@@ -225,6 +225,17 @@ namespace sptlz{
     }
     return(result);
   }
+
+  template <class T>
+  std::vector<T> slice_drop_idx(std::vector<T> *arr, int idx){
+    std::vector<T> result;
+    for(int i=0; i<arr->size(); i++){
+      if(i!=idx){
+        result.push_back(arr->at(i));
+      }
+    }
+    return(result);
+  }
 }
 
 #endif

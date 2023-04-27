@@ -28,21 +28,21 @@ namespace sptlz{
 		return(s.str());
 	}
 
-	std::vector<std::vector<float>> samples_coords_bbox(std::vector<std::vector<float>> coords){
+	std::vector<std::vector<float>> samples_coords_bbox(std::vector<std::vector<float>> *coords){
 		std::vector<std::vector<float>> bbox;
 
-		for(int i=0; i<coords[0].size(); i++){
+		for(int i=0; i<coords->at(0).size(); i++){
 
-			bbox.push_back({coords[0][i], coords[0][i]});
+			bbox.push_back({coords->at(0)[i], coords->at(0)[i]});
 		}
 
-		for(int i=0; i<coords.size(); i++){
-			for(int j=0; j<coords.at(i).size(); j++){
-				if(coords.at(i).at(j) < bbox.at(j).at(0)){
-					bbox.at(j).at(0) = coords.at(i).at(j);
+		for(int i=0; i<coords->size(); i++){
+			for(int j=0; j<coords->at(i).size(); j++){
+				if(coords->at(i).at(j) < bbox.at(j).at(0)){
+					bbox.at(j).at(0) = coords->at(i).at(j);
 				}
-				if(bbox.at(j).at(1) < coords.at(i).at(j)){
-					bbox.at(j).at(1) = coords.at(i).at(j);
+				if(bbox.at(j).at(1) < coords->at(i).at(j)){
+					bbox.at(j).at(1) = coords->at(i).at(j);
 				}
 			}
 		}
@@ -252,6 +252,10 @@ namespace sptlz{
 				throw std::runtime_error("must override");
 			}
 
+			virtual std::vector<float> leaf_loo(std::vector<std::vector<float>> *coords, std::vector<float> *values, std::vector<int> *samples_id, std::vector<float> *params){
+				throw std::runtime_error("must override");
+			}
+
 		public:
 			ESI(std::vector<std::vector<float>> _coords, std::vector<float> _values, float lambda, int forest_size, std::vector<std::vector<float>> bbox, float seed=0){
 				my_rand = std::mt19937(seed);
@@ -297,6 +301,27 @@ namespace sptlz{
 				return(results);
 			}
 
+			std::vector<std::vector<float>> leave_one_out(){
+				std::vector<std::vector<float>> results(coords.size());
+				int aux;
+
+				for(int i=0; i<mondrian_forest.size(); i++){
+					// get tree
+					std::cout << "tree_" << i << std::endl;
+					auto mt = mondrian_forest.at(i);
+
+					// make loo by leaf
+					for(int j=0; j<mt->samples_by_leaf.size(); j++){
+						if(mt->samples_by_leaf.at(j).size()!=0){
+							auto predictions = leaf_loo(&coords, &values, &(mt->samples_by_leaf.at(j)), &(mt->leaf_params.at(j)));
+							for(int k=0; k<mt->samples_by_leaf.at(j).size(); k++){
+								results.at(mt->samples_by_leaf.at(j).at(k)).push_back(predictions.at(k));
+							}
+						}
+					}
+				}
+				return(results);
+			}
 	};
 }
 

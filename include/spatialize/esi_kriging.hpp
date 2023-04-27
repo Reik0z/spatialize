@@ -3,12 +3,30 @@
 
 #include <cmath>
 #include <functional>
+#include <utility>
 #include <Eigen/Dense>
 #include "spatialize/abstract_esi.hpp"
 #include "spatialize/utils.hpp"
 
 namespace sptlz{
-  typedef Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic> COV_NxN;
+  std::pair<std::vector<float>, std::vector<float>> split_cov_matrix(std::vector<float> *mat, int n, int idx){
+    std::vector<float> left, right;
+
+    for(int i=0; i<n; i++){
+      for(int j=0; j<n; j++){
+        if(i==idx){
+          if(j!=idx){
+            right.push_back(mat->at(i*n+j));
+          }
+        }else{
+          if(j!=idx){
+            left.push_back(mat->at(i*n+j));
+          }
+        }
+      }
+    }
+    return(std::make_pair(left, right));
+  }
 
   std::vector<float> distances(std::vector<std::vector<float>> *coords){
     int n = coords->size();
@@ -94,19 +112,50 @@ namespace sptlz{
         auto sl_locations = slice(locations, locations_id);
 
         auto right_cov = kriging_right_matrix(&sl_coords, &sl_locations, variogram(variogram_model, nugget, range));
-        values->push_back(0.0); // to anulate the mu coeffcicient
+        sl_values.push_back(0.0); // to anulate the mu coeffcicient
         Eigen::Map<Eigen::MatrixXf> v = Eigen::Map<Eigen::MatrixXf>(sl_values.data(), 1, n+1);
         Eigen::Map<Eigen::MatrixXf> b = Eigen::Map<Eigen::MatrixXf>(right_cov.data(), n+1, m);
         Eigen::Map<Eigen::MatrixXf> A_1 = Eigen::Map<Eigen::MatrixXf>(params->data(), n+1, n+1);
         auto weights = A_1*b;
         auto vals = v*weights;
         
-/*        Eigen::Map<Eigen::MatrixXf> A = Eigen::Map<Eigen::MatrixXf>(params->data(), n+1, n+1);
-        auto x = A.fullPivLu().solve(b);
-        auto vals = v*x; */
         result.resize(m);
         Eigen::Map<Eigen::MatrixXf>(&result[0], 1, m) = vals;
 
+        return(result);
+      }
+
+      std::vector<float> leaf_loo(std::vector<std::vector<float>> *coords, std::vector<float> *values, std::vector<int> *samples_id, std::vector<float> *params){
+        std::vector<float> result;
+        
+        if((samples_id->size()==0) || (samples_id->size()==1)){
+          for(auto l: *samples_id){
+            result.push_back(NAN);
+          }
+          return(result);
+        }
+        int n = samples_id->size();
+        auto sl_coords = slice(coords, samples_id);
+        auto sl_values = slice(values, samples_id);
+        sl_values.push_back(0.0); // to anulate the mu coeffcicient
+
+        auto left_cov = kriging_left_matrix(&sl_coords, variogram(variogram_model, nugget, range));
+        for(int i=0; i<n; i++){
+          auto aux = split_cov_matrix(&left_cov, n+1, i);
+          auto right_cov = aux.second;
+          auto new_values = slice_drop_idx(&sl_values, i);
+
+          Eigen::Map<Eigen::MatrixXf> A = Eigen::Map<Eigen::MatrixXf>(aux.first.data(), n, n);
+          auto inv = A.completeOrthogonalDecomposition().pseudoInverse();
+          Eigen::Map<Eigen::MatrixXf> v = Eigen::Map<Eigen::MatrixXf>(sl_values.data(), 1, n);
+          Eigen::Map<Eigen::MatrixXf> b = Eigen::Map<Eigen::MatrixXf>(right_cov.data(), n, 1);
+          auto weights = inv*b;
+          auto est = v*weights;
+          
+          result.push_back(est(0));
+        }
+
+        //for(auto l: *samples_id){result.push_back(NAN);}
         return(result);
       }
 
@@ -133,7 +182,6 @@ namespace sptlz{
 
         auto klm = kriging_left_matrix(coords, variogram(variogram_model, nugget, range));
         Eigen::Map<Eigen::MatrixXf> LM = Eigen::Map<Eigen::MatrixXf>(klm.data(), n+1, n+1);
-        // auto inv = LM.inverse();
         auto inv = LM.completeOrthogonalDecomposition().pseudoInverse();
 
         result.resize((n+1)*(n+1));
