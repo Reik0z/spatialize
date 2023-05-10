@@ -5,7 +5,6 @@
 #include <sstream>
 #include <iostream>
 #include "spatialize/esi_idw.hpp"
-#include "spatialize/esi_idw_anis.hpp"
 #include "spatialize/esi_kriging.hpp"
 
 static PyObject *esi_idw_2d(PyObject *self, PyObject *args){
