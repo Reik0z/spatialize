@@ -60,6 +60,37 @@ namespace sptlz{
         return(result);
       }
 
+      std::vector<float> leaf_kfold(int k, std::vector<std::vector<float>> *coords, std::vector<float> *values, std::vector<int> *folds, std::vector<int> *samples_id, std::vector<float> *params){
+        std::vector<float> result(samples_id->size());
+        auto sl_coords = slice(coords, samples_id);
+        auto sl_values = slice(values, samples_id);
+        auto sl_folds = slice(folds, samples_id);
+        float w, w_sum, w_v_sum;
+
+        for(int i=0; i<k; i++){
+          auto test_train = indexes_by_predicate<int>(&sl_folds, [i](int *j){return(*j==i);});
+          if(test_train.first.size()!=0){ // if is 0, then there's nothing to estimate
+            if(test_train.second.size()==0){
+              for(int j: test_train.first){
+                result.at(j) = NAN;
+              }
+            }else{
+              for(int j: test_train.first){
+                w_sum = 0.0;
+                w_v_sum = 0.0;
+                for(int l: test_train.second){
+                  w = 1/(1+std::pow(distance(&(sl_coords.at(j)), &(sl_coords.at(l))), exponent));
+                  w_sum += w;
+                  w_v_sum += w*values->at(samples_id->at(l));
+                }
+                result.at(j) = w_v_sum/w_sum;
+              }
+            }
+          }
+        }
+        return(result);
+      }
+
     public:
       ESI_IDW(std::vector<std::vector<float>> _coords, std::vector<float> _values, float lambda, int forest_size, std::vector<std::vector<float>> bbox, float _exponent, float seed=0):ESI(_coords, _values, lambda, forest_size, bbox, seed){
         exponent = _exponent;

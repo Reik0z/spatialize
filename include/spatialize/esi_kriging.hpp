@@ -159,6 +159,43 @@ namespace sptlz{
         return(result);
       }
 
+      std::vector<float> leaf_kfold(int k, std::vector<std::vector<float>> *coords, std::vector<float> *values, std::vector<int> *folds, std::vector<int> *samples_id, std::vector<float> *params){
+        std::vector<float> result(samples_id->size());
+        auto sl_coords = slice(coords, samples_id);
+        auto sl_values = slice(values, samples_id);
+        auto sl_folds = slice(folds, samples_id);
+
+        for(int i=0; i<k; i++){
+          auto test_train = indexes_by_predicate<int>(&sl_folds, [i](int *j){return(*j==i);});
+          if(test_train.first.size()!=0){ // if is 0, then there's nothing to estimate
+            if(test_train.second.size()==0){
+              for(int j: test_train.first){
+                result.at(j) = NAN;
+              }
+            }else{
+              int m = test_train.first.size(), n = test_train.second.size();
+              auto sl_coords_train = slice(&sl_coords, &(test_train.second));
+              auto sl_coords_test = slice(&sl_coords, &(test_train.first));
+              auto sl_values_train = slice(&sl_values, &(test_train.second));
+              sl_values_train.push_back(0.0);              
+
+              auto left_cov = kriging_left_matrix(&sl_coords_train, variogram(variogram_model, nugget, range));
+              auto right_cov = kriging_right_matrix(&sl_coords_train, &sl_coords_test, variogram(variogram_model, nugget, range));
+              Eigen::Map<Eigen::MatrixXf> A = Eigen::Map<Eigen::MatrixXf>(left_cov.data(), n+1, n+1);
+              auto inv = A.completeOrthogonalDecomposition().pseudoInverse();
+              Eigen::Map<Eigen::MatrixXf> v = Eigen::Map<Eigen::MatrixXf>(sl_values_train.data(), 1, n+1);
+              Eigen::Map<Eigen::MatrixXf> b = Eigen::Map<Eigen::MatrixXf>(right_cov.data(), n+1, m);
+              auto weights = inv*b;
+              auto est = v*weights;
+              for(int j=0; j<test_train.first.size(); j++){
+                result.at(test_train.first.at(j)) = est(j);
+              }
+            }
+          }
+        }
+        return(result);
+      }
+
       void post_process(){
         int n;
         std::vector<std::vector<float>> leaf_coords;

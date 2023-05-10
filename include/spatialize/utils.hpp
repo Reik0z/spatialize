@@ -4,8 +4,17 @@
 #include <vector>
 #include <string>
 #include <algorithm>
+#include <functional>
 
 namespace sptlz{
+  template <class T>
+  void pprint(std::vector<T> v){
+      for(T i: v){
+        std::cout << " " << i;
+      }
+      std::cout << std::endl;
+  }
+
   std::vector<std::vector<int>> get_full_neighboorhood(int d){
     if(d==0){
       std::vector<std::vector<int>> r;
@@ -235,6 +244,53 @@ namespace sptlz{
       }
     }
     return(result);
+  }
+
+  std::vector<int> get_folds(int n, int k, float seed){
+    std::vector<int> result(n);
+    std::mt19937 my_rand(seed);
+    std::uniform_real_distribution<float> uni_float(0, 1);
+    std::vector<std::pair<int, float>> permutation;
+
+    for(int i=0; i<n; i++){
+      permutation.push_back(std::make_pair(i,uni_float(my_rand)));
+    }
+    std::sort(permutation.begin(), permutation.end(), [](auto a, auto b){return(a.second<b.second);});
+    for(int i=0; i<n; i++){
+      result.at(i) = permutation.at(i).first*k/n;
+    }
+
+    return(result);
+  }
+
+  template <class T>
+  std::pair<std::vector<T>, std::vector<T>> divide_by_predicate(std::vector<T> *arr, std::function<bool(T *)> pred){
+    std::vector<T> result1;
+    std::vector<T> result2;
+
+    for(auto record: *arr){
+      if(pred(&record)){
+        result1.push_back(record);
+      }else{
+        result2.push_back(record);
+      }
+    }
+    return(std::make_pair(result1, result2));
+  }
+
+  template <class T>
+  std::pair<std::vector<int>, std::vector<int>> indexes_by_predicate(std::vector<T> *arr, std::function<bool(T *)> pred){
+    std::vector<int> result1;
+    std::vector<int> result2;
+
+    for(int i=0; i<arr->size(); i++){
+      if(pred(&(arr->at(i)))){
+        result1.push_back(i);
+      }else{
+        result2.push_back(i);
+      }
+    }
+    return(std::make_pair(result1, result2));
   }
 }
 

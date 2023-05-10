@@ -6,6 +6,7 @@
 #include <queue>
 #include <string>
 #include <stdexcept>
+#include "utils.hpp"
 
 namespace sptlz{
 	std::string IND_STEP = "    ";
@@ -246,6 +247,7 @@ namespace sptlz{
 			std::vector<sptlz::MondrianTree*> mondrian_forest;
 			std::vector<std::vector<float>> coords;
 			std::vector<float> values;
+			std::vector<int> folds;
 			std::mt19937 my_rand;
 
 			virtual std::vector<float> leaf_estimation(std::vector<std::vector<float>> *coords, std::vector<float> *values, std::vector<int> *samples_id, std::vector<std::vector<float>> *locations, std::vector<int> *locations_id, std::vector<float> *params){
@@ -255,6 +257,12 @@ namespace sptlz{
 			virtual std::vector<float> leaf_loo(std::vector<std::vector<float>> *coords, std::vector<float> *values, std::vector<int> *samples_id, std::vector<float> *params){
 				throw std::runtime_error("must override");
 			}
+
+			virtual std::vector<float> leaf_kfold(int k, std::vector<std::vector<float>> *coords, std::vector<float> *values, std::vector<int> *fold, std::vector<int> *samples_id, std::vector<float> *params){
+				throw std::runtime_error("must override");
+			}
+
+			virtual void post_process(){}
 
 		public:
 			ESI(std::vector<std::vector<float>> _coords, std::vector<float> _values, float lambda, int forest_size, std::vector<std::vector<float>> bbox, float seed=0){
@@ -307,13 +315,34 @@ namespace sptlz{
 
 				for(int i=0; i<mondrian_forest.size(); i++){
 					// get tree
-					std::cout << "tree_" << i << std::endl;
 					auto mt = mondrian_forest.at(i);
 
 					// make loo by leaf
 					for(int j=0; j<mt->samples_by_leaf.size(); j++){
 						if(mt->samples_by_leaf.at(j).size()!=0){
 							auto predictions = leaf_loo(&coords, &values, &(mt->samples_by_leaf.at(j)), &(mt->leaf_params.at(j)));
+							for(int k=0; k<mt->samples_by_leaf.at(j).size(); k++){
+								results.at(mt->samples_by_leaf.at(j).at(k)).push_back(predictions.at(k));
+							}
+						}
+					}
+				}
+				return(results);
+			}
+
+			std::vector<std::vector<float>> k_fold(int k){
+				std::uniform_real_distribution<float> uni_float;
+				auto folds = get_folds(values.size(), k, uni_float(my_rand));
+				std::vector<std::vector<float>> results(coords.size());
+
+				for(int i=0; i<mondrian_forest.size(); i++){
+					// get tree
+					auto mt = mondrian_forest.at(i);
+
+					// make kfold by leaf
+					for(int j=0; j<mt->samples_by_leaf.size(); j++){
+						if(mt->samples_by_leaf.at(j).size()!=0){
+							auto predictions = leaf_kfold(k, &coords, &values, &folds, &(mt->samples_by_leaf.at(j)), &(mt->leaf_params.at(j)));
 							for(int k=0; k<mt->samples_by_leaf.at(j).size(); k++){
 								results.at(mt->samples_by_leaf.at(j).at(k)).push_back(predictions.at(k));
 							}
