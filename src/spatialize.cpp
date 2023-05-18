@@ -1067,17 +1067,17 @@ static PyMethodDef SpatializeMethods[] = {
   { NULL, NULL, 0, NULL }
 };
 
-static struct PyModuleDef spatialize = {
+static struct PyModuleDef libspatialize = {
     PyModuleDef_HEAD_INIT,
-    "spatialize",   /* name of module */
-    "Python wrapper for c++ ESI library", /* module documentation, may be NULL */
+    "libspatialize",   /* name of module */
+    "Python wrapper for C++ ESI library", /* module documentation, may be NULL */
     -1,       /* size of per-interpreter state of the module,
                  or -1 if the module keeps state in global variables. */
     SpatializeMethods
 };
 
-PyMODINIT_FUNC PyInit_spatialize(void){
-    PyObject *m = PyModule_Create(&spatialize);
+PyMODINIT_FUNC PyInit_libspatialize(void){
+    PyObject *m = PyModule_Create(&libspatialize);
     if (m == NULL)
         return(NULL);
 

@@ -4,12 +4,12 @@ import os
 from setuptools import setup, find_packages
 from distutils.extension import Extension
 
-libsrc = os.path.join('src', 'spatialize.cpp')
+libsrc = os.path.join('src', 'libspatialize.cpp')
 defs = []
 defs.append(('NPY_NO_DEPRECATED_API', 'NPY_1_7_API_VERSION'))
 
-spatialize_extensions = [
-    Extension(name='spatialize',
+libspatialize_extensions = [
+    Extension(name='libspatialize',
         sources=[libsrc],
         include_dirs=[numpy.get_include(), os.path.join('.','include')],
         extra_compile_args=['-std=c++14'],
@@ -28,7 +28,7 @@ if __name__ == '__main__':
         url="http://www.alges.cl/",
         long_description=open(os.path.join(os.path.dirname(os.path.realpath(
                               __file__)), "README.txt")).read(),
-        ext_modules= spatialize_extensions,
+        ext_modules= libspatialize_extensions,
         #packages=['spatialize'],
         # package_dir={'justesi': 'src'},
         # packages=find_packages('..', exclude=[".DS_Store", "__pycache__"]),
