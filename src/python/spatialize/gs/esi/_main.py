@@ -42,8 +42,20 @@ class LibSpatializeFacade:
         return LibSpatializeFacade.hash_map[d][base_interpolator][operation]
 
 
-def loo_griddata(points, values, xi, base_interpolator='idw', n_partitions=500, exponent=2):
+def hparams_search(points, values, xi, base_interpolator='idw', n_partitions=500, exponent=2):
     loo = LibSpatializeFacade.get_operator(points, base_interpolator, "loo")
     alpha = 0.7
+    print(loo)
 
-    res = loo(points, values, n_partitions, alpha, exponent, xi)
+    # res = loo(points, values, n_partitions, alpha, exponent, xi)
+
+def egriddata(points, values, xi, base_interpolator='idw', n_partitions=500, alpha=0.7, exponent=2.0):
+    # values = libspatialize.esi_idw_2d(np.float32(samples[['x', 'y']].values),
+    #                                   np.float32(samples[['cu']].values[:, 0]), 100, 0.7, 2.0,
+    #                                   np.float32(locations[['X', 'Y']].values))
+
+    estimate = LibSpatializeFacade.get_operator(points, base_interpolator, "estimate")
+
+    e_values = estimate(np.float32(points), np.float32(values), n_partitions, alpha, exponent, np.float32(xi))
+
+    return np.nanmean(e_values, axis=1)
