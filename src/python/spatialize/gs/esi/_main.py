@@ -1,6 +1,7 @@
 import libspatialize as lsp
 
 import numpy as np
+import scipy as sci
 
 
 class SpatializeError(Exception):
@@ -42,6 +43,21 @@ class LibSpatializeFacade:
         return LibSpatializeFacade.hash_map[d][base_interpolator][operation]
 
 
+class aggregation_functions:
+
+    @staticmethod
+    def mean(values):
+        return np.nanmean(values, axis=1)
+
+    @staticmethod
+    def median(values):
+        return np.nanmedian(values, axis=1)
+
+    @staticmethod
+    def map(values):
+        return sci.stats.mode(values, axis=1, keepdims=True, nan_policy="omit").mode
+
+
 def hparams_search(points, values, xi, base_interpolator='idw', n_partitions=500, exponent=2):
     loo = LibSpatializeFacade.get_operator(points, base_interpolator, "loo")
     alpha = 0.7
@@ -49,7 +65,10 @@ def hparams_search(points, values, xi, base_interpolator='idw', n_partitions=500
 
     # res = loo(points, values, n_partitions, alpha, exponent, xi)
 
-def egriddata(points, values, xi, base_interpolator='idw', n_partitions=500, alpha=0.7, exponent=2.0):
+
+def egriddata(points, values, xi, base_interpolator='idw', n_partitions=500,
+              alpha=0.7, agg_func=aggregation_functions.mean,
+              exponent=2.0):
     # values = libspatialize.esi_idw_2d(np.float32(samples[['x', 'y']].values),
     #                                   np.float32(samples[['cu']].values[:, 0]), 100, 0.7, 2.0,
     #                                   np.float32(locations[['X', 'Y']].values))
@@ -58,4 +77,4 @@ def egriddata(points, values, xi, base_interpolator='idw', n_partitions=500, alp
 
     e_values = estimate(np.float32(points), np.float32(values), n_partitions, alpha, exponent, np.float32(xi))
 
-    return np.nanmean(e_values, axis=1)
+    return agg_func(e_values)
