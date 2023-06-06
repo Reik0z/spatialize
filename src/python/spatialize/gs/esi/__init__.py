@@ -1,1 +1,1 @@
-from ._main import hparams_search, egriddata, aggregation_functions
+from ._main import hparams_search, griddata, nongriddata

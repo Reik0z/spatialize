@@ -1,5 +1,5 @@
 import libspatialize as lsp
-import aggfunc_1 as af
+import spatialize.gs.esi.aggfunc as af
 
 import numpy as np
 
@@ -51,13 +51,23 @@ def hparams_search(points, values, xi, base_interpolator='idw', n_partitions=500
     # res = loo(points, values, n_partitions, alpha, exponent, xi)
 
 
-def egriddata(points, values, xi, base_interpolator='idw', n_partitions=500,
-              alpha=0.7, agg_func=af.mean,
-              exponent=2.0):
-    # values = libspatialize.esi_idw_2d(np.float32(samples[['x', 'y']].values),
-    #                                   np.float32(samples[['cu']].values[:, 0]), 100, 0.7, 2.0,
-    #                                   np.float32(locations[['X', 'Y']].values))
+def griddata(points, values, xi, base_interpolator='idw', n_partitions=500,
+             alpha=0.7, agg_func=af.mean,
+             exponent=2.0):
+    if len(xi) != 2:
+        raise SpatializeError("No grid data values found")
 
+    (grid_x, grid_y) = xi
+    ng_xi = np.column_stack((grid_x.flatten(), grid_y.flatten()))
+
+    result = nongriddata(points, values, ng_xi, base_interpolator, n_partitions, alpha, agg_func, exponent)
+
+    return result.reshape([grid_x.shape[0], grid_x.shape[1]])
+
+
+def nongriddata(points, values, xi, base_interpolator='idw', n_partitions=500,
+                alpha=0.7, agg_func=af.mean,
+                exponent=2.0):
     estimate = LibSpatializeFacade.get_operator(points, base_interpolator, "estimate")
 
     e_values = estimate(np.float32(points), np.float32(values), n_partitions, alpha, exponent, np.float32(xi))
