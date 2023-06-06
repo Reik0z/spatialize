@@ -5,6 +5,8 @@ import time
 import numpy as np
 import pandas as pd
 
+from spatialize.gs.esi.precfunction import mse_precision, mae_precision
+
 # if running from 'this' test directory then change to the
 # project root directory
 curr_dir = os.path.split(os.getcwd())[1]
@@ -39,11 +41,12 @@ def test_esi_idw_2d(op='estimate'):
                                           np.float32(locations[['X', 'Y']].values))
         df = pd.DataFrame(locations, columns=['X', 'Y', 'Z'])
         df['py_cu'] = np.nanmean(values, axis=1)
+        print(values.shape)
+        print(np.nanmean(values, axis=1).shape)
+        r = mae_precision(np.nanmean(values, axis=1).shape, values)
+        print(r.shape)
         df.to_csv('./test/testdata/output/pyesi_idw_2d.csv', index=False)
     elif op == 'loo':
-        print(np.float32(samples[['x', 'y']].values).shape)
-        print(np.float32(samples[['cu']].values[:, 0]).shape)
-        print(np.float32(locations[['X', 'Y']].values.shape))
         values = libspatialize.loo_esi_idw_2d(np.float32(samples[['x', 'y']].values),
                                               np.float32(samples[['cu']].values[:, 0]), 100, 0.7, 2.0,
                                               np.float32(locations[['X', 'Y']].values))
@@ -73,6 +76,10 @@ def test_esi_idw_3d(op='estimate'):
                                           np.float32(locations[['X', 'Y', 'Z']].values))
         df = pd.DataFrame(locations, columns=['X', 'Y', 'Z'])
         df['py_cu'] = np.nanmean(values, axis=1)
+        print(values.shape)
+        print(np.nanmean(values, axis=1).shape)
+        r = mae_precision(np.nanmean(values, axis=1).shape, values)
+        print(r.shape)
         df.to_csv('./test/testdata/output/pyesi_idw_3d.csv', index=False)
     elif op == 'loo':
         values = libspatialize.loo_esi_idw_3d(np.float32(samples[['X', 'Y', 'Z']].values),
@@ -158,19 +165,19 @@ if __name__ == '__main__':
     if not os.path.exists(outdir):
         os.mkdir(outdir)
 
-    # t1 = time.time()
-    # test_esi_idw_2d(op='estimate')
-    # print('test_esi_idw_2d: ', time.time() - t1, '[s]')
     t1 = time.time()
-    test_esi_idw_2d(op='loo')
-    print('test_loo_esi_idw_2d: ', time.time() - t1, '[s]')
+    test_esi_idw_2d(op='estimate')
+    print('test_esi_idw_2d: ', time.time() - t1, '[s]')
+    # t1 = time.time()
+    # test_esi_idw_2d(op='loo')
+    # print('test_loo_esi_idw_2d: ', time.time() - t1, '[s]')
     # t1 = time.time()
     # test_esi_idw_2d(op='kfold')
     # print('test_kfold_esi_idw_2d: ', time.time() - t1, '[s]')
 
-    # t1 = time.time()
-    # test_esi_idw_3d(op='estimate')
-    # print('test_esi_idw_3d: ', time.time() - t1, '[s]')
+    t1 = time.time()
+    test_esi_idw_3d(op='estimate')
+    print('test_esi_idw_3d: ', time.time() - t1, '[s]')
     # t1 = time.time()
     # test_esi_idw_3d(op='loo')
     # print('test_loo_esi_idw_3d: ', time.time() - t1, '[s]')
