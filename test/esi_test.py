@@ -1,14 +1,19 @@
 import unittest
 
-from spatialize.gs.esi._main import signature_overload, SpatializeError
+import numpy as np
+
+from spatialize.gs.esi._main import signature_overload
+from spatialize import SpatializeError
 
 
 class ESIModule(unittest.TestCase):
     def test_overload_decorator(self):
-        @signature_overload(default_base_interpolator="idw", base_interp_case={
-            "idw": {"c": 7},
-            "kriging": {"k": 100}
-        })
+        @signature_overload(default_base_interpolator="idw",
+                            common_args={"base_interpolator": "idw"},
+                            specific_args={
+                                "idw": {"c": 7},
+                                "kriging": {"k": 100}
+                            })
         def f(a, b, **kwargs):
             if kwargs["base_interpolator"] == "idw":
                 extra = kwargs["c"]
@@ -50,6 +55,23 @@ class ESIModule(unittest.TestCase):
             f(2, 4, base_interpolator="rbf", k=101)
         except SpatializeError:
             self.assertTrue("Correct")
+
+    def test_griddata(self):
+        def func(x, y):  # a kind of cubic function
+            return x * (1 - x) * np.cos(4 * np.pi * x) * np.sin(4 * np.pi * y ** 2) ** 2
+
+        grid_x, grid_y = np.mgrid[0:1:100j, 0:1:200j]
+
+        rng = np.random.default_rng()
+        points = rng.random((1000, 2))
+        values = func(points[:, 0], points[:, 1])
+
+        import spatialize.gs.esi.aggfunction as af
+        import spatialize.gs.esi.precfunction as pf
+        from spatialize.gs.esi import griddata
+
+        grid_z3, _ = griddata(points, values, (grid_x, grid_y), n_partitions=100, alpha=0.99, exponent=7.0,
+                              agg_function=af.mean, prec_function=pf.mse_precision)
 
 
 if __name__ == '__main__':

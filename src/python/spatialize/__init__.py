@@ -1,0 +1,2 @@
+class SpatializeError(Exception):
+    pass
