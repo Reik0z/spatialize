@@ -39,17 +39,16 @@ def test_esi_idw_2d(op='estimate'):
         values = libspatialize.esi_idw_2d(np.float32(samples[['x', 'y']].values),
                                           np.float32(samples[['cu']].values[:, 0]), 100, 0.7, 2.0,
                                           np.float32(locations[['X', 'Y']].values))
+        print(values.shape)
         df = pd.DataFrame(locations, columns=['X', 'Y', 'Z'])
         df['py_cu'] = np.nanmean(values, axis=1)
-        print(values.shape)
-        print(np.nanmean(values, axis=1).shape)
-        r = mae_precision(np.nanmean(values, axis=1).shape, values)
-        print(r.shape)
         df.to_csv('./test/testdata/output/pyesi_idw_2d.csv', index=False)
     elif op == 'loo':
         values = libspatialize.loo_esi_idw_2d(np.float32(samples[['x', 'y']].values),
                                               np.float32(samples[['cu']].values[:, 0]), 100, 0.7, 2.0,
                                               np.float32(locations[['X', 'Y']].values))
+        print(values.shape)
+        print(np.float32(locations[['X', 'Y']].values.shape))
         df = pd.DataFrame(samples, columns=['X', 'Y', 'cu'])
         df['loo_py_cu'] = np.nanmean(values, axis=1)
         df.to_csv('./test/testdata/output/loo_pyesi_idw_2d.csv', index=False)
@@ -57,6 +56,7 @@ def test_esi_idw_2d(op='estimate'):
         values = libspatialize.kfold_esi_idw_2d(np.float32(samples[['x', 'y']].values),
                                                 np.float32(samples[['cu']].values[:, 0]), 100, 0.7, 2.0, k,
                                                 np.float32(locations[['X', 'Y']].values))
+        print(values.shape)
         df = pd.DataFrame(samples, columns=['X', 'Y', 'cu'])
         df['kfold_py_cu'] = np.nanmean(values, axis=1)
         df.to_csv('./test/testdata/output/kfold_pyesi_idw_2d.csv', index=False)
@@ -76,10 +76,6 @@ def test_esi_idw_3d(op='estimate'):
                                           np.float32(locations[['X', 'Y', 'Z']].values))
         df = pd.DataFrame(locations, columns=['X', 'Y', 'Z'])
         df['py_cu'] = np.nanmean(values, axis=1)
-        print(values.shape)
-        print(np.nanmean(values, axis=1).shape)
-        r = mae_precision(np.nanmean(values, axis=1).shape, values)
-        print(r.shape)
         df.to_csv('./test/testdata/output/pyesi_idw_3d.csv', index=False)
     elif op == 'loo':
         values = libspatialize.loo_esi_idw_3d(np.float32(samples[['X', 'Y', 'Z']].values),
@@ -168,16 +164,16 @@ if __name__ == '__main__':
     t1 = time.time()
     test_esi_idw_2d(op='estimate')
     print('test_esi_idw_2d: ', time.time() - t1, '[s]')
-    # t1 = time.time()
-    # test_esi_idw_2d(op='loo')
-    # print('test_loo_esi_idw_2d: ', time.time() - t1, '[s]')
-    # t1 = time.time()
-    # test_esi_idw_2d(op='kfold')
-    # print('test_kfold_esi_idw_2d: ', time.time() - t1, '[s]')
-
     t1 = time.time()
-    test_esi_idw_3d(op='estimate')
-    print('test_esi_idw_3d: ', time.time() - t1, '[s]')
+    test_esi_idw_2d(op='loo')
+    print('test_loo_esi_idw_2d: ', time.time() - t1, '[s]')
+    t1 = time.time()
+    test_esi_idw_2d(op='kfold')
+    print('test_kfold_esi_idw_2d: ', time.time() - t1, '[s]')
+
+    # t1 = time.time()
+    # test_esi_idw_3d(op='estimate')
+    # print('test_esi_idw_3d: ', time.time() - t1, '[s]')
     # t1 = time.time()
     # test_esi_idw_3d(op='loo')
     # print('test_loo_esi_idw_3d: ', time.time() - t1, '[s]')

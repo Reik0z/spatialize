@@ -1,7 +1,7 @@
 # spatialize
 spatialize: A Python wrapper for C++ ESI library
 
-requisites: numpy, pandas, jupyter, scipy, hvplot
+requisites: numpy, pandas, jupyter, scipy, hvplot, scikit-learn
 pip install --upgrade metpy
 
 test_esi_idw_2d:  14.463987350463867 [s]
