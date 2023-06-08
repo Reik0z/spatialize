@@ -52,7 +52,7 @@ def hparams_search(points, values, xi, **kwargs):
 
 def griddata(points, values, xi, **kwargs):
     ng_xi, original_shape = flatten_grid_data(xi)
-    estimation, precision = nongriddata(points, values, ng_xi, **kwargs)
+    estimation, precision = _call_libspatialize(points, values, ng_xi, **kwargs)
     return estimation.reshape(original_shape), precision.reshape(original_shape)
 
 
