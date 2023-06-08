@@ -116,7 +116,7 @@ class ESIModule(unittest.TestCase):
         values = func(points[:, 0], points[:, 1])
 
         from spatialize.gs.esi import hparams_search
-        hparams_search(points, values, (grid_x, grid_y), griddata=True)
+        hparams_search(points, values, (grid_x, grid_y), griddata=True, k=10)
 
 
 if __name__ == '__main__':

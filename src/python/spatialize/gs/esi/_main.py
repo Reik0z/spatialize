@@ -25,8 +25,8 @@ def hparams_search(points, values, xi, **kwargs):
     method, k = "kfold", kwargs["k"]
     if k == points.shape[0] or k == -1:
         method = "loo"
+
     cross_validate = LibSpatializeFacade.get_operator(points, kwargs["base_interpolator"], method)
-    print(cross_validate)
 
     grid = {"n_partitions": kwargs["n_partitions"],
             "alpha": kwargs["alpha"]}
@@ -43,11 +43,11 @@ def hparams_search(points, values, xi, **kwargs):
         print(param_set)
         if kwargs["base_interpolator"] == "idw":
             if method == "loo":
-                cv = cross_validate(points, values, param_set["n_partitions"],
-                                    param_set["alpha"], param_set["exponent"], p_xi)
+                cv = cross_validate(np.float32(points), np.float32(values), param_set["n_partitions"],
+                                    param_set["alpha"], param_set["exponent"], np.float32(p_xi))
             else:
-                cv = cross_validate(points, values, param_set["n_partitions"],
-                                    param_set["alpha"], param_set["exponent"], k, p_xi)
+                cv = cross_validate(np.float32(points), np.float32(values), param_set["n_partitions"],
+                                    param_set["alpha"], param_set["exponent"], k, np.float32(p_xi))
 
 
 def griddata(points, values, xi, **kwargs):
