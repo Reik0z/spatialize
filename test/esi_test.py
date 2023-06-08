@@ -18,13 +18,13 @@ def test_griddata_kriging():
 
     import spatialize.gs.esi.aggfunction as af
     import spatialize.gs.esi.precfunction as pf
-    from spatialize.gs.esi import griddata
+    from spatialize.gs.esi import esi_griddata
 
-    grid_z3, grid_z3p = griddata(points, values, (grid_x, grid_y),
-                                 base_interpolator="idw",
-                                 n_partitions=100, alpha=0.99,
-                                 exponent=7.0,
-                                 agg_function=af.mean, prec_function=pf.mae_precision)
+    grid_z3, grid_z3p = esi_griddata(points, values, (grid_x, grid_y),
+                                     base_interpolator="idw",
+                                     n_partitions=100, alpha=0.99,
+                                     exponent=7.0,
+                                     agg_function=af.mean, prec_function=pf.mae_precision)
 
 
 class ESIModule(unittest.TestCase):
@@ -91,19 +91,19 @@ class ESIModule(unittest.TestCase):
 
         import spatialize.gs.esi.aggfunction as af
         import spatialize.gs.esi.precfunction as pf
-        from spatialize.gs.esi import griddata
+        from spatialize.gs.esi import esi_griddata
 
-        _, _ = griddata(points, values, (grid_x, grid_y),
-                        base_interpolator="idw",
-                        exponent=7.0,
-                        n_partitions=100, alpha=0.97,
-                        agg_function=af.mean, prec_function=pf.mae_precision)
+        _, _ = esi_griddata(points, values, (grid_x, grid_y),
+                            base_interpolator="idw",
+                            exponent=7.0,
+                            n_partitions=100, alpha=0.97,
+                            agg_function=af.mean, prec_function=pf.mae_precision)
 
-        _, _ = griddata(points, values, (grid_x, grid_y),
-                        base_interpolator="kriging",
-                        model="cubic", nugget=0.1, range=5000.0,
-                        n_partitions=100, alpha=0.97,
-                        agg_function=af.mean, prec_function=pf.mae_precision)
+        _, _ = esi_griddata(points, values, (grid_x, grid_y),
+                            base_interpolator="kriging",
+                            model="cubic", nugget=0.1, range=5000.0,
+                            n_partitions=100, alpha=0.97,
+                            agg_function=af.mean, prec_function=pf.mae_precision)
 
     def test_hparams_search(self):
         def func(x, y):  # a kind of cubic function
@@ -115,8 +115,8 @@ class ESIModule(unittest.TestCase):
         points = rng.random((1000, 2))
         values = func(points[:, 0], points[:, 1])
 
-        from spatialize.gs.esi import hparams_search
-        hparams_search(points, values, (grid_x, grid_y), griddata=True, k=10)
+        from spatialize.gs.esi import esi_hparams_search
+        esi_hparams_search(points, values, (grid_x, grid_y), base_interpolator="kriging", griddata=True, k=10)
 
 
 if __name__ == '__main__':
