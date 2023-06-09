@@ -111,7 +111,7 @@ class ESIModule(unittest.TestCase):
 
         from spatialize.gs.esi import esi_hparams_search
         b_params = esi_hparams_search(points, values, (grid_x, grid_y),
-                                      base_interpolator="kriging", griddata=True, k=-1,
+                                      base_interpolator="idw", griddata=True, k=-1,
                                       alpha=list(np.flip(np.arange(0.70, 0.75, 0.01))))
         print(b_params)
 
