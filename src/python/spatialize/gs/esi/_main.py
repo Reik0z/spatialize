@@ -1,3 +1,6 @@
+from concurrent.futures.thread import ThreadPoolExecutor
+from multiprocessing import Pool
+
 import numpy as np
 from sklearn.model_selection import ParameterGrid
 
@@ -58,7 +61,8 @@ def esi_hparams_search(points, values, xi, **kwargs):
     it = range(len(param_grid))
     if kwargs["show_progress"]:
         it = tqdm(range(len(param_grid)), desc="searching the grid")
-    for i in it:
+
+    def run_scenario(i):
         param_set = param_grid[i].copy()
         param_set["base_interpolator"] = kwargs["base_interpolator"]
 
@@ -70,6 +74,9 @@ def esi_hparams_search(points, values, xi, **kwargs):
 
         for agg_func_name, agg_func in kwargs["agg_function"].items():
             results[(agg_func_name, i)] = np.nanmean(np.abs(values - agg_func(cv)))
+
+    for i in it:
+         run_scenario(i)
 
     # sort results
     results = dict(sorted(results.items(), key=lambda x: x[1], reverse=False))

@@ -111,9 +111,20 @@ class ESIModule(unittest.TestCase):
 
         from spatialize.gs.esi import esi_hparams_search
         b_params = esi_hparams_search(points, values, (grid_x, grid_y),
-                                      base_interpolator="idw", griddata=True, k=-1,
-                                      alpha=list(np.flip(np.arange(0.70, 0.75, 0.01))))
+                                      base_interpolator="kriging", griddata=True, k=10,
+                                      alpha=list(np.flip(np.arange(0.95, 0.98, 0.01))))
         print(b_params)
+
+        # from spatialize.gs.esi import esi_hparams_search
+        # b_params = esi_hparams_search(points, values, (grid_x, grid_y),
+        #                               base_interpolator="idw", griddata=True, k=10,
+        #                               alpha=list(reversed((0.5, 0.6, 0.8, 0.9, 0.95))))
+
+        # from spatialize.gs.esi import esi_hparams_search
+        # b_params = esi_hparams_search(points, values, (grid_x, grid_y),
+        #                               base_interpolator="idw", griddata=True, k=10,
+        #                               alpha=(0.985, 0.97, 0.95))
+        # print(b_params)
 
     @staticmethod
     def func(x, y):  # a kind of "cubic" function
