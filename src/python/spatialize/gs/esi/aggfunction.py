@@ -12,3 +12,15 @@ def median(values):
 
 def MAP(values):
     return sci.stats.mode(values, axis=1, keepdims=True, nan_policy="omit").mode
+
+
+class Percentile:
+    def __init__(self, q=75):
+        self.q = q
+
+    def __call__(self, values):
+        return np.nanpercentile(values, self.q, axis=1)
+
+    def __repr__(self):
+        return f"percentile({self.q})"
+
