@@ -101,7 +101,8 @@ namespace sptlz{
         std::vector<float> result;
         if(params->size()==0){
           for(auto l: *locations_id){
-            result.push_back(NAN);
+              std::ignore = l;
+              result.push_back(NAN);
           }
           return(result);
         }
@@ -130,6 +131,7 @@ namespace sptlz{
         
         if((samples_id->size()==0) || (samples_id->size()==1)){
           for(auto l: *samples_id){
+            std::ignore = l;
             result.push_back(NAN);
           }
           return(result);
@@ -187,7 +189,7 @@ namespace sptlz{
               Eigen::Map<Eigen::MatrixXf> b = Eigen::Map<Eigen::MatrixXf>(right_cov.data(), n+1, m);
               auto weights = inv*b;
               auto est = v*weights;
-              for(int j=0; j<test_train.first.size(); j++){
+              for(size_t j=0; j<test_train.first.size(); j++){
                 result.at(test_train.first.at(j)) = est(j);
               }
             }
@@ -200,12 +202,12 @@ namespace sptlz{
         int n;
         std::vector<std::vector<float>> leaf_coords;
 
-        for(int i=0; i<mondrian_forest.size(); i++){
+        for(size_t i=0; i<mondrian_forest.size(); i++){
           auto mt = mondrian_forest.at(i);
           n = mt->samples_by_leaf.size();
           for(int j=0; j<n; j++){
             leaf_coords.clear();
-            for(int k=0; k<mt->samples_by_leaf.at(j).size(); k++){
+            for(size_t k=0; k<mt->samples_by_leaf.at(j).size(); k++){
               leaf_coords.push_back(coords.at(mt->samples_by_leaf.at(j).at(k)));
             }
             mt->leaf_params.at(j) = get_params(&leaf_coords);

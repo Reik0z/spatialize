@@ -111,7 +111,7 @@ namespace sptlz{
     std::vector<T> result;
 
     for(auto &record : *arr){
-      for(int i=0;i<idxs.size();i++){
+      for(size_t i=0;i<idxs.size();i++){
         result.push_back(record[idxs[i]]);
       }
     }
@@ -123,7 +123,7 @@ namespace sptlz{
   std::vector<T> as_1d_array(std::vector<std::vector<T>> *arr){
     std::vector<int> idxs = {};
 
-    for(int i=0;i<arr->at(0).size();i++){
+    for(size_t i=0;i<arr->at(0).size();i++){
       idxs.push_back(i);
     }
 
@@ -132,16 +132,16 @@ namespace sptlz{
 
   float distance(std::vector<float> *p1, std::vector<float> *p2){
     float c = 0.0;
-    for(int i=0; i<p1->size(); i++){
+    for(size_t i=0; i<p1->size(); i++){
       c += std::pow(p1->at(i)-p2->at(i), 2.0);
     }
     return(std::pow(c, 0.5));
   }
 
-  std::vector<float> distances(std::vector<std::vector<float>> *coords, int j){
+  std::vector<float> distances(std::vector<std::vector<float>> *coords, size_t j){
     std::vector<float> result;
 
-    for(int i=0; i<coords->size(); i++){
+    for(size_t i=0; i<coords->size(); i++){
       if(i!=j){
         result.push_back(distance(&(coords->at(j)), &(coords->at(i))));
       }
@@ -153,14 +153,14 @@ namespace sptlz{
     std::vector<float> result(coords->at(0).size());
     int n = 0;
 
-    for(int i=0; i<coords->size(); i++){
-      for(int j=0; j<result.size(); j++){
+    for(size_t i=0; i<coords->size(); i++){
+      for(size_t j=0; j<result.size(); j++){
         result.at(j) = result.at(j)+coords->at(i).at(j);
       }
       n++;
     }
 
-    for(int j=0; j<result.size(); j++){
+    for(size_t j=0; j<result.size(); j++){
       result.at(j) = result.at(j)/n;
     }
 
@@ -187,7 +187,7 @@ namespace sptlz{
         tr_coords.push_back({
           r1*(coords[3*i]-centroid[0])+r2*(coords[3*i+1]-centroid[1])+r3*(coords[3*i+2]-centroid[2]),
           r4*(coords[3*i]-centroid[0])+r5*(coords[3*i+1]-centroid[1])+r6*(coords[3*i+2]-centroid[2]),
-          r7*(coords[3*i]-centroid[0])+r8*(coords[3*i+1]-centroid[1])+r8*(coords[3*i+2]-centroid[2])
+          r7*(coords[3*i]-centroid[0])+r8*(coords[3*i+1]-centroid[1])+r9*(coords[3*i+2]-centroid[2])
         });
       }
     }
@@ -236,9 +236,9 @@ namespace sptlz{
   }
 
   template <class T>
-  std::vector<T> slice_drop_idx(std::vector<T> *arr, int idx){
+  std::vector<T> slice_drop_idx(std::vector<T> *arr, size_t idx){
     std::vector<T> result;
-    for(int i=0; i<arr->size(); i++){
+    for(size_t i=0; i<arr->size(); i++){
       if(i!=idx){
         result.push_back(arr->at(i));
       }
@@ -283,7 +283,7 @@ namespace sptlz{
     std::vector<int> result1;
     std::vector<int> result2;
 
-    for(int i=0; i<arr->size(); i++){
+    for(size_t i=0; i<arr->size(); i++){
       if(pred(&(arr->at(i)))){
         result1.push_back(i);
       }else{

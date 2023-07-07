@@ -14,7 +14,7 @@ namespace sptlz{
 	std::string bbox_to_json(std::vector<std::vector<float>> bbox, std::string indent){
 		std::vector<std::string> axis = {"X", "Y", "Z"};
 		std::stringstream s;
-		for(int i=0; i<bbox.size(); i++){
+		for(size_t i=0; i<bbox.size(); i++){
 			if(i==0){
 				s << "{" << std::endl;
 			}
@@ -32,13 +32,13 @@ namespace sptlz{
 	std::vector<std::vector<float>> samples_coords_bbox(std::vector<std::vector<float>> *coords){
 		std::vector<std::vector<float>> bbox;
 
-		for(int i=0; i<coords->at(0).size(); i++){
+		for(size_t i=0; i<coords->at(0).size(); i++){
 
 			bbox.push_back({coords->at(0)[i], coords->at(0)[i]});
 		}
 
-		for(int i=0; i<coords->size(); i++){
-			for(int j=0; j<coords->at(i).size(); j++){
+		for(size_t i=0; i<coords->size(); i++){
+			for(size_t j=0; j<coords->at(i).size(); j++){
 				if(coords->at(i).at(j) < bbox.at(j).at(0)){
 					bbox.at(j).at(0) = coords->at(i).at(j);
 				}
@@ -220,7 +220,7 @@ namespace sptlz{
 
 				// assign samples to leafs and inverse too
 				int aux;
-				for(int i=0; i<coords->size(); i++){
+				for(size_t i=0; i<coords->size(); i++){
 					aux = search_leaf(coords->at(i));
 					samples_by_leaf.at(aux).push_back(i);
 					leaf_for_sample.push_back(aux);
@@ -229,7 +229,7 @@ namespace sptlz{
 
 	  		int search_leaf(std::vector<float> point){
 	  			auto bbox = root->bbox;
-	  			for(int i=0; i<point.size(); i++){
+	  			for(size_t i=0; i<point.size(); i++){
 	  				if((point.at(i) < bbox.at(i).at(0)) || (bbox.at(i).at(1) < point.at(i))){
 	  					return(-1);
 	  				}
@@ -281,26 +281,26 @@ namespace sptlz{
 				std::vector<std::vector<int>> locations_by_leaf;
 				int aux;
 
-				for(int i=0; i<mondrian_forest.size(); i++){
+				for(size_t i=0; i<mondrian_forest.size(); i++){
 					// get tree
 					auto mt = mondrian_forest.at(i);
 					locations_by_leaf = std::vector<std::vector<int>>(mt->leaves.size());
 
 					// join all locations for same leaf
-					for(int j=0; j<locations->size(); j++){
+					for(size_t j=0; j<locations->size(); j++){
 						aux = mt->search_leaf(locations->at(j));
 						locations_by_leaf.at(aux).push_back(j);
 					}
 
 					// make estimation by leaf
-					for(int j=0; j<locations_by_leaf.size(); j++){
+					for(size_t j=0; j<locations_by_leaf.size(); j++){
 						if(mt->samples_by_leaf.at(j).size()==0){
-							for(int k=0; k<locations_by_leaf.at(j).size(); k++){
+							for(size_t k=0; k<locations_by_leaf.at(j).size(); k++){
 								results.at(locations_by_leaf.at(j).at(k)).push_back(NAN);
 							}
 						}else{
 							auto predictions = leaf_estimation(&coords, &values, &(mt->samples_by_leaf.at(j)), locations, &(locations_by_leaf.at(j)), &(mt->leaf_params.at(j)));
-							for(int k=0; k<locations_by_leaf.at(j).size(); k++){
+							for(size_t k=0; k<locations_by_leaf.at(j).size(); k++){
 								results.at(locations_by_leaf.at(j).at(k)).push_back(predictions.at(k));
 							}
 						}
@@ -311,17 +311,16 @@ namespace sptlz{
 
 			std::vector<std::vector<float>> leave_one_out(){
 				std::vector<std::vector<float>> results(coords.size());
-				int aux;
 
-				for(int i=0; i<mondrian_forest.size(); i++){
+				for(size_t i=0; i<mondrian_forest.size(); i++){
 					// get tree
 					auto mt = mondrian_forest.at(i);
 
 					// make loo by leaf
-					for(int j=0; j<mt->samples_by_leaf.size(); j++){
+					for(size_t j=0; j<mt->samples_by_leaf.size(); j++){
 						if(mt->samples_by_leaf.at(j).size()!=0){
 							auto predictions = leaf_loo(&coords, &values, &(mt->samples_by_leaf.at(j)), &(mt->leaf_params.at(j)));
-							for(int k=0; k<mt->samples_by_leaf.at(j).size(); k++){
+							for(size_t k=0; k<mt->samples_by_leaf.at(j).size(); k++){
 								results.at(mt->samples_by_leaf.at(j).at(k)).push_back(predictions.at(k));
 							}
 						}
@@ -335,15 +334,15 @@ namespace sptlz{
 				auto folds = get_folds(values.size(), k, uni_float(my_rand));
 				std::vector<std::vector<float>> results(coords.size());
 
-				for(int i=0; i<mondrian_forest.size(); i++){
+				for(size_t i=0; i<mondrian_forest.size(); i++){
 					// get tree
 					auto mt = mondrian_forest.at(i);
 
 					// make kfold by leaf
-					for(int j=0; j<mt->samples_by_leaf.size(); j++){
+					for(size_t j=0; j<mt->samples_by_leaf.size(); j++){
 						if(mt->samples_by_leaf.at(j).size()!=0){
 							auto predictions = leaf_kfold(k, &coords, &values, &folds, &(mt->samples_by_leaf.at(j)), &(mt->leaf_params.at(j)));
-							for(int k=0; k<mt->samples_by_leaf.at(j).size(); k++){
+							for(size_t k=0; k<mt->samples_by_leaf.at(j).size(); k++){
 								results.at(mt->samples_by_leaf.at(j).at(k)).push_back(predictions.at(k));
 							}
 						}

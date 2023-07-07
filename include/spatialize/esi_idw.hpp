@@ -16,11 +16,11 @@ namespace sptlz{
         float w, w_sum, w_v_sum;
 
         // for every location
-        for(int i=0; i<locations_id->size(); i++){
+        for(size_t i=0; i<locations_id->size(); i++){
           w_sum = 0.0;
           w_v_sum = 0.0;
 
-          for(int j=0; j<samples_id->size(); j++){
+          for(size_t j=0; j<samples_id->size(); j++){
             // calculate weight
             w = 1/(1+std::pow(distance(&(locations->at(locations_id->at(i))), &(coords->at(samples_id->at(j)))), exponent));
             // keep sum of weighted values and sum of weights
@@ -42,11 +42,11 @@ namespace sptlz{
         float w, w_sum, w_v_sum;
 
         // for every location
-        for(int i=0; i<samples_id->size(); i++){
+        for(size_t i=0; i<samples_id->size(); i++){
           w_sum = 0.0;
           w_v_sum = 0.0;
 
-          for(int j=0; j<samples_id->size(); j++){
+          for(size_t j=0; j<samples_id->size(); j++){
             if(i!=j){
               // calculate weight
               w = 1/(1+std::pow(distance(&(coords->at(samples_id->at(i))), &(coords->at(samples_id->at(j)))), exponent));
