@@ -1,0 +1,27 @@
+[build-system]
+requires = [
+    "setuptools==59.2.0",
+    "wheel==0.37.0",
+    "Cython>=0.29.30,<3.0",
+    "numpy>= 1.8.0",
+    "tqdm"
+]   
+build-backend = "setuptools.build_meta"
+
+[metadata]
+name = "spatialize"
+version = "0.1"
+url = "https://github.com/alges/spatialize"
+author = "ALGES Lab"
+author_email = "contacto@alges.cl"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent"
+]
+description = "Spatialize: A Python wrapper for C++ ESI library"
+long_description = "file: README.txt"
+long_description_content_type = "text/plain"
+
+[options]
+python_requires = ">=3.8"
