@@ -31,5 +31,10 @@
 *.out
 *.app
 
+# Jupyter Notebooks
+.ipynb_checkpoints
+
+# Others
 build/
 .DS_Store
+dist/
