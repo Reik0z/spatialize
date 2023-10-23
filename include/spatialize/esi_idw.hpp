@@ -15,6 +15,14 @@ namespace sptlz{
         std::vector<float> result;
         float w, w_sum, w_v_sum;
 
+        if(samples_id->size()==0){
+          for(auto l: *locations_id){
+            std::ignore = l;
+            result.push_back(NAN);
+          }
+          return(result);
+        }
+
         // for every location
         for(size_t i=0; i<locations_id->size(); i++){
           w_sum = 0.0;
@@ -35,10 +43,15 @@ namespace sptlz{
 
       std::vector<float> leaf_loo(std::vector<std::vector<float>> *coords, std::vector<float> *values, std::vector<int> *samples_id, std::vector<float> *params){
         std::vector<float> result;
-        if(samples_id->size()==1){
-          result.push_back(NAN);
+
+        if((samples_id->size()==0) || (samples_id->size()==1)){
+          for(auto l: *samples_id){
+            std::ignore = l;
+            result.push_back(NAN);
+          }
           return(result);
         }
+
         float w, w_sum, w_v_sum;
 
         // for every location
@@ -62,6 +75,15 @@ namespace sptlz{
 
       std::vector<float> leaf_kfold(int k, std::vector<std::vector<float>> *coords, std::vector<float> *values, std::vector<int> *folds, std::vector<int> *samples_id, std::vector<float> *params){
         std::vector<float> result(samples_id->size());
+
+        if((samples_id->size()==0) || (samples_id->size()==1)){
+          for(auto l: *samples_id){
+            std::ignore = l;
+            result.push_back(NAN);
+          }
+          return(result);
+        }
+
         auto sl_coords = slice(coords, samples_id);
         auto sl_values = slice(values, samples_id);
         auto sl_folds = slice(folds, samples_id);
@@ -92,8 +114,16 @@ namespace sptlz{
       }
 
     public:
-      ESI_IDW(std::vector<std::vector<float>> _coords, std::vector<float> _values, float lambda, int forest_size, std::vector<std::vector<float>> bbox, float _exponent, float seed=0):ESI(_coords, _values, lambda, forest_size, bbox, seed){
+      ESI_IDW(std::vector<std::vector<float>> _coords, std::vector<float> _values, float lambda, int forest_size, std::vector<std::vector<float>> bbox, float _exponent, int seed=206936):ESI(_coords, _values, lambda, forest_size, bbox, seed){
         exponent = _exponent;
+      }
+
+      ESI_IDW(std::vector<sptlz::MondrianTree*> _mondrian_forest, std::vector<std::vector<float>> _coords, std::vector<float> _values, float _exponent):ESI(_mondrian_forest, _coords, _values){
+        exponent = _exponent;
+      }
+
+      float get_exponent(){
+        return(this->exponent);
       }
   };
 }

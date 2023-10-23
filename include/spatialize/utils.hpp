@@ -201,7 +201,7 @@ namespace sptlz{
 
   template <class T>
   std::vector<T> slice(std::vector<T> *arr, std::vector<int> *idxs){
-    std::vector<T> result;
+    std::vector<T> result; 
     for(int i : *idxs){
       result.push_back(arr->at(i));
     }

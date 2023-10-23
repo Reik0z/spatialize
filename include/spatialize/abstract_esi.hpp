@@ -5,6 +5,7 @@
 #include <random>
 #include <queue>
 #include <string>
+#include <functional>
 #include <stdexcept>
 #include "utils.hpp"
 
@@ -33,7 +34,6 @@ namespace sptlz{
 		std::vector<std::vector<float>> bbox;
 
 		for(size_t i=0; i<coords->at(0).size(); i++){
-
 			bbox.push_back({coords->at(0)[i], coords->at(0)[i]});
 		}
 
@@ -67,6 +67,8 @@ namespace sptlz{
 			int height, axis;
 			MondrianNode* left;
 			MondrianNode* right;
+
+			MondrianNode(){}
 
 			MondrianNode(std::vector<std::vector<float>> _bbox, float _tau, int _height){
 				bbox = _bbox;
@@ -120,10 +122,8 @@ namespace sptlz{
 			std::vector<std::vector<int>> samples_by_leaf;
 			std::vector<std::vector<float>> leaf_params;
 			int ndim;
-			float* coords;
-			float* values;
 
-			MondrianTree(std::vector<std::vector<float>> *coords, float lambda, std::vector<std::vector<float>> bbox, float seed=0){
+			MondrianTree(std::vector<std::vector<float>> *coords, float lambda, std::vector<std::vector<float>> bbox, int seed=206936){
 				ndim = (int) bbox.size();
 				std::mt19937 my_rand(seed);
 				std::uniform_int_distribution<int> uni_int(0, ndim-1);
@@ -193,6 +193,7 @@ namespace sptlz{
 						// set a right child
 						cur_node->right = aux_node;
 						// if it must be splitted, put it in the queue
+
 						if(aux_value < lambda){
 							bft.push(aux_node);
 						}
@@ -225,21 +226,23 @@ namespace sptlz{
 					samples_by_leaf.at(aux).push_back(i);
 					leaf_for_sample.push_back(aux);
 				}
-	  		}
+  		}
 
-	  		int search_leaf(std::vector<float> point){
-	  			auto bbox = root->bbox;
-	  			for(size_t i=0; i<point.size(); i++){
-	  				if((point.at(i) < bbox.at(i).at(0)) || (bbox.at(i).at(1) < point.at(i))){
-	  					return(-1);
-	  				}
-	  			}
-	  			return(root->search_leaf(point));
-	  		}
+			MondrianTree(){}
 
-	  		std::string to_json(){
-	  			return(root->to_json(""));
-	  		}
+  		int search_leaf(std::vector<float> point){
+  			auto bbox = root->bbox;
+  			for(size_t i=0; i<point.size(); i++){
+  				if((point.at(i) < bbox.at(i).at(0)) || (bbox.at(i).at(1) < point.at(i))){
+  					return(-1);
+  				}
+  			}
+  			return(root->search_leaf(point));
+  		}
+
+  		std::string to_json(){
+  			return(root->to_json(""));
+  		}
 	};
 
 	class ESI {
@@ -247,8 +250,8 @@ namespace sptlz{
 			std::vector<sptlz::MondrianTree*> mondrian_forest;
 			std::vector<std::vector<float>> coords;
 			std::vector<float> values;
-			std::vector<int> folds;
 			std::mt19937 my_rand;
+			bool debug;
 
 			virtual std::vector<float> leaf_estimation(std::vector<std::vector<float>> *coords, std::vector<float> *values, std::vector<int> *samples_id, std::vector<std::vector<float>> *locations, std::vector<int> *locations_id, std::vector<float> *params){
 				throw std::runtime_error("must override");
@@ -265,7 +268,7 @@ namespace sptlz{
 			virtual void post_process(){}
 
 		public:
-			ESI(std::vector<std::vector<float>> _coords, std::vector<float> _values, float lambda, int forest_size, std::vector<std::vector<float>> bbox, float seed=0){
+			ESI(std::vector<std::vector<float>> _coords, std::vector<float> _values, float lambda, int forest_size, std::vector<std::vector<float>> bbox, int seed=206936){
 				my_rand = std::mt19937(seed);
 				coords = _coords;
 				values = _values;
@@ -276,12 +279,35 @@ namespace sptlz{
 				}
 			}
 
-			std::vector<std::vector<float>> estimate(std::vector<std::vector<float>> *locations){
+			ESI(std::vector<sptlz::MondrianTree*> _mondrian_forest, std::vector<std::vector<float>> _coords, std::vector<float> _values){
+				this->mondrian_forest = _mondrian_forest;
+				this->coords = _coords;
+				this->values = _values;
+			}
+
+			int forest_size(){
+				return(this->mondrian_forest.size());
+			}
+
+			MondrianTree *get_tree(int i){
+				return(this->mondrian_forest.at(i));
+			}
+
+			std::vector<std::vector<float>> *get_coords(){
+				return(&(this->coords));
+			}
+
+			std::vector<float> *get_values(){
+				return(&(this->values));
+			}
+
+			std::vector<std::vector<float>> estimate(std::vector<std::vector<float>> *locations, std::function<int(std::string)> visitor){
+				std::stringstream json;
 				std::vector<std::vector<float>> results(locations->size());
 				std::vector<std::vector<int>> locations_by_leaf;
-				int aux;
+				int aux, n = mondrian_forest.size();
 
-				for(size_t i=0; i<mondrian_forest.size(); i++){
+				for(int i=0; i<n; i++){
 					// get tree
 					auto mt = mondrian_forest.at(i);
 					locations_by_leaf = std::vector<std::vector<int>>(mt->leaves.size());
@@ -305,14 +331,19 @@ namespace sptlz{
 							}
 						}
 					}
+					json.str("");
+					json << "{\"percentage\": " << 100.0*(i+1.0)/n << "}";
+					visitor(json.str());
 				}
 				return(results);
 			}
 
-			std::vector<std::vector<float>> leave_one_out(){
+			std::vector<std::vector<float>> leave_one_out(std::function<int(std::string)> visitor){
+				std::stringstream json;
 				std::vector<std::vector<float>> results(coords.size());
+				int n = mondrian_forest.size();
 
-				for(size_t i=0; i<mondrian_forest.size(); i++){
+				for(int i=0; i<n; i++){
 					// get tree
 					auto mt = mondrian_forest.at(i);
 
@@ -325,19 +356,24 @@ namespace sptlz{
 							}
 						}
 					}
+					json.str("");
+					json << "{\"percentage\": " << 100.0*(i+1.0)/n << "}";
+					visitor(json.str());
 				}
 				return(results);
 			}
 
-			std::vector<std::vector<float>> k_fold(int k){
+			std::vector<std::vector<float>> k_fold(int k, std::function<int(std::string)> visitor, int seed=206936){
+				std::stringstream json;
+				auto fold_rand = std::mt19937(seed);
 				std::uniform_real_distribution<float> uni_float;
-				auto folds = get_folds(values.size(), k, uni_float(my_rand));
+				auto folds = get_folds(values.size(), k, uni_float(fold_rand));
 				std::vector<std::vector<float>> results(coords.size());
+				int n = mondrian_forest.size();
 
-				for(size_t i=0; i<mondrian_forest.size(); i++){
+				for(int i=0; i<n; i++){
 					// get tree
 					auto mt = mondrian_forest.at(i);
-
 					// make kfold by leaf
 					for(size_t j=0; j<mt->samples_by_leaf.size(); j++){
 						if(mt->samples_by_leaf.at(j).size()!=0){
@@ -347,6 +383,9 @@ namespace sptlz{
 							}
 						}
 					}
+					json.str("");
+					json << "{\"percentage\": " << 100.0*(i+1.0)/n << "}";
+					visitor(json.str());
 				}
 				return(results);
 			}

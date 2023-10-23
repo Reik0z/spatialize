@@ -99,27 +99,39 @@ namespace sptlz{
 
       std::vector<float> leaf_estimation(std::vector<std::vector<float>> *coords, std::vector<float> *values, std::vector<int> *samples_id, std::vector<std::vector<float>> *locations, std::vector<int> *locations_id, std::vector<float> *params){
         std::vector<float> result;
-        if(params->size()==0){
+        int n = samples_id->size();
+        int m = locations_id->size();
+
+        if(n==0){
           for(auto l: *locations_id){
-              std::ignore = l;
-              result.push_back(NAN);
+            std::ignore = l;
+            result.push_back(NAN);
           }
           return(result);
         }
-        int n = samples_id->size();
-        int m = locations_id->size();
-        auto sl_coords = slice(coords, samples_id);
-        auto sl_values = slice(values, samples_id);
-        auto sl_locations = slice(locations, locations_id);
 
-        auto right_cov = kriging_right_matrix(&sl_coords, &sl_locations, variogram(variogram_model, nugget, range));
+        auto sl_values = slice(values, samples_id);
+        if(n==1){
+          for(auto l: *locations_id){
+            std::ignore = l;
+            result.push_back(sl_values.at(0));
+          }
+          return(result);
+        }
+
+        auto gamma = variogram(this->variogram_model, this->nugget, this->range);
+        auto sl_coords = slice(coords, samples_id);
+        auto sl_locations = slice(locations, locations_id);
+        auto left_cov = kriging_left_matrix(&sl_coords, gamma);
+        auto right_cov = kriging_right_matrix(&sl_coords, &sl_locations, gamma);
         sl_values.push_back(0.0); // to anulate the mu coeffcicient
         Eigen::Map<Eigen::MatrixXf> v = Eigen::Map<Eigen::MatrixXf>(sl_values.data(), 1, n+1);
         Eigen::Map<Eigen::MatrixXf> b = Eigen::Map<Eigen::MatrixXf>(right_cov.data(), n+1, m);
-        Eigen::Map<Eigen::MatrixXf> A_1 = Eigen::Map<Eigen::MatrixXf>(params->data(), n+1, n+1);
+        Eigen::Map<Eigen::MatrixXf> A = Eigen::Map<Eigen::MatrixXf>(left_cov.data(), n+1, n+1);
+        auto A_1 = A.completeOrthogonalDecomposition().pseudoInverse();
         auto weights = A_1*b;
         auto vals = v*weights;
-        
+
         result.resize(m);
         Eigen::Map<Eigen::MatrixXf>(&result[0], 1, m) = vals;
 
@@ -128,7 +140,7 @@ namespace sptlz{
 
       std::vector<float> leaf_loo(std::vector<std::vector<float>> *coords, std::vector<float> *values, std::vector<int> *samples_id, std::vector<float> *params){
         std::vector<float> result;
-        
+
         if((samples_id->size()==0) || (samples_id->size()==1)){
           for(auto l: *samples_id){
             std::ignore = l;
@@ -153,7 +165,7 @@ namespace sptlz{
           Eigen::Map<Eigen::MatrixXf> b = Eigen::Map<Eigen::MatrixXf>(right_cov.data(), n, 1);
           auto weights = inv*b;
           auto est = v*weights;
-          
+
           result.push_back(est(0));
         }
 
@@ -163,6 +175,15 @@ namespace sptlz{
 
       std::vector<float> leaf_kfold(int k, std::vector<std::vector<float>> *coords, std::vector<float> *values, std::vector<int> *folds, std::vector<int> *samples_id, std::vector<float> *params){
         std::vector<float> result(samples_id->size());
+
+        if((samples_id->size()==0) || (samples_id->size()==1)){
+          for(auto l: *samples_id){
+            std::ignore = l;
+            result.push_back(NAN);
+          }
+          return(result);
+        }
+
         auto sl_coords = slice(coords, samples_id);
         auto sl_values = slice(values, samples_id);
         auto sl_folds = slice(folds, samples_id);
@@ -179,7 +200,7 @@ namespace sptlz{
               auto sl_coords_train = slice(&sl_coords, &(test_train.second));
               auto sl_coords_test = slice(&sl_coords, &(test_train.first));
               auto sl_values_train = slice(&sl_values, &(test_train.second));
-              sl_values_train.push_back(0.0);              
+              sl_values_train.push_back(0.0);
 
               auto left_cov = kriging_left_matrix(&sl_coords_train, variogram(variogram_model, nugget, range));
               auto right_cov = kriging_right_matrix(&sl_coords_train, &sl_coords_test, variogram(variogram_model, nugget, range));
@@ -198,44 +219,31 @@ namespace sptlz{
         return(result);
       }
 
-      void post_process(){
-        int n;
-        std::vector<std::vector<float>> leaf_coords;
-
-        for(size_t i=0; i<mondrian_forest.size(); i++){
-          auto mt = mondrian_forest.at(i);
-          n = mt->samples_by_leaf.size();
-          for(int j=0; j<n; j++){
-            leaf_coords.clear();
-            for(size_t k=0; k<mt->samples_by_leaf.at(j).size(); k++){
-              leaf_coords.push_back(coords.at(mt->samples_by_leaf.at(j).at(k)));
-            }
-            mt->leaf_params.at(j) = get_params(&leaf_coords);
-          }
-        }
-      }
-
-      std::vector<float> get_params(std::vector<std::vector<float>> *coords){
-        int n = coords->size();
-        std::vector<float> result;
-
-        auto klm = kriging_left_matrix(coords, variogram(variogram_model, nugget, range));
-        Eigen::Map<Eigen::MatrixXf> LM = Eigen::Map<Eigen::MatrixXf>(klm.data(), n+1, n+1);
-        auto inv = LM.completeOrthogonalDecomposition().pseudoInverse();
-
-        result.resize((n+1)*(n+1));
-        Eigen::Map<Eigen::MatrixXf>(&result[0], n+1, n+1) = inv;
-
-        return(result);
-      }
-
     public:
-      ESI_Kriging(std::vector<std::vector<float>> _coords, std::vector<float> _values, float lambda, int forest_size, std::vector<std::vector<float>> bbox, int _model, float _nugget, float _range, float seed=0):ESI(_coords, _values, lambda, forest_size, bbox, seed){
+      ESI_Kriging(std::vector<std::vector<float>> _coords, std::vector<float> _values, float lambda, int forest_size, std::vector<std::vector<float>> bbox, int _model, float _nugget, float _range, int seed=206936):ESI(_coords, _values, lambda, forest_size, bbox, seed){
         variogram_model = _model;
         nugget = _nugget;
         range = _range;
-        post_process();
       }
+
+      ESI_Kriging(std::vector<sptlz::MondrianTree*> _mondrian_forest, std::vector<std::vector<float>> _coords, std::vector<float> _values, int _model, float _nugget, float _range):ESI(_mondrian_forest, _coords, _values){
+        variogram_model = _model;
+        nugget = _nugget;
+        range = _range;
+      }
+
+      int get_variogram_model(){
+        return(this->variogram_model);
+      }
+
+      float get_nugget(){
+        return(this->nugget);
+      }
+
+      float get_range(){
+        return(this->range);
+      }
+
   };
 }
 
