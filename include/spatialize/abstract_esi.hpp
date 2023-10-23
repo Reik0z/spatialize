@@ -209,10 +209,10 @@ namespace sptlz{
 					bft.pop();
 
 					if((cur_node->left==NULL) && (cur_node->right==NULL)){
-						cur_node->leaf_id = (int) leaves.size();
-						leaves.push_back(cur_node);
-						samples_by_leaf.push_back({});
-						leaf_params.push_back({});
+						cur_node->leaf_id = (int) this->leaves.size();
+						this->leaves.push_back(cur_node);
+						this->samples_by_leaf.push_back({});
+						this->leaf_params.push_back({});
 					}else{
 						bft.push(cur_node->left);
 						bft.push(cur_node->right);
@@ -223,8 +223,8 @@ namespace sptlz{
 				int aux;
 				for(size_t i=0; i<coords->size(); i++){
 					aux = search_leaf(coords->at(i));
-					samples_by_leaf.at(aux).push_back(i);
-					leaf_for_sample.push_back(aux);
+					this->samples_by_leaf.at(aux).push_back(i);
+					this->leaf_for_sample.push_back(aux);
 				}
   		}
 
@@ -299,6 +299,20 @@ namespace sptlz{
 
 			std::vector<float> *get_values(){
 				return(&(this->values));
+			}
+
+			std::vector<std::vector<int>> get_partitions(){
+				int n = mondrian_forest.size();
+				std::vector<std::vector<int>> results(this->coords.size());
+
+				for(int i=0; i<n; i++){
+					// get tree
+					auto lfs = mondrian_forest.at(i)->leaf_for_sample;
+					for(size_t j=0; j<this->coords.size(); j++){
+						results.at(j).push_back(lfs.at(j));
+					}
+				}
+				return(results);
 			}
 
 			std::vector<std::vector<float>> estimate(std::vector<std::vector<float>> *locations, std::function<int(std::string)> visitor){
