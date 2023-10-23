@@ -263,9 +263,6 @@ static sptlz::ESI *load_esi(PyObject *dict){
     float exponent = PyFloat_AsDouble(PyDict_GetItem(dict, Py_BuildValue("s", "exponent")));
     sptlz::ESI_IDW *esi = new sptlz::ESI_IDW(mondrian_forest, coords, values, exponent);
     return(esi);
-  }else if(esitype == 3){
-    sptlz::ESI_IDW_ANIS *esi = new sptlz::ESI_IDW_ANIS(mondrian_forest, coords, values);
-    return(esi);
   }else if(esitype == 2){
     int var_model = PyLong_AsLong(PyDict_GetItem(dict, Py_BuildValue("s", "variogram_model")));
     float range = PyFloat_AsDouble(PyDict_GetItem(dict, Py_BuildValue("s", "range")));
