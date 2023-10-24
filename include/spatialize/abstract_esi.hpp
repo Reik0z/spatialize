@@ -79,6 +79,15 @@ namespace sptlz{
 				leaf_id = -1;
 			}
 
+			~MondrianNode(){
+				if(this->left != NULL){
+					delete(this->left);
+				}
+				if(this->right != NULL){
+					delete(this->right);
+				}
+			}
+
 			int search_leaf(std::vector<float> point){
 				if(leaf_id<0){
 					if(point.at(axis) < cut){
@@ -228,7 +237,17 @@ namespace sptlz{
 				}
   		}
 
-			MondrianTree(){}
+            MondrianTree(){}
+
+			~MondrianTree(){
+				if(this->root != NULL){
+					delete(this->root);
+				}
+				std::vector<MondrianNode*>().swap(this->leaves);
+			    std::vector<int>().swap(this->leaf_for_sample);
+			    std::vector<std::vector<int>>().swap(this->samples_by_leaf);
+			    std::vector<std::vector<float>>().swap(this->leaf_params);
+			}
 
   		int search_leaf(std::vector<float> point){
   			auto bbox = root->bbox;
@@ -284,6 +303,10 @@ namespace sptlz{
 				this->coords = _coords;
 				this->values = _values;
 			}
+
+		    ~ESI(){
+				std::vector<sptlz::MondrianTree*>().swap(mondrian_forest);
+		    }
 
 			int forest_size(){
 				return(this->mondrian_forest.size());

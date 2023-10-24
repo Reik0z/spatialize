@@ -41,6 +41,7 @@ class LibSpatializeFacade:
             raise SpatializeError(f"Operation '{operation}' not supported for '{base_interpolator}' and "
                                   f"{str(d).upper()}-D data")
 
+        print(base_interpolator, operation)
         return LibSpatializeFacade.esi_hash_map[d][base_interpolator][operation]
 
     @classmethod

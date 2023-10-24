@@ -109,11 +109,14 @@ class ESIModule(unittest.TestCase):
         points = rng.random((1000, 2))
         values = self.func(points[:, 0], points[:, 1])
 
-        from spatialize.gs.esi import esi_hparams_search
-        b_params = esi_hparams_search(points, values, (grid_x, grid_y),
-                                      base_interpolator="kriging", griddata=True, k=10,
-                                      alpha=list(np.flip(np.arange(0.95, 0.98, 0.01))))
-        print(b_params)
+        # from spatialize.gs.esi import esi_hparams_search
+        # b_params = esi_hparams_search(points, values, (grid_x, grid_y),
+        #                               base_interpolator="kriging", griddata=True, k=10,
+        #                               alpha=(0.70, 0.65))
+        # print(b_params)
+
+
+
 
         # from spatialize.gs.esi import esi_hparams_search
         # b_params = esi_hparams_search(points, values, (grid_x, grid_y),
