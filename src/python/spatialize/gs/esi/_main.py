@@ -66,11 +66,22 @@ def esi_hparams_search(points, values, xi, **kwargs):
         param_set = param_grid[i].copy()
         param_set["base_interpolator"] = kwargs["base_interpolator"]
 
+        if "seed" in kwargs:
+            param_set["seed"] = kwargs["seed"]
+        else:
+            param_set["seed"] = np.random.randint(1000,10000)  # creation_seed
+
         l_args = build_arg_list(points, values, p_xi, param_set)
         if method == "kfold":
             l_args.insert(-1, k)
+            l_args.insert(-1, np.random.randint(1000,10000))  # folding_seed
 
-        cv = cross_validate(*l_args)
+        if "callback" in kwargs:
+            l_args.append(kwargs["callback"])
+        else:
+            l_args.append(callback)  # callback
+
+        model, cv = cross_validate(*l_args)
 
         for agg_func_name, agg_func in kwargs["agg_function"].items():
             results[(agg_func_name, i)] = np.nanmean(np.abs(values - agg_func(cv)))
@@ -141,10 +152,15 @@ def build_arg_list(points, values, xi, nonpos_args):
     # add specific args
     if nonpos_args["base_interpolator"] == "idw":
         l_args.insert(-1, nonpos_args["exponent"])
+        l_args.insert(-1, nonpos_args["seed"])
 
     if nonpos_args["base_interpolator"] == "kriging":
         l_args.insert(-1, LibSpatializeFacade.get_kriging_model_number(nonpos_args["model"]))
         l_args.insert(-1, nonpos_args["nugget"])
         l_args.insert(-1, nonpos_args["range"])
+        l_args.insert(-1, nonpos_args["seed"])
 
     return l_args
+
+def callback(self):
+    pass
