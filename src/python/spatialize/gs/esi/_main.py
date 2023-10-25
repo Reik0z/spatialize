@@ -69,7 +69,7 @@ def esi_hparams_search(points, values, xi, **kwargs):
         if "seed" in kwargs:
             param_set["seed"] = kwargs["seed"]
         else:
-            param_set["seed"] = np.random.randint(1000,10000)  # creation_seed
+            param_set["seed"] = np.random.randint(1000, 10000)  # creation_seed
 
         l_args = build_arg_list(points, values, p_xi, param_set)
         if method == "kfold":
@@ -121,7 +121,8 @@ def esi_nongriddata(points, values, xi, **kwargs):
                     common_args={"n_partitions": 100,
                                  "alpha": 0.8,
                                  "agg_function": af.mean,
-                                 "prec_function": pf.mse_precision},
+                                 "prec_function": pf.mse_precision,
+                                 "seed": np.random.randint(1000, 10000)},
                     specific_args={
                         "idw": {"exponent": 2.0},
                         "kriging": {"model": 1, "nugget": 0.1, "range": 5000.0}
