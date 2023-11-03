@@ -1217,6 +1217,8 @@ static PyObject *estimation_esi_kriging_2d(PyObject *self, PyObject *args){
 
   model_list = esi_kriging_to_dict(esi);
 
+  delete esi;
+
   return(Py_BuildValue("O,O", model_list, (PyObject *)estimation));
 }
 
@@ -1431,7 +1433,6 @@ static PyObject *kfold_esi_kriging_2d(PyObject *self, PyObject *args){
 
   model_list = esi_kriging_to_dict(esi);
 
-  // esi = NULL;
   delete esi;
 
   return(Py_BuildValue("O,O", model_list, (PyObject *)estimation));

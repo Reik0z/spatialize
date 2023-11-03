@@ -16,6 +16,10 @@ else:
     from tqdm import tqdm
 
 
+def default_callback(self):
+    pass
+
+
 # ============================================= PUBLIC API ==========================================================
 @signature_overload(pivot_arg=("base_interpolator", "idw", "base interpolator"),
                     common_args={"k": 10,
@@ -23,6 +27,9 @@ else:
                                  "n_partitions": [100],
                                  "alpha": list(np.flip(np.arange(0.70, 0.90, 0.01))),
                                  "agg_function": {"mean": af.mean, "median": af.median},
+                                 "seed": np.random.randint(1000, 10000),
+                                 "folding_seed": np.random.randint(1000, 10000),
+                                 "callback": default_callback,
                                  "show_progress": True},
                     specific_args={
                         "idw": {"exponent": list(np.arange(1.0, 15.0, 1.0))},
@@ -65,21 +72,13 @@ def esi_hparams_search(points, values, xi, **kwargs):
     def run_scenario(i):
         param_set = param_grid[i].copy()
         param_set["base_interpolator"] = kwargs["base_interpolator"]
-
-        if "seed" in kwargs:
-            param_set["seed"] = kwargs["seed"]
-        else:
-            param_set["seed"] = np.random.randint(1000, 10000)  # creation_seed
+        param_set["seed"] = kwargs["seed"]
+        param_set["callback"] = kwargs["callback"]
 
         l_args = build_arg_list(points, values, p_xi, param_set)
         if method == "kfold":
-            l_args.insert(-1, k)
-            l_args.insert(-1, np.random.randint(1000,10000))  # folding_seed
-
-        if "callback" in kwargs:
-            l_args.append(kwargs["callback"])
-        else:
-            l_args.append(callback)  # callback
+            l_args.insert(-2, k)
+            l_args.insert(-2, kwargs["folding_seed"])  # folding_seed
 
         model, cv = cross_validate(*l_args)
 
@@ -87,7 +86,7 @@ def esi_hparams_search(points, values, xi, **kwargs):
             results[(agg_func_name, i)] = np.nanmean(np.abs(values - agg_func(cv)))
 
     for i in it:
-         run_scenario(i)
+        run_scenario(i)
 
     # sort results
     results = dict(sorted(results.items(), key=lambda x: x[1], reverse=False))
@@ -122,7 +121,8 @@ def esi_nongriddata(points, values, xi, **kwargs):
                                  "alpha": 0.8,
                                  "agg_function": af.mean,
                                  "prec_function": pf.mse_precision,
-                                 "seed": np.random.randint(1000, 10000)},
+                                 "seed": np.random.randint(1000, 10000),
+                                 "callback": default_callback},
                     specific_args={
                         "idw": {"exponent": 2.0},
                         "kriging": {"model": 1, "nugget": 0.1, "range": 5000.0}
@@ -136,7 +136,7 @@ def _call_libspatialize(points, values, xi, **kwargs):
 
     # run
     try:
-        esi_samples = estimate(*l_args)
+        esi_model, esi_samples = estimate(*l_args)
     except Exception as e:
         raise SpatializeError(e)
 
@@ -147,21 +147,19 @@ def _call_libspatialize(points, values, xi, **kwargs):
 
 
 def build_arg_list(points, values, xi, nonpos_args):
-    # add common args
-    l_args = [np.float32(points), np.float32(values), nonpos_args["n_partitions"], nonpos_args["alpha"], np.float32(xi)]
+    # add initial common args
+    l_args = [np.float32(points), np.float32(values),
+              nonpos_args["n_partitions"], nonpos_args["alpha"], np.float32(xi), nonpos_args["callback"]]
 
     # add specific args
     if nonpos_args["base_interpolator"] == "idw":
-        l_args.insert(-1, nonpos_args["exponent"])
-        l_args.insert(-1, nonpos_args["seed"])
+        l_args.insert(-2, nonpos_args["exponent"])
+        l_args.insert(-2, nonpos_args["seed"])
 
     if nonpos_args["base_interpolator"] == "kriging":
-        l_args.insert(-1, LibSpatializeFacade.get_kriging_model_number(nonpos_args["model"]))
-        l_args.insert(-1, nonpos_args["nugget"])
-        l_args.insert(-1, nonpos_args["range"])
-        l_args.insert(-1, nonpos_args["seed"])
+        l_args.insert(-2, LibSpatializeFacade.get_kriging_model_number(nonpos_args["model"]))
+        l_args.insert(-2, nonpos_args["nugget"])
+        l_args.insert(-2, nonpos_args["range"])
+        l_args.insert(-2, nonpos_args["seed"])
 
     return l_args
-
-def callback(self):
-    pass
