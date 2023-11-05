@@ -333,6 +333,8 @@ static PyObject *get_partitions_using_esi(PyObject *self, PyObject *args){
   aux = (float *)PyArray_DATA(estimation);
   memcpy(&aux[0], &output.data()[0], output.size()*sizeof(float));
 
+  delete esi;
+
   return((PyObject *)estimation);
 }
 
@@ -874,6 +876,13 @@ static PyObject *estimation_esi_idw(PyObject *self, PyObject *args){
 
   model_list = esi_idw_to_dict(esi);
 
+  delete esi;
+  std::vector<float>().swap(output);
+  std::vector<std::vector<float>>().swap(c_smp);
+  std::vector<std::vector<float>>().swap(c_loc);
+  std::vector<std::vector<float>>().swap(r);
+  std::vector<float>().swap(c_val);
+
   return(Py_BuildValue("O,O", model_list, (PyObject *)estimation));
 }
 
@@ -991,6 +1000,13 @@ static PyObject *loo_esi_idw(PyObject *self, PyObject *args){
   memcpy(&aux[0], &output.data()[0], output.size()*sizeof(float));
 
   model_list = esi_idw_to_dict(esi);
+
+  delete esi;
+  std::vector<float>().swap(output);
+  std::vector<std::vector<float>>().swap(c_smp);
+  std::vector<std::vector<float>>().swap(c_loc);
+  std::vector<std::vector<float>>().swap(r);
+  std::vector<float>().swap(c_val);
 
   return(Py_BuildValue("O,O", model_list, (PyObject *)estimation));
 }
@@ -1110,6 +1126,13 @@ static PyObject *kfold_esi_idw(PyObject *self, PyObject *args){
 
   model_list = esi_idw_to_dict(esi);
 
+  delete esi;
+  std::vector<float>().swap(output);
+  std::vector<std::vector<float>>().swap(c_smp);
+  std::vector<std::vector<float>>().swap(c_loc);
+  std::vector<std::vector<float>>().swap(r);
+  std::vector<float>().swap(c_val);
+
   return(Py_BuildValue("O,O", model_list, (PyObject *)estimation));
 }
 
@@ -1218,6 +1241,11 @@ static PyObject *estimation_esi_kriging_2d(PyObject *self, PyObject *args){
   model_list = esi_kriging_to_dict(esi);
 
   delete esi;
+  std::vector<float>().swap(output);
+  std::vector<std::vector<float>>().swap(c_smp);
+  std::vector<std::vector<float>>().swap(c_loc);
+  std::vector<std::vector<float>>().swap(r);
+  std::vector<float>().swap(c_val);
 
   return(Py_BuildValue("O,O", model_list, (PyObject *)estimation));
 }
@@ -1325,6 +1353,13 @@ static PyObject *loo_esi_kriging_2d(PyObject *self, PyObject *args){
   memcpy(&aux[0], &output.data()[0], output.size()*sizeof(float));
 
   model_list = esi_kriging_to_dict(esi);
+
+  delete esi;
+  std::vector<float>().swap(output);
+  std::vector<std::vector<float>>().swap(c_smp);
+  std::vector<std::vector<float>>().swap(c_loc);
+  std::vector<std::vector<float>>().swap(r);
+  std::vector<float>().swap(c_val);
 
   return(Py_BuildValue("O,O", model_list, (PyObject *)estimation));
 }
@@ -1434,6 +1469,11 @@ static PyObject *kfold_esi_kriging_2d(PyObject *self, PyObject *args){
   model_list = esi_kriging_to_dict(esi);
 
   delete esi;
+  std::vector<float>().swap(output);
+  std::vector<std::vector<float>>().swap(c_smp);
+  std::vector<std::vector<float>>().swap(c_loc);
+  std::vector<std::vector<float>>().swap(r);
+  std::vector<float>().swap(c_val);
 
   return(Py_BuildValue("O,O", model_list, (PyObject *)estimation));
 }
@@ -1542,6 +1582,8 @@ static PyObject *estimation_esi_kriging_3d(PyObject *self, PyObject *args){
 
   model_list = esi_kriging_to_dict(esi);
 
+  delete esi;
+
   return(Py_BuildValue("O,O", model_list, (PyObject *)estimation));
 }
 
@@ -1647,6 +1689,13 @@ static PyObject *loo_esi_kriging_3d(PyObject *self, PyObject *args){
   memcpy(&aux[0], &output.data()[0], output.size()*sizeof(float));
 
   model_list = esi_kriging_to_dict(esi);
+
+  delete esi;
+  std::vector<float>().swap(output);
+  std::vector<std::vector<float>>().swap(c_smp);
+  std::vector<std::vector<float>>().swap(c_loc);
+  std::vector<std::vector<float>>().swap(r);
+  std::vector<float>().swap(c_val);
 
   return(Py_BuildValue("O,O", model_list, (PyObject *)estimation));
 }
@@ -1754,6 +1803,13 @@ static PyObject *kfold_esi_kriging_3d(PyObject *self, PyObject *args){
   memcpy(&aux[0], &output.data()[0], output.size()*sizeof(float));
 
   model_list = esi_kriging_to_dict(esi);
+
+  delete esi;
+  std::vector<float>().swap(output);
+  std::vector<std::vector<float>>().swap(c_smp);
+  std::vector<std::vector<float>>().swap(c_loc);
+  std::vector<std::vector<float>>().swap(r);
+  std::vector<float>().swap(c_val);
 
   return(Py_BuildValue("O,O", model_list, (PyObject *)estimation));
 }

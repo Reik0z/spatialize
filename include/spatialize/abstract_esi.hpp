@@ -304,7 +304,11 @@ namespace sptlz{
 				this->values = _values;
 			}
 
-		    ~ESI(){
+            /* Needs to be defined as 'virtual' because this an abstract class
+               and to avoid the warning:
+               "delete called on non-final that has virtual functions but non-virtual destructor"
+            */
+		    virtual ~ESI(){
 				std::vector<sptlz::MondrianTree*>().swap(mondrian_forest);
 		    }
 

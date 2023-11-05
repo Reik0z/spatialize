@@ -46,6 +46,7 @@ values = func(points[:, 0], points[:, 1])
 def idw(points, values, grid):
     _, _ = esi_griddata(points, values, grid,
                         base_interpolator="idw",
+                        callback=progress,
                         exponent=7.0,
                         n_partitions=100, alpha=0.97,
                         agg_function=af.mean, prec_function=pf.mae_precision)
@@ -71,7 +72,7 @@ def gsearch_kriging(points, values, grid):
 
 def gsearch_idw(points, values, grid):
     b_params = esi_hparams_search(points, values, grid,
-                                  base_interpolator="idw", griddata=True, k=10,
+                                  base_interpolator="idw", griddata=True, k=-1,
                                   show_progress=True,
                                   callback=progress,
                                   alpha=list(reversed((0.5, 0.6, 0.8, 0.9, 0.95))))

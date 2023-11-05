@@ -232,6 +232,8 @@ namespace sptlz{
         range = _range;
       }
 
+      ~ESI_Kriging() {}
+
       int get_variogram_model(){
         return(this->variogram_model);
       }

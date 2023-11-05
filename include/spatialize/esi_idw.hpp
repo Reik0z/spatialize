@@ -122,6 +122,8 @@ namespace sptlz{
         exponent = _exponent;
       }
 
+      ~ESI_IDW() {}
+
       float get_exponent(){
         return(this->exponent);
       }
