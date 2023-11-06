@@ -27,6 +27,7 @@ import spatialize.gs.esi.precfunction as pf
 from spatialize.gs.esi import esi_griddata
 from spatialize.gs.esi import esi_hparams_search
 
+from rich import print as rprint
 
 def progress(s):
     print(f'processing ... {int(float(s.split()[1][:-1]))}%\r', end="")
@@ -80,7 +81,7 @@ def gsearch_idw(points, values, grid):
 
 
 if __name__ == "__main__":
-    # idw(points, values, (grid_x, grid_y))
+    idw(points, values, (grid_x, grid_y))
     # kriging(points, values, (grid_x, grid_y))
     # gsearch_kriging(points, values, (grid_x, grid_y))
-    gsearch_idw(points, values, (grid_x, grid_y))
+    # gsearch_idw(points, values, (grid_x, grid_y))

@@ -2,6 +2,7 @@ from concurrent.futures.thread import ThreadPoolExecutor
 from multiprocessing import Pool
 
 import numpy as np
+from rich.progress import track
 from sklearn.model_selection import ParameterGrid
 
 from spatialize import SpatializeError
@@ -68,6 +69,7 @@ def esi_hparams_search(points, values, xi, **kwargs):
     it = range(len(param_grid))
     if kwargs["show_progress"]:
         it = tqdm(range(len(param_grid)), desc="searching the grid")
+        # it = track(range(len(param_grid)), description="searching the grid ...")
 
     def run_scenario(i):
         param_set = param_grid[i].copy()
@@ -78,7 +80,7 @@ def esi_hparams_search(points, values, xi, **kwargs):
         l_args = build_arg_list(points, values, p_xi, param_set)
         if method == "kfold":
             l_args.insert(-2, k)
-            l_args.insert(-2, kwargs["folding_seed"])  # folding_seed
+            l_args.insert(-2, kwargs["folding_seed"])
 
         model, cv = cross_validate(*l_args)
 

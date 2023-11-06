@@ -18,6 +18,14 @@ class LibSpatializeFacade:
                         "loo": lsp.loo_esi_kriging_3d,
                         "kfold": lsp.kfold_esi_kriging_3d},
             },
+        4: {"idw": {"estimate": lsp.estimation_esi_idw,
+                    "loo": lsp.loo_esi_idw,
+                    "kfold": lsp.kfold_esi_idw},
+            },
+        5: {"idw": {"estimate": lsp.estimation_esi_idw,
+                    "loo": lsp.loo_esi_idw,
+                    "kfold": lsp.kfold_esi_idw},
+            },
     }
 
     esi_kriging_models = {

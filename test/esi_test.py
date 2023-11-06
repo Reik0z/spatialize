@@ -92,12 +92,14 @@ class ESIModule(unittest.TestCase):
 
         _, _ = esi_griddata(points, values, (grid_x, grid_y),
                             base_interpolator="idw",
+                            callback=self.progress,
                             exponent=7.0,
                             n_partitions=100, alpha=0.97,
                             agg_function=af.mean, prec_function=pf.mae_precision)
 
         _, _ = esi_griddata(points, values, (grid_x, grid_y),
                             base_interpolator="kriging",
+                            callback=self.progress,
                             model="cubic", nugget=0.1, range=5000.0,
                             n_partitions=100, alpha=0.97,
                             agg_function=af.mean, prec_function=pf.mae_precision)
@@ -132,6 +134,10 @@ class ESIModule(unittest.TestCase):
     @staticmethod
     def func(x, y):  # a kind of "cubic" function
         return x * (1 - x) * np.cos(4 * np.pi * x) * np.sin(4 * np.pi * y ** 2) ** 2
+
+    @staticmethod
+    def progress(s):
+        print(f'processing ... {int(float(s.split()[1][:-1]))}%\r', end="")
 
 
 if __name__ == '__main__':
