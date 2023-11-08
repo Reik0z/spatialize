@@ -861,12 +861,22 @@ static PyObject *estimation_esi_idw(PyObject *self, PyObject *args){
   lambda = 1/(lambda-alpha*lambda);
 
   sptlz::ESI_IDW* esi = new sptlz::ESI_IDW(c_smp, c_val, lambda, forest_size, bbox, exp, seed);
+  std::cout << "esi references 1: " << Py_REFCNT(esi) << "\n";
+
   r = esi->estimate(&c_loc, [func](std::string s){
     PyObject *tup = Py_BuildValue("(s)", s.c_str());
     PyObject_Call(func, tup, NULL);
     return(0);
   });
+
+  // Py_XDECREF(esi);
+  Py_SET_REFCNT(esi, 1);
+
+  std::cout << "esi references 2: " << Py_REFCNT(esi) << "\n";
+
   auto output = sptlz::as_1d_array(&r);
+
+  std::cout << "esi references 3: " << Py_REFCNT(esi) << "\n";
 
   // stuff to return data to python
   const npy_intp dims[2] = {(int)r.size(), forest_size};
@@ -874,9 +884,17 @@ static PyObject *estimation_esi_idw(PyObject *self, PyObject *args){
   aux = (float *)PyArray_DATA(estimation);
   memcpy(&aux[0], &output.data()[0], output.size()*sizeof(float));
 
-  model_list = esi_idw_to_dict(esi);
+  std::cout << "esi references 4: " << Py_REFCNT(esi) << "\n";
 
-  delete esi;
+  model_list = esi_idw_to_dict(esi);
+  std::cout << "model references: " << Py_REFCNT(model_list) << "\n";
+
+  std::cout << "esi references 5: " << Py_REFCNT(esi) << "\n";
+  // delete esi;
+  std::cout << "esi references 6: " << Py_REFCNT(esi) << "\n";
+  Py_SET_REFCNT(esi, 0);
+  std::cout << "esi references 7: " << Py_REFCNT(esi) << "\n";
+
   std::vector<float>().swap(output);
   std::vector<std::vector<float>>().swap(c_smp);
   std::vector<std::vector<float>>().swap(c_loc);
