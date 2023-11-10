@@ -860,6 +860,9 @@ static PyObject *estimation_esi_idw(PyObject *self, PyObject *args){
   float lambda = sptlz::bbox_sum_interval(bbox);
   lambda = 1/(lambda-alpha*lambda);
 
+  std::cout << "func references 1: " << Py_REFCNT(func) << "\n";
+  std::cout << "aux references 1: " << Py_REFCNT(aux) << "\n";
+
   sptlz::ESI_IDW* esi = new sptlz::ESI_IDW(c_smp, c_val, lambda, forest_size, bbox, exp, seed);
   std::cout << "esi references 1: " << Py_REFCNT(esi) << "\n";
 
@@ -868,6 +871,8 @@ static PyObject *estimation_esi_idw(PyObject *self, PyObject *args){
     PyObject_Call(func, tup, NULL);
     return(0);
   });
+
+  std::cout << "func references 2: " << Py_REFCNT(func) << "\n";
 
   // Py_XDECREF(esi);
   Py_SET_REFCNT(esi, 1);
