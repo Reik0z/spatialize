@@ -49,7 +49,7 @@ def idw(points, values, grid):
                         base_interpolator="idw",
                         callback=progress,
                         exponent=7.0,
-                        n_partitions=50, alpha=0.5,
+                        n_partitions=100, alpha=0.985,
                         agg_function=af.mean, prec_function=pf.mae_precision)
 
 

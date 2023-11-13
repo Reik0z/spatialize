@@ -773,6 +773,7 @@ static PyObject *estimation_esi_idw(PyObject *self, PyObject *args){
   std::string fname;
   PyArrayObject *estimation;
 
+  std::cout << "[C++] parsing arguments" << "\n";
   // parse arguments
   if (!PyArg_ParseTuple(args, "O!O!iffiO!O", &PyArray_Type, &samples, &PyArray_Type, &values, &forest_size, &alpha, &exp, &seed, &PyArray_Type, &scattered, &func)) {
     PyErr_SetString(PyExc_TypeError, "[1] Argument do not match");
@@ -809,6 +810,7 @@ static PyObject *estimation_esi_idw(PyObject *self, PyObject *args){
     return((PyObject *) NULL);
   }
 
+  std::cout << "[C++] checking data format" << "\n";
   // Check if C contiguous data (if not we should transpose)
   aux = (float *)PyArray_DATA(samples);
   if (PyArray_CHKFLAGS(samples, NPY_ARRAY_F_CONTIGUOUS)==1){
@@ -828,7 +830,12 @@ static PyObject *estimation_esi_idw(PyObject *self, PyObject *args){
       c_smp.push_back(c_val);
     }
   }
+
+  if (Py_REFCNT(aux) != 0) {
+      Py_SET_REFCNT(aux, 0);
+  }
   aux = (float *)PyArray_DATA(scattered);
+
   if (PyArray_CHKFLAGS(scattered, NPY_ARRAY_F_CONTIGUOUS)==1){
     for(int i=0; i<sct_sh[0]; i++){
       c_val.clear();
@@ -846,11 +853,17 @@ static PyObject *estimation_esi_idw(PyObject *self, PyObject *args){
       c_loc.push_back(c_val);
     }
   }
+
+  if (Py_REFCNT(aux) != 0) {
+      Py_SET_REFCNT(aux, 0);
+  }
   aux = (float *)PyArray_DATA(values);
+
   c_val = std::vector<float>(smp_sh[0]);
   memcpy(&c_val[0], &aux[0], c_val.size()*sizeof(float));
 
   // ##### THE METHOD ITSELF #####
+  std::cout << "[C++] arranging parameters" << "\n";
   auto bbox = sptlz::samples_coords_bbox(&c_loc);
   auto bbox2 = sptlz::samples_coords_bbox(&c_smp);
   for(int i=0;i<smp_sh[1];i++){
@@ -860,51 +873,46 @@ static PyObject *estimation_esi_idw(PyObject *self, PyObject *args){
   float lambda = sptlz::bbox_sum_interval(bbox);
   lambda = 1/(lambda-alpha*lambda);
 
-  std::cout << "func references 1: " << Py_REFCNT(func) << "\n";
-  std::cout << "aux references 1: " << Py_REFCNT(aux) << "\n";
-
+  std::cout << "[C++] building esi" << "\n";
   sptlz::ESI_IDW* esi = new sptlz::ESI_IDW(c_smp, c_val, lambda, forest_size, bbox, exp, seed);
-  std::cout << "esi references 1: " << Py_REFCNT(esi) << "\n";
 
+  std::cout << "[C++] calling esi" << "\n";
   r = esi->estimate(&c_loc, [func](std::string s){
     PyObject *tup = Py_BuildValue("(s)", s.c_str());
     PyObject_Call(func, tup, NULL);
     return(0);
   });
 
-  std::cout << "func references 2: " << Py_REFCNT(func) << "\n";
-
-  // Py_XDECREF(esi);
-  Py_SET_REFCNT(esi, 1);
-
-  std::cout << "esi references 2: " << Py_REFCNT(esi) << "\n";
-
+  std::cout << "[C++] formatting the output" << "\n";
   auto output = sptlz::as_1d_array(&r);
 
-  std::cout << "esi references 3: " << Py_REFCNT(esi) << "\n";
-
   // stuff to return data to python
+  if (Py_REFCNT(aux) != 0) {
+      Py_SET_REFCNT(aux, 0);
+  }
+
   const npy_intp dims[2] = {(int)r.size(), forest_size};
   estimation = (PyArrayObject *) PyArray_SimpleNew(2, dims, NPY_FLOAT);
   aux = (float *)PyArray_DATA(estimation);
   memcpy(&aux[0], &output.data()[0], output.size()*sizeof(float));
 
-  std::cout << "esi references 4: " << Py_REFCNT(esi) << "\n";
-
+  std::cout << "[C++] building the output model" << "\n";
   model_list = esi_idw_to_dict(esi);
-  std::cout << "model references: " << Py_REFCNT(model_list) << "\n";
 
-  std::cout << "esi references 5: " << Py_REFCNT(esi) << "\n";
-  // delete esi;
-  std::cout << "esi references 6: " << Py_REFCNT(esi) << "\n";
-  Py_SET_REFCNT(esi, 0);
-  std::cout << "esi references 7: " << Py_REFCNT(esi) << "\n";
+  delete esi;
+  if (Py_REFCNT(esi) != 0) {
+      Py_SET_REFCNT(esi, 0);
+  }
 
   std::vector<float>().swap(output);
   std::vector<std::vector<float>>().swap(c_smp);
   std::vector<std::vector<float>>().swap(c_loc);
   std::vector<std::vector<float>>().swap(r);
   std::vector<float>().swap(c_val);
+
+  if (Py_REFCNT(aux) != 0) {
+      Py_SET_REFCNT(aux, 0);
+  }
 
   return(Py_BuildValue("O,O", model_list, (PyObject *)estimation));
 }
