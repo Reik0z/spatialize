@@ -25,7 +25,7 @@ def default_callback(self):
 @signature_overload(pivot_arg=("base_interpolator", "idw", "base interpolator"),
                     common_args={"k": 10,
                                  "griddata": False,
-                                 "n_partitions": [100],
+                                 "n_partitions": [30],
                                  "alpha": list(np.flip(np.arange(0.70, 0.90, 0.01))),
                                  "agg_function": {"mean": af.mean, "median": af.median},
                                  "seed": np.random.randint(1000, 10000),
