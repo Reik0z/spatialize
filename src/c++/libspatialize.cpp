@@ -317,6 +317,9 @@ static PyObject *get_partitions_using_esi(PyObject *self, PyObject *args){
       c_smp.push_back(c_aux);
     }
   }
+  if (Py_REFCNT(aux) != 0) {
+      Py_SET_REFCNT(aux, 0);
+  }
 
   // ##### THE METHOD ITSELF #####
   auto bbox = sptlz::samples_coords_bbox(&c_smp);
@@ -334,6 +337,13 @@ static PyObject *get_partitions_using_esi(PyObject *self, PyObject *args){
   memcpy(&aux[0], &output.data()[0], output.size()*sizeof(float));
 
   delete esi;
+  if (Py_REFCNT(esi) != 0) {
+      Py_SET_REFCNT(esi, 0);
+  }
+
+  if (Py_REFCNT(aux) != 0) {
+      Py_SET_REFCNT(aux, 0);
+  }
 
   return((PyObject *)estimation);
 }
@@ -396,6 +406,9 @@ static PyObject *estimation_using_model(PyObject *self, PyObject *args){
       c_loc.push_back(c_aux);
     }
   }
+  if (Py_REFCNT(aux) != 0) {
+      Py_SET_REFCNT(aux, 0);
+  }
 
   // ##### THE METHOD ITSELF #####
   r = esi->estimate(&c_loc, [func](std::string s){
@@ -410,6 +423,10 @@ static PyObject *estimation_using_model(PyObject *self, PyObject *args){
   estimation = (PyArrayObject *) PyArray_SimpleNew(2, dims, NPY_FLOAT);
   aux = (float *)PyArray_DATA(estimation);
   memcpy(&aux[0], &output.data()[0], output.size()*sizeof(float));
+
+  if (Py_REFCNT(aux) != 0) {
+      Py_SET_REFCNT(aux, 0);
+  }
 
   return((PyObject *)estimation);
 }
@@ -454,6 +471,9 @@ static PyObject *loo_using_model(PyObject *self, PyObject *args){
   aux = (float *)PyArray_DATA(estimation);
   memcpy(&aux[0], &output.data()[0], output.size()*sizeof(float));
 
+  if (Py_REFCNT(aux) != 0) {
+      Py_SET_REFCNT(aux, 0);
+  }
   return((PyObject *)estimation);
 }
 
@@ -497,6 +517,9 @@ static PyObject *kfold_using_model(PyObject *self, PyObject *args){
   aux = (float *)PyArray_DATA(estimation);
   memcpy(&aux[0], &output.data()[0], output.size()*sizeof(float));
 
+  if (Py_REFCNT(aux) != 0) {
+      Py_SET_REFCNT(aux, 0);
+  }
   return((PyObject *)estimation);
 }
 
@@ -566,6 +589,10 @@ static PyObject *estimation_nn_idw(PyObject *self, PyObject *args){
       c_smp.push_back(c_val);
     }
   }
+  if (Py_REFCNT(aux) != 0) {
+      Py_SET_REFCNT(aux, 0);
+  }
+
   aux = (float *)PyArray_DATA(scattered);
   if (PyArray_CHKFLAGS(scattered, NPY_ARRAY_F_CONTIGUOUS)==1){
     for(int i=0; i<sct_sh[0]; i++){
@@ -584,9 +611,16 @@ static PyObject *estimation_nn_idw(PyObject *self, PyObject *args){
       c_loc.push_back(c_val);
     }
   }
+  if (Py_REFCNT(aux) != 0) {
+      Py_SET_REFCNT(aux, 0);
+  }
+
   aux = (float *)PyArray_DATA(values);
   c_val = std::vector<float>(smp_sh[0]);
   memcpy(&c_val[0], &aux[0], c_val.size()*sizeof(float));
+  if (Py_REFCNT(aux) != 0) {
+      Py_SET_REFCNT(aux, 0);
+  }
 
   // ##### THE METHOD ITSELF #####
   std::vector<float> search_params = {radius, radius, radius, 0.0, 0.0, 0.0};
@@ -602,6 +636,10 @@ static PyObject *estimation_nn_idw(PyObject *self, PyObject *args){
   estimation = (PyArrayObject *) PyArray_SimpleNew(1, dims, NPY_FLOAT);
   aux = (float *)PyArray_DATA(estimation);
   memcpy(&aux[0], &r.data()[0], r.size()*sizeof(float));
+
+  if (Py_REFCNT(aux) != 0) {
+      Py_SET_REFCNT(aux, 0);
+  }
 
   return((PyObject *)estimation);
 }
@@ -662,9 +700,16 @@ static PyObject *loo_nn_idw(PyObject *self, PyObject *args){
       c_smp.push_back(c_val);
     }
   }
+  if (Py_REFCNT(aux) != 0) {
+      Py_SET_REFCNT(aux, 0);
+  }
+
   aux = (float *)PyArray_DATA(values);
   c_val = std::vector<float>(smp_sh[0]);
   memcpy(&c_val[0], &aux[0], c_val.size()*sizeof(float));
+  if (Py_REFCNT(aux) != 0) {
+      Py_SET_REFCNT(aux, 0);
+  }
 
   // ##### THE METHOD ITSELF #####
   std::vector<float> search_params = {radius, radius, radius, 0.0, 0.0, 0.0};
@@ -681,6 +726,9 @@ static PyObject *loo_nn_idw(PyObject *self, PyObject *args){
   aux = (float *)PyArray_DATA(estimation);
   memcpy(&aux[0], &r.data()[0], r.size()*sizeof(float));
 
+  if (Py_REFCNT(aux) != 0) {
+      Py_SET_REFCNT(aux, 0);
+  }
   return((PyObject *)estimation);
 }
 
@@ -740,9 +788,16 @@ static PyObject *kfold_nn_idw(PyObject *self, PyObject *args){
       c_smp.push_back(c_val);
     }
   }
+  if (Py_REFCNT(aux) != 0) {
+      Py_SET_REFCNT(aux, 0);
+  }
+
   aux = (float *)PyArray_DATA(values);
   c_val = std::vector<float>(smp_sh[0]);
   memcpy(&c_val[0], &aux[0], c_val.size()*sizeof(float));
+  if (Py_REFCNT(aux) != 0) {
+      Py_SET_REFCNT(aux, 0);
+  }
 
   // ##### THE METHOD ITSELF #####
   std::vector<float> search_params = {radius, radius, radius, 0.0, 0.0, 0.0};
@@ -759,6 +814,9 @@ static PyObject *kfold_nn_idw(PyObject *self, PyObject *args){
   aux = (float *)PyArray_DATA(estimation);
   memcpy(&aux[0], &r.data()[0], r.size()*sizeof(float));
 
+  if (Py_REFCNT(aux) != 0) {
+      Py_SET_REFCNT(aux, 0);
+  }
   return((PyObject *)estimation);
 }
 
@@ -773,7 +831,9 @@ static PyObject *estimation_esi_idw(PyObject *self, PyObject *args){
   std::string fname;
   PyArrayObject *estimation;
 
+#ifdef DEBUG
   std::cout << "[C++] parsing arguments" << "\n";
+#endif
   // parse arguments
   if (!PyArg_ParseTuple(args, "O!O!iffiO!O", &PyArray_Type, &samples, &PyArray_Type, &values, &forest_size, &alpha, &exp, &seed, &PyArray_Type, &scattered, &func)) {
     PyErr_SetString(PyExc_TypeError, "[1] Argument do not match");
@@ -810,7 +870,9 @@ static PyObject *estimation_esi_idw(PyObject *self, PyObject *args){
     return((PyObject *) NULL);
   }
 
+#ifdef DEBUG
   std::cout << "[C++] checking data format" << "\n";
+#endif
   // Check if C contiguous data (if not we should transpose)
   aux = (float *)PyArray_DATA(samples);
   if (PyArray_CHKFLAGS(samples, NPY_ARRAY_F_CONTIGUOUS)==1){
@@ -861,9 +923,14 @@ static PyObject *estimation_esi_idw(PyObject *self, PyObject *args){
 
   c_val = std::vector<float>(smp_sh[0]);
   memcpy(&c_val[0], &aux[0], c_val.size()*sizeof(float));
+  if (Py_REFCNT(aux) != 0) {
+      Py_SET_REFCNT(aux, 0);
+  }
 
   // ##### THE METHOD ITSELF #####
+#ifdef DEBUG
   std::cout << "[C++] arranging parameters" << "\n";
+#endif
   auto bbox = sptlz::samples_coords_bbox(&c_loc);
   auto bbox2 = sptlz::samples_coords_bbox(&c_smp);
   for(int i=0;i<smp_sh[1];i++){
@@ -873,17 +940,23 @@ static PyObject *estimation_esi_idw(PyObject *self, PyObject *args){
   float lambda = sptlz::bbox_sum_interval(bbox);
   lambda = 1/(lambda-alpha*lambda);
 
+#ifdef DEBUG
   std::cout << "[C++] building esi" << "\n";
+#endif
   sptlz::ESI_IDW* esi = new sptlz::ESI_IDW(c_smp, c_val, lambda, forest_size, bbox, exp, seed);
 
+#ifdef DEBUG
   std::cout << "[C++] calling esi" << "\n";
+#endif
   r = esi->estimate(&c_loc, [func](std::string s){
     PyObject *tup = Py_BuildValue("(s)", s.c_str());
     PyObject_Call(func, tup, NULL);
     return(0);
   });
 
+#ifdef DEBUG
   std::cout << "[C++] formatting the output" << "\n";
+#endif
   auto output = sptlz::as_1d_array(&r);
 
   // stuff to return data to python
@@ -896,7 +969,9 @@ static PyObject *estimation_esi_idw(PyObject *self, PyObject *args){
   aux = (float *)PyArray_DATA(estimation);
   memcpy(&aux[0], &output.data()[0], output.size()*sizeof(float));
 
+#ifdef DEBUG
   std::cout << "[C++] building the output model" << "\n";
+#endif
   model_list = esi_idw_to_dict(esi);
 
   delete esi;
@@ -984,6 +1059,10 @@ static PyObject *loo_esi_idw(PyObject *self, PyObject *args){
       c_smp.push_back(c_val);
     }
   }
+  if (Py_REFCNT(aux) != 0) {
+      Py_SET_REFCNT(aux, 0);
+  }
+
   aux = (float *)PyArray_DATA(scattered);
   if (PyArray_CHKFLAGS(scattered, NPY_ARRAY_F_CONTIGUOUS)==1){
     for(int i=0; i<sct_sh[0]; i++){
@@ -1002,6 +1081,10 @@ static PyObject *loo_esi_idw(PyObject *self, PyObject *args){
       c_loc.push_back(c_val);
     }
   }
+  if (Py_REFCNT(aux) != 0) {
+      Py_SET_REFCNT(aux, 0);
+  }
+
   aux = (float *)PyArray_DATA(values);
   c_val = std::vector<float>(smp_sh[0]);
   memcpy(&c_val[0], &aux[0], c_val.size()*sizeof(float));
@@ -1024,6 +1107,9 @@ static PyObject *loo_esi_idw(PyObject *self, PyObject *args){
   });
   auto output = sptlz::as_1d_array(&r);
 
+  if (Py_REFCNT(aux) != 0) {
+      Py_SET_REFCNT(aux, 0);
+  }
   // stuff to return data to python
   const npy_intp dims[2] = {(int)r.size(), forest_size};
   estimation = (PyArrayObject *) PyArray_SimpleNew(2, dims, NPY_FLOAT);
@@ -1033,11 +1119,19 @@ static PyObject *loo_esi_idw(PyObject *self, PyObject *args){
   model_list = esi_idw_to_dict(esi);
 
   delete esi;
+  if (Py_REFCNT(esi) != 0) {
+      Py_SET_REFCNT(esi, 0);
+  }
+
   std::vector<float>().swap(output);
   std::vector<std::vector<float>>().swap(c_smp);
   std::vector<std::vector<float>>().swap(c_loc);
   std::vector<std::vector<float>>().swap(r);
   std::vector<float>().swap(c_val);
+
+  if (Py_REFCNT(aux) != 0) {
+      Py_SET_REFCNT(aux, 0);
+  }
 
   return(Py_BuildValue("O,O", model_list, (PyObject *)estimation));
 }
@@ -1109,6 +1203,10 @@ static PyObject *kfold_esi_idw(PyObject *self, PyObject *args){
       c_smp.push_back(c_val);
     }
   }
+  if (Py_REFCNT(aux) != 0) {
+      Py_SET_REFCNT(aux, 0);
+  }
+
   aux = (float *)PyArray_DATA(scattered);
   if (PyArray_CHKFLAGS(scattered, NPY_ARRAY_F_CONTIGUOUS)==1){
     for(int i=0; i<sct_sh[0]; i++){
@@ -1127,6 +1225,10 @@ static PyObject *kfold_esi_idw(PyObject *self, PyObject *args){
       c_loc.push_back(c_val);
     }
   }
+  if (Py_REFCNT(aux) != 0) {
+      Py_SET_REFCNT(aux, 0);
+  }
+
   aux = (float *)PyArray_DATA(values);
   c_val = std::vector<float>(smp_sh[0]);
   memcpy(&c_val[0], &aux[0], c_val.size()*sizeof(float));
@@ -1149,6 +1251,10 @@ static PyObject *kfold_esi_idw(PyObject *self, PyObject *args){
   }, folding_seed);
   auto output = sptlz::as_1d_array(&r);
 
+  if (Py_REFCNT(aux) != 0) {
+      Py_SET_REFCNT(aux, 0);
+  }
+
   // stuff to return data to python
   const npy_intp dims[2] = {(int)r.size(), forest_size};
   estimation = (PyArrayObject *) PyArray_SimpleNew(2, dims, NPY_FLOAT);
@@ -1158,11 +1264,18 @@ static PyObject *kfold_esi_idw(PyObject *self, PyObject *args){
   model_list = esi_idw_to_dict(esi);
 
   delete esi;
+  if (Py_REFCNT(esi) != 0) {
+      Py_SET_REFCNT(esi, 0);
+  }
   std::vector<float>().swap(output);
   std::vector<std::vector<float>>().swap(c_smp);
   std::vector<std::vector<float>>().swap(c_loc);
   std::vector<std::vector<float>>().swap(r);
   std::vector<float>().swap(c_val);
+
+  if (Py_REFCNT(aux) != 0) {
+      Py_SET_REFCNT(aux, 0);
+  }
 
   return(Py_BuildValue("O,O", model_list, (PyObject *)estimation));
 }
@@ -1232,6 +1345,10 @@ static PyObject *estimation_esi_kriging_2d(PyObject *self, PyObject *args){
       c_smp.push_back({aux[2*i], aux[2*i+1]});
     }
   }
+  if (Py_REFCNT(aux) != 0) {
+      Py_SET_REFCNT(aux, 0);
+  }
+
   aux = (float *)PyArray_DATA(values);
   memcpy(&c_val[0], &aux[0], c_val.size()*sizeof(float));
   aux = (float *)PyArray_DATA(scattered);
@@ -1243,6 +1360,9 @@ static PyObject *estimation_esi_kriging_2d(PyObject *self, PyObject *args){
     for(int i=0; i<sct_sh[0]; i++){
       c_loc.push_back({aux[2*i], aux[2*i+1]});
     }
+  }
+  if (Py_REFCNT(aux) != 0) {
+      Py_SET_REFCNT(aux, 0);
   }
 
   // ##### THE METHOD ITSELF #####
@@ -1272,11 +1392,18 @@ static PyObject *estimation_esi_kriging_2d(PyObject *self, PyObject *args){
   model_list = esi_kriging_to_dict(esi);
 
   delete esi;
+  if (Py_REFCNT(esi) != 0) {
+      Py_SET_REFCNT(esi, 0);
+  }
   std::vector<float>().swap(output);
   std::vector<std::vector<float>>().swap(c_smp);
   std::vector<std::vector<float>>().swap(c_loc);
   std::vector<std::vector<float>>().swap(r);
   std::vector<float>().swap(c_val);
+
+  if (Py_REFCNT(aux) != 0) {
+      Py_SET_REFCNT(aux, 0);
+  }
 
   return(Py_BuildValue("O,O", model_list, (PyObject *)estimation));
 }
@@ -1346,8 +1473,17 @@ static PyObject *loo_esi_kriging_2d(PyObject *self, PyObject *args){
       c_smp.push_back({aux[2*i], aux[2*i+1]});
     }
   }
+  if (Py_REFCNT(aux) != 0) {
+      Py_SET_REFCNT(aux, 0);
+  }
+
   aux = (float *)PyArray_DATA(values);
   memcpy(&c_val[0], &aux[0], c_val.size()*sizeof(float));
+
+  if (Py_REFCNT(aux) != 0) {
+      Py_SET_REFCNT(aux, 0);
+  }
+
   aux = (float *)PyArray_DATA(scattered);
   if (PyArray_CHKFLAGS(scattered, NPY_ARRAY_F_CONTIGUOUS)==1){
     for(int i=0; i<sct_sh[0]; i++){
@@ -1357,6 +1493,9 @@ static PyObject *loo_esi_kriging_2d(PyObject *self, PyObject *args){
     for(int i=0; i<sct_sh[0]; i++){
       c_loc.push_back({aux[2*i], aux[2*i+1]});
     }
+  }
+  if (Py_REFCNT(aux) != 0) {
+      Py_SET_REFCNT(aux, 0);
   }
 
   // ##### THE METHOD ITSELF #####
@@ -1386,11 +1525,18 @@ static PyObject *loo_esi_kriging_2d(PyObject *self, PyObject *args){
   model_list = esi_kriging_to_dict(esi);
 
   delete esi;
+  if (Py_REFCNT(esi) != 0) {
+      Py_SET_REFCNT(esi, 0);
+  }
   std::vector<float>().swap(output);
   std::vector<std::vector<float>>().swap(c_smp);
   std::vector<std::vector<float>>().swap(c_loc);
   std::vector<std::vector<float>>().swap(r);
   std::vector<float>().swap(c_val);
+
+  if (Py_REFCNT(aux) != 0) {
+      Py_SET_REFCNT(aux, 0);
+  }
 
   return(Py_BuildValue("O,O", model_list, (PyObject *)estimation));
 }
@@ -1460,8 +1606,16 @@ static PyObject *kfold_esi_kriging_2d(PyObject *self, PyObject *args){
       c_smp.push_back({aux[2*i], aux[2*i+1]});
     }
   }
+  if (Py_REFCNT(aux) != 0) {
+      Py_SET_REFCNT(aux, 0);
+  }
+
   aux = (float *)PyArray_DATA(values);
   memcpy(&c_val[0], &aux[0], c_val.size()*sizeof(float));
+  if (Py_REFCNT(aux) != 0) {
+      Py_SET_REFCNT(aux, 0);
+  }
+
   aux = (float *)PyArray_DATA(scattered);
   if (PyArray_CHKFLAGS(scattered, NPY_ARRAY_F_CONTIGUOUS)==1){
     for(int i=0; i<sct_sh[0]; i++){
@@ -1471,6 +1625,9 @@ static PyObject *kfold_esi_kriging_2d(PyObject *self, PyObject *args){
     for(int i=0; i<sct_sh[0]; i++){
       c_loc.push_back({aux[2*i], aux[2*i+1]});
     }
+  }
+  if (Py_REFCNT(aux) != 0) {
+      Py_SET_REFCNT(aux, 0);
   }
 
   // ##### THE METHOD ITSELF #####
@@ -1500,11 +1657,18 @@ static PyObject *kfold_esi_kriging_2d(PyObject *self, PyObject *args){
   model_list = esi_kriging_to_dict(esi);
 
   delete esi;
+  if (Py_REFCNT(esi) != 0) {
+      Py_SET_REFCNT(esi, 0);
+  }
   std::vector<float>().swap(output);
   std::vector<std::vector<float>>().swap(c_smp);
   std::vector<std::vector<float>>().swap(c_loc);
   std::vector<std::vector<float>>().swap(r);
   std::vector<float>().swap(c_val);
+
+  if (Py_REFCNT(aux) != 0) {
+      Py_SET_REFCNT(aux, 0);
+  }
 
   return(Py_BuildValue("O,O", model_list, (PyObject *)estimation));
 }
@@ -1574,8 +1738,19 @@ static PyObject *estimation_esi_kriging_3d(PyObject *self, PyObject *args){
       c_smp.push_back({aux[3*i], aux[3*i+1], aux[3*i+2]});
     }
   }
+  if (Py_REFCNT(aux) != 0) {
+      Py_SET_REFCNT(aux, 0);
+  }
+
   aux = (float *)PyArray_DATA(values);
   memcpy(&c_val[0], &aux[0], c_val.size()*sizeof(float));
+  if (Py_REFCNT(aux) != 0) {
+      Py_SET_REFCNT(aux, 0);
+  }
+  if (Py_REFCNT(aux) != 0) {
+      Py_SET_REFCNT(aux, 0);
+  }
+
   aux = (float *)PyArray_DATA(scattered);
   if (PyArray_CHKFLAGS(scattered, NPY_ARRAY_F_CONTIGUOUS)==1){
     for(int i=0; i<sct_sh[0]; i++){
@@ -1585,6 +1760,9 @@ static PyObject *estimation_esi_kriging_3d(PyObject *self, PyObject *args){
     for(int i=0; i<sct_sh[0]; i++){
       c_loc.push_back({aux[3*i], aux[3*i+1], aux[3*i+2]});
     }
+  }
+  if (Py_REFCNT(aux) != 0) {
+      Py_SET_REFCNT(aux, 0);
   }
 
   // ##### THE METHOD ITSELF #####
@@ -1614,6 +1792,18 @@ static PyObject *estimation_esi_kriging_3d(PyObject *self, PyObject *args){
   model_list = esi_kriging_to_dict(esi);
 
   delete esi;
+  if (Py_REFCNT(esi) != 0) {
+      Py_SET_REFCNT(esi, 0);
+  }
+
+  std::vector<float>().swap(output);
+  std::vector<std::vector<float>>().swap(c_smp);
+  std::vector<std::vector<float>>().swap(c_loc);
+  std::vector<float>().swap(c_val);
+
+  if (Py_REFCNT(aux) != 0) {
+      Py_SET_REFCNT(aux, 0);
+  }
 
   return(Py_BuildValue("O,O", model_list, (PyObject *)estimation));
 }
@@ -1682,8 +1872,16 @@ static PyObject *loo_esi_kriging_3d(PyObject *self, PyObject *args){
       c_smp.push_back({aux[3*i], aux[3*i+1], aux[3*i+2]});
     }
   }
+  if (Py_REFCNT(aux) != 0) {
+      Py_SET_REFCNT(aux, 0);
+  }
+
   aux = (float *)PyArray_DATA(values);
   memcpy(&c_val[0], &aux[0], c_val.size()*sizeof(float));
+  if (Py_REFCNT(aux) != 0) {
+      Py_SET_REFCNT(aux, 0);
+  }
+
   aux = (float *)PyArray_DATA(scattered);
   if (PyArray_CHKFLAGS(scattered, NPY_ARRAY_F_CONTIGUOUS)==1){
     for(int i=0; i<sct_sh[0]; i++){
@@ -1693,6 +1891,9 @@ static PyObject *loo_esi_kriging_3d(PyObject *self, PyObject *args){
     for(int i=0; i<sct_sh[0]; i++){
       c_loc.push_back({aux[3*i], aux[3*i+1], aux[3*i+2]});
     }
+  }
+  if (Py_REFCNT(aux) != 0) {
+      Py_SET_REFCNT(aux, 0);
   }
 
   // ##### THE METHOD ITSELF #####
@@ -1722,11 +1923,18 @@ static PyObject *loo_esi_kriging_3d(PyObject *self, PyObject *args){
   model_list = esi_kriging_to_dict(esi);
 
   delete esi;
+  if (Py_REFCNT(esi) != 0) {
+      Py_SET_REFCNT(esi, 0);
+  }
   std::vector<float>().swap(output);
   std::vector<std::vector<float>>().swap(c_smp);
   std::vector<std::vector<float>>().swap(c_loc);
   std::vector<std::vector<float>>().swap(r);
   std::vector<float>().swap(c_val);
+
+  if (Py_REFCNT(aux) != 0) {
+      Py_SET_REFCNT(aux, 0);
+  }
 
   return(Py_BuildValue("O,O", model_list, (PyObject *)estimation));
 }
@@ -1796,8 +2004,16 @@ static PyObject *kfold_esi_kriging_3d(PyObject *self, PyObject *args){
       c_smp.push_back({aux[3*i], aux[3*i+1], aux[3*i+2]});
     }
   }
+  if (Py_REFCNT(aux) != 0) {
+      Py_SET_REFCNT(aux, 0);
+  }
+
   aux = (float *)PyArray_DATA(values);
   memcpy(&c_val[0], &aux[0], c_val.size()*sizeof(float));
+  if (Py_REFCNT(aux) != 0) {
+      Py_SET_REFCNT(aux, 0);
+  }
+
   aux = (float *)PyArray_DATA(scattered);
   if (PyArray_CHKFLAGS(scattered, NPY_ARRAY_F_CONTIGUOUS)==1){
     for(int i=0; i<sct_sh[0]; i++){
@@ -1807,6 +2023,9 @@ static PyObject *kfold_esi_kriging_3d(PyObject *self, PyObject *args){
     for(int i=0; i<sct_sh[0]; i++){
       c_loc.push_back({aux[3*i], aux[3*i+1], aux[3*i+2]});
     }
+  }
+  if (Py_REFCNT(aux) != 0) {
+      Py_SET_REFCNT(aux, 0);
   }
 
   // ##### THE METHOD ITSELF #####
@@ -1836,11 +2055,18 @@ static PyObject *kfold_esi_kriging_3d(PyObject *self, PyObject *args){
   model_list = esi_kriging_to_dict(esi);
 
   delete esi;
+  if (Py_REFCNT(esi) != 0) {
+      Py_SET_REFCNT(esi, 0);
+  }
   std::vector<float>().swap(output);
   std::vector<std::vector<float>>().swap(c_smp);
   std::vector<std::vector<float>>().swap(c_loc);
   std::vector<std::vector<float>>().swap(r);
   std::vector<float>().swap(c_val);
+
+  if (Py_REFCNT(aux) != 0) {
+      Py_SET_REFCNT(aux, 0);
+  }
 
   return(Py_BuildValue("O,O", model_list, (PyObject *)estimation));
 }
@@ -1874,7 +2100,7 @@ static PyMethodDef SpatializeMethods[] = {
 static struct PyModuleDef libspatialize = {
     PyModuleDef_HEAD_INIT,
     "libspatialize",   /* name of module */
-    "Python wrapper for c++ Ensemble Spatial Interpolation library", /* module documentation, may be NULL */
+    "Python wrapper for C++ Ensemble Spatial Interpolation library", /* module documentation, may be NULL */
     -1,       /* size of per-interpreter state of the module,
                  or -1 if the module keeps state in global variables. */
     SpatializeMethods
