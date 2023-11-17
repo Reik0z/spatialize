@@ -75,7 +75,6 @@ def gsearch_idw(points, values, grid):
     b_params = esi_hparams_search(points, values, grid,
                                   base_interpolator="idw", griddata=True, k=-1,
                                   show_progress=True,
-                                  callback=progress,
                                   alpha=list(reversed((0.5, 0.6, 0.8, 0.9, 0.95))))
     print(b_params)
 

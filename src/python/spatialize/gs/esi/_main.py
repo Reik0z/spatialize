@@ -68,8 +68,10 @@ def esi_hparams_search(points, values, xi, **kwargs):
     results = {}
     it = range(len(param_grid))
     if kwargs["show_progress"]:
-        it = tqdm(range(len(param_grid)), desc="searching the grid")
-        # it = track(range(len(param_grid)), description="searching the grid ...")
+        if is_notebook():
+            it = tqdm(range(len(param_grid)), desc="searching the grid ...")
+        else:
+            it = track(range(len(param_grid)), description="searching the grid ...")
 
     def run_scenario(i):
         param_set = param_grid[i].copy()
