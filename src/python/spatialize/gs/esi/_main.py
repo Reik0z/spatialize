@@ -2,23 +2,18 @@ from concurrent.futures.thread import ThreadPoolExecutor
 from multiprocessing import Pool
 
 import numpy as np
-from rich.progress import track
 from sklearn.model_selection import ParameterGrid
 
 from spatialize import SpatializeError
 import spatialize.gs.esi.aggfunction as af
 import spatialize.gs.esi.precfunction as pf
-from spatialize._util import signature_overload, is_notebook, flatten_grid_data
+from spatialize._util import signature_overload, flatten_grid_data, get_progress_bar
 from spatialize.gs import LibSpatializeFacade
-
-if is_notebook():
-    from tqdm.notebook import tqdm
-else:
-    from tqdm import tqdm
 
 
 def default_callback(self):
     pass
+
 
 
 # ============================================= PUBLIC API ==========================================================
@@ -68,10 +63,7 @@ def esi_hparams_search(points, values, xi, **kwargs):
     results = {}
     it = range(len(param_grid))
     if kwargs["show_progress"]:
-        if is_notebook():
-            it = tqdm(range(len(param_grid)), desc="searching the grid ...")
-        else:
-            it = track(range(len(param_grid)), description="searching the grid ...")
+        it = get_progress_bar(range(len(param_grid)), "searching the grid ...")
 
     def run_scenario(i):
         param_set = param_grid[i].copy()

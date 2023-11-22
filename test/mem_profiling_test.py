@@ -1,6 +1,7 @@
 import os
 import sys
 import numpy as np
+from rich.progress import Progress
 
 # if running from 'this' test directory then change to the
 # project root directory
@@ -27,11 +28,26 @@ import spatialize.gs.esi.precfunction as pf
 from spatialize.gs.esi import esi_griddata
 from spatialize.gs.esi import esi_hparams_search
 
-from rich import print as rprint
 
 def progress(s):
     print(f'processing ... {int(float(s.split()[1][:-1]))}%\r', end="")
 
+
+class ProgressVisitor:
+    def __init__(self, desc, total=99, def_step=1):
+        self.total = total
+        self.def_step = def_step
+        self.progress = Progress()
+        self.task = self.progress.add_task(desc, total=self.total)
+        self.progress.start()
+
+    def __call__(self, s):
+        a = int(float(s.split()[1][:-1]))
+        if a < self.total + 1:
+            self.progress.update(self.task, advance=self.def_step)
+        else:
+            self.progress.refresh()
+            self.progress.stop()
 
 def func(x, y):  # a kind of "cubic" function
     return x * (1 - x) * np.cos(4 * np.pi * x) * np.sin(4 * np.pi * y ** 2) ** 2
@@ -47,9 +63,11 @@ values = func(points[:, 0], points[:, 1])
 def idw(points, values, grid):
     _, _ = esi_griddata(points, values, grid,
                         base_interpolator="idw",
-                        callback=progress,
+                        callback=ProgressVisitor("idw ... "),
+                        # callback=progress,
                         exponent=7.0,
                         n_partitions=100, alpha=0.985,
+                        # n_partitions=100, alpha=0.8,
                         agg_function=af.mean, prec_function=pf.mae_precision)
 
 

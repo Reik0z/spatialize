@@ -1,6 +1,29 @@
 import numpy as np
+from rich.progress import track
 
 from spatialize import SpatializeError
+
+
+def is_notebook():
+    try:
+        from IPython import get_ipython
+
+        if "IPKernelApp" not in get_ipython().config:  # pragma: no cover
+            raise ImportError("console")
+            return False
+        if "VSCODE_PID" in os.environ:  # pragma: no cover
+            raise ImportError("vscode")
+            return False
+    except:
+        return False
+    else:  # pragma: no cover
+        return True
+
+
+if is_notebook():
+    from tqdm.notebook import tqdm
+else:
+    from tqdm import tqdm
 
 
 def signature_overload(pivot_arg, common_args, specific_args):
@@ -46,20 +69,12 @@ def signature_overload(pivot_arg, common_args, specific_args):
     return outer_function
 
 
-def is_notebook():
-    try:
-        from IPython import get_ipython
-
-        if "IPKernelApp" not in get_ipython().config:  # pragma: no cover
-            raise ImportError("console")
-            return False
-        if "VSCODE_PID" in os.environ:  # pragma: no cover
-            raise ImportError("vscode")
-            return False
-    except:
-        return False
-    else:  # pragma: no cover
-        return True
+def get_progress_bar(list_like_obj, desc):
+    if is_notebook():
+        it = tqdm(range(len(list_like_obj)), desc=desc)
+    else:
+        it = track(range(len(list_like_obj)), description=desc)
+    return it
 
 
 def flatten_grid_data(xi):
