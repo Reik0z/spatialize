@@ -2,6 +2,7 @@ import os
 import sys
 import numpy as np
 from rich.progress import Progress
+from tqdm import tqdm
 
 # if running from 'this' test directory then change to the
 # project root directory
@@ -34,20 +35,31 @@ def progress(s):
 
 
 class ProgressVisitor:
-    def __init__(self, desc, total=99, def_step=1):
+    def __init__(self, desc, total=99, def_step=1, in_notebook=False):
         self.total = total
         self.def_step = def_step
-        self.progress = Progress()
-        self.task = self.progress.add_task(desc, total=self.total)
-        self.progress.start()
+        self.in_notebook = in_notebook
+
+        if self.in_notebook:
+            self.progress = tqdm(total=self.total)
+        else:
+            self.progress = Progress()
+            self.task = self.progress.add_task(desc, total=self.total)
+            self.progress.start()
 
     def __call__(self, s):
         a = int(float(s.split()[1][:-1]))
-        if a < self.total + 1:
-            self.progress.update(self.task, advance=self.def_step)
+        if a < self.total:
+            if self.in_notebook:
+                self.progress.update(self.def_step)
+            else:
+                self.progress.update(self.task, advance=self.def_step)
         else:
-            self.progress.refresh()
-            self.progress.stop()
+            if self.in_notebook:
+                self.progress.close()
+            else:
+                self.progress.refresh()
+                self.progress.stop()
 
 def func(x, y):  # a kind of "cubic" function
     return x * (1 - x) * np.cos(4 * np.pi * x) * np.sin(4 * np.pi * y ** 2) ** 2
@@ -63,7 +75,7 @@ values = func(points[:, 0], points[:, 1])
 def idw(points, values, grid):
     _, _ = esi_griddata(points, values, grid,
                         base_interpolator="idw",
-                        callback=ProgressVisitor("idw ... "),
+                        callback=ProgressVisitor("idw ... ", in_notebook=True),
                         # callback=progress,
                         exponent=7.0,
                         n_partitions=100, alpha=0.985,
