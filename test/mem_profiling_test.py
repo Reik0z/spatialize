@@ -35,19 +35,21 @@ def progress(s):
 
 
 class ProgressVisitor:
-    def __init__(self, desc, total=99, def_step=1, in_notebook=False):
+    def __init__(self, desc, total=100, def_step=1, in_notebook=False):
         self.total = total
         self.def_step = def_step
         self.in_notebook = in_notebook
 
         if self.in_notebook:
-            self.progress = tqdm(total=self.total)
+            self.progress = tqdm(total=self.total - 1, bar_format='{l_bar}{bar:40}{r_bar}{bar:-40b}')
         else:
             self.progress = Progress()
-            self.task = self.progress.add_task(desc, total=self.total)
+            self.task = self.progress.add_task(desc, total=self.total - 1)
             self.progress.start()
+        self.call_count = 0
 
     def __call__(self, s):
+        self.call_count += 1
         a = int(float(s.split()[1][:-1]))
         if a < self.total:
             if self.in_notebook:
@@ -73,14 +75,15 @@ values = func(points[:, 0], points[:, 1])
 
 
 def idw(points, values, grid):
+    progress = ProgressVisitor("idw ... ", in_notebook=True)
     _, _ = esi_griddata(points, values, grid,
                         base_interpolator="idw",
-                        callback=ProgressVisitor("idw ... ", in_notebook=True),
-                        # callback=progress,
+                        callback=progress,
                         exponent=7.0,
                         n_partitions=100, alpha=0.985,
                         # n_partitions=100, alpha=0.8,
                         agg_function=af.mean, prec_function=pf.mae_precision)
+    print(progress.call_count)
 
 
 def kriging(points, values, grid):
