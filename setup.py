@@ -4,12 +4,20 @@ import os
 from setuptools import setup, find_packages
 from distutils.extension import Extension
 
-libsrc = os.path.join('src', 'c++', 'libspatialize.cpp')
+libsptlzsrc = os.path.join('src', 'c++', 'libspatialize.cpp')
+libsptltsrc = os.path.join('src', 'c++', 'libspatialite.cpp')
 macros = [('NPY_NO_DEPRECATED_API', 'NPY_1_7_API_VERSION')]
 
 libspatialize_extensions = [
     Extension(name='libspatialize',
-              sources=[libsrc],
+              sources=[libsptlzsrc],
+              include_dirs=[ os.path.join('.', 'include'), numpy.get_include()],
+              extra_compile_args=['-std=c++14'],
+              define_macros=macros,
+              ),
+    Extension(name='libspatialite',
+              sources=[libsptltsrc],
+              libraries = ['sqlite3'],
               include_dirs=[ os.path.join('.', 'include'), numpy.get_include()],
               extra_compile_args=['-std=c++14'],
               define_macros=macros,
