@@ -1,4 +1,5 @@
 import libspatialize as lsp
+import libspatialite as lsplt
 from spatialize import SpatializeError
 
 
@@ -10,6 +11,12 @@ class LibSpatializeFacade:
             "kriging": {"estimate": lsp.estimation_esi_kriging_2d,
                         "loo": lsp.loo_esi_kriging_2d,
                         "kfold": lsp.kfold_esi_kriging_2d},
+            "idwlite": {"estimate": lsplt.estimation_esi_idw,
+                        "loo": lsplt.loo_esi_idw,
+                        "kfold": lsplt.kfold_esi_idw},
+            "kriginglite": {"estimate": lsplt.estimation_esi_kriging,
+                            "loo": lsplt.loo_esi_kriging,
+                            "kfold": lsplt.kfold_esi_kriging},
             },
         3: {"idw": {"estimate": lsp.estimation_esi_idw,
                     "loo": lsp.loo_esi_idw,
