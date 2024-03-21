@@ -1,8 +1,6 @@
 import sys, time, json
 sys.path.append('./lib.linux-x86_64-cpython-39')
 
-import pandas as pd, numpy as np, libspatialite as sp
-
 # load libspatialize
 try:
     # check if it's already installed
@@ -11,9 +9,10 @@ except ImportError:
     # we are in dev env so the compiled library
     # must be in the project root directory.
     sys.path.append('.')
+    sys.path.append('..')
 
 import libspatialite as sp
-
+import pandas as pd, numpy as np, libspatialite as sp
 
 def pperc(s):
 	print('Processing... {0}'.format(s), flush=True)
