@@ -195,7 +195,11 @@ cython_debug/
 # Jupyter Notebooks
 .ipynb_checkpoints
 
+# IDEA
+.idea/
+
 # Others
 build/
 .DS_Store
 dist/
+test/testdata/output/
