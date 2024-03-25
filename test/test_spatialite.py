@@ -240,7 +240,7 @@ def testing_exec_flow(create_data_base=True):
 
 
 if __name__ == '__main__':
-    testing_exec_flow(False)
+    testing_exec_flow(True)
 
 # creation()
 # stored_model("idw", "./testdata/output/create_test_esi_idw.db", "estimate")
