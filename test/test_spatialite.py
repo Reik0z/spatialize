@@ -1,23 +1,12 @@
 """
-CREATE UNIQUE INDEX idx_bboxes_id ON bboxes (id);
-CREATE UNIQUE INDEX idx_extras_id ON extras (id);
 CREATE UNIQUE INDEX idx_leaves_id ON leaves (id);
-CREATE UNIQUE INDEX idx_params_id ON params (key);
-CREATE UNIQUE INDEX idx_positions_id ON positions (id);
-CREATE UNIQUE INDEX idx_queries_id ON queries (id);
-CREATE UNIQUE INDEX idx_roots_id ON roots (id);
-CREATE UNIQUE INDEX idx_samples_id ON samples (id);
-
-CREATE INDEX idx_queries_axis ON queries(axis);
 CREATE INDEX idx_leaves_axis ON leaves(axis);
-CREATE INDEX idx_positions_axis ON positions(axis);
-CREATE INDEX idx_positions_sample_id ON positions(sample_id);
-CREATE INDEX idx_query_q_id_axis ON queries(query_id);
-CREATE INDEX idx_roots_leaf_id ON roots(leaf_id);
-
-SELECT name
-FROM sqlite_master
-WHERE type = 'index';
+CREATE INDEX idx_leaves_tree_id ON leaves(tree_id);
+CREATE INDEX idx_leaves_tree_tau ON leaves(tau);
+CREATE INDEX idx_leaves_tree_cut ON leaves(cut);
+CREATE INDEX idx_leaves_tree_height ON leaves(height);
+CREATE UNIQUE INDEX idx_queries_id ON queries (id);
+CREATE UNIQUE INDEX idx_samples_id ON samples (id);
 """
 import sys, time, json
 
@@ -249,8 +238,9 @@ def testing_exec_flow(create_data_base=True):
     stored_model("idw", "./testdata/output/create_test_esi_idw.db", "estimate")
     print(f"time elapsed:{time.time() - it}")
 
+
 if __name__ == '__main__':
-	testing_exec_flow(False)
+    testing_exec_flow(False)
 
 # creation()
 # stored_model("idw", "./testdata/output/create_test_esi_idw.db", "estimate")
