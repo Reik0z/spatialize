@@ -29,6 +29,16 @@ def pperc(s):
     print('Processing... {0}'.format(s), flush=True)
 
 
+def timeit(f):
+    def wrapper(*a, **ka):
+        print(f"*** running function '{f.__name__}' ...")
+        s = time.time()
+        r = f(*a, **ka)
+        print(f"*** elapsed time: {time.time() - s}")
+        return r
+    return wrapper
+
+@timeit
 def creation():
     locations = pd.read_csv('./testdata/box.csv')
     with open('./testdata/muestras.dat', 'r') as data:
@@ -58,7 +68,7 @@ def creation():
     )
     print('ESI Kriging created', flush=True)
 
-
+@timeit
 def esi_idw(op):
     locations = pd.read_csv('./testdata/box.csv')
     with open('./testdata/muestras.dat', 'r') as data:
@@ -240,7 +250,7 @@ def testing_exec_flow(create_data_base=True):
 
 
 if __name__ == '__main__':
-    testing_exec_flow(True)
+    # testing_exec_flow(True)
 
 # creation()
 # stored_model("idw", "./testdata/output/create_test_esi_idw.db", "estimate")
@@ -250,7 +260,7 @@ if __name__ == '__main__':
 # stored_model("idw", "./testdata/output/test_esi_idw.db", "loo")
 # stored_model("idw", "./testdata/output/test_esi_idw.db", "kfold")
 #
-# esi_idw("estimate")
+  esi_idw("estimate")
 # esi_idw("loo")
 # esi_idw("kfold")
 #
