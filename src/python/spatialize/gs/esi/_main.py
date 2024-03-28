@@ -26,6 +26,7 @@ def default_callback(self):
                                  "seed": np.random.randint(1000, 10000),
                                  "folding_seed": np.random.randint(1000, 10000),
                                  "callback": default_callback,
+                                 "backend": None,  # it can be: None, "raw-in-memory", "in-memory", "disk-cached"
                                  "show_progress": True},
                     specific_args={
                         "idw": {"exponent": list(np.arange(1.0, 15.0, 1.0))},
@@ -39,7 +40,7 @@ def esi_hparams_search(points, values, xi, **kwargs):
         method = "loo"
 
     # get the cross validation function
-    cross_validate = LibSpatializeFacade.get_operator(points, kwargs["base_interpolator"], method)
+    cross_validate = LibSpatializeFacade.get_operator(points, kwargs["base_interpolator"], method, kwargs["backend"])
 
     grid = {"n_partitions": kwargs["n_partitions"],
             "alpha": kwargs["alpha"]}
@@ -118,14 +119,15 @@ def esi_nongriddata(points, values, xi, **kwargs):
                                  "agg_function": af.mean,
                                  "prec_function": pf.mse_precision,
                                  "seed": np.random.randint(1000, 10000),
-                                 "callback": default_callback},
+                                 "callback": default_callback,
+                                 "backend": None},  # it can be: None, "raw-in-memory", "in-memory", "disk-cached"
                     specific_args={
                         "idw": {"exponent": 2.0},
                         "kriging": {"model": 1, "nugget": 0.1, "range": 5000.0}
                     })
 def _call_libspatialize(points, values, xi, **kwargs):
     # get the estimator function
-    estimate = LibSpatializeFacade.get_operator(points, kwargs["base_interpolator"], "estimate")
+    estimate = LibSpatializeFacade.get_operator(points, kwargs["base_interpolator"], "estimate", kwargs["backend"])
 
     # get the argument list
     l_args = build_arg_list(points, values, xi, kwargs)

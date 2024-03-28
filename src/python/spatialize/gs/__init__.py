@@ -1,47 +1,55 @@
 import libspatialize as lsp
 import libspatialite as lsplt
 from spatialize import SpatializeError
+from spatialize._util import is_notebook
 
+# backend constants
+SQLITE_BACKEND = "lite"
+[IDW, KRIGING] = ["idw", "kriging"]
+[IDWSQLite, KRIGINSQLite] = [IDW + SQLITE_BACKEND, KRIGING + SQLITE_BACKEND]
+
+# backend options
+[RAW_IN_MEMORY, IN_MEMORY, DISK_CACHED] = ["raw-in-memory", "in-memory", "disk-cached"]
 
 class LibSpatializeFacade:
     esi_hash_map = {
-        2: {"idw": {"estimate": lsp.estimation_esi_idw,
+        2: {IDW: {"estimate": lsp.estimation_esi_idw,
                     "loo": lsp.loo_esi_idw,
                     "kfold": lsp.kfold_esi_idw},
-            "kriging": {"estimate": lsp.estimation_esi_kriging_2d,
+            KRIGING: {"estimate": lsp.estimation_esi_kriging_2d,
                         "loo": lsp.loo_esi_kriging_2d,
                         "kfold": lsp.kfold_esi_kriging_2d},
-            "idwlite": {"estimate": lsplt.estimation_esi_idw,
+            IDWSQLite: {"estimate": lsplt.estimation_esi_idw,
                         "loo": lsplt.loo_esi_idw,
                         "kfold": lsplt.kfold_esi_idw},
-            "kriginglite": {"estimate": lsplt.estimation_esi_kriging,
+            KRIGINSQLite: {"estimate": lsplt.estimation_esi_kriging,
                             "loo": lsplt.loo_esi_kriging,
                             "kfold": lsplt.kfold_esi_kriging},
             },
-        3: {"idw": {"estimate": lsp.estimation_esi_idw,
+        3: {IDW: {"estimate": lsp.estimation_esi_idw,
                     "loo": lsp.loo_esi_idw,
                     "kfold": lsp.kfold_esi_idw},
-            "kriging": {"estimate": lsp.estimation_esi_kriging_3d,
+            KRIGING: {"estimate": lsp.estimation_esi_kriging_3d,
                         "loo": lsp.loo_esi_kriging_3d,
                         "kfold": lsp.kfold_esi_kriging_3d},
-            "idwlite": {"estimate": lsplt.estimation_esi_idw,
+            IDWSQLite: {"estimate": lsplt.estimation_esi_idw,
                         "loo": lsplt.loo_esi_idw,
                         "kfold": lsplt.kfold_esi_idw},
-            "kriginglite": {"estimate": lsplt.estimation_esi_kriging,
+            KRIGINSQLite: {"estimate": lsplt.estimation_esi_kriging,
                             "loo": lsplt.loo_esi_kriging,
                             "kfold": lsplt.kfold_esi_kriging},
             },
-        4: {"idw": {"estimate": lsp.estimation_esi_idw,
+        4: {IDW: {"estimate": lsp.estimation_esi_idw,
                     "loo": lsp.loo_esi_idw,
                     "kfold": lsp.kfold_esi_idw},
-            "idwlite": {"estimate": lsplt.estimation_esi_idw,
+            IDWSQLite: {"estimate": lsplt.estimation_esi_idw,
                         "loo": lsplt.loo_esi_idw,
                         "kfold": lsplt.kfold_esi_idw},
             },
-        5: {"idw": {"estimate": lsp.estimation_esi_idw,
+        5: {IDW: {"estimate": lsp.estimation_esi_idw,
                     "loo": lsp.loo_esi_idw,
                     "kfold": lsp.kfold_esi_idw},
-            "idwlite": {"estimate": lsplt.estimation_esi_idw,
+            IDWSQLite: {"estimate": lsplt.estimation_esi_idw,
                         "loo": lsplt.loo_esi_idw,
                         "kfold": lsplt.kfold_esi_idw},
             },
@@ -55,22 +63,44 @@ class LibSpatializeFacade:
     }
 
     @classmethod
-    def get_operator(cls, points, base_interpolator, operation):
+    def get_operator(cls, points, base_interpolator, operation, backend):
         d = int(points.shape[1])
 
         if d not in LibSpatializeFacade.esi_hash_map:
             raise SpatializeError(f"Points dimension must be in {list(LibSpatializeFacade.esi_hash_map.keys)}")
 
-        if base_interpolator not in LibSpatializeFacade.esi_hash_map[d]:
-            raise SpatializeError(f"Base interpolator '{base_interpolator}' not supported for {str(d).upper()}-D data")
+        operator = LibSpatializeFacade.raw_operator(base_interpolator, backend)
 
-        if operation not in LibSpatializeFacade.esi_hash_map[d][base_interpolator]:
-            raise SpatializeError(f"Operation '{operation}' not supported for '{base_interpolator}' and "
+        if operator not in LibSpatializeFacade.esi_hash_map[d]:
+            raise SpatializeError(f"Base interpolator '{operator}' not supported for {str(d).upper()}-D data")
+
+        if operation not in LibSpatializeFacade.esi_hash_map[d][operator]:
+            raise SpatializeError(f"Operation '{operation}' not supported for '{operator}' and "
                                   f"{str(d).upper()}-D data")
 
-        print(base_interpolator, operation)
-        return LibSpatializeFacade.esi_hash_map[d][base_interpolator][operation]
+        print(operator, operation)
+        return LibSpatializeFacade.esi_hash_map[d][operator][operation]
 
     @classmethod
     def get_kriging_model_number(cls, model):
         return LibSpatializeFacade.esi_kriging_models[model]
+
+    def raw_operator(cls, base_interpolator, backend):
+        if backend is None:  # set the backend automatically
+            if is_notebook() and base_interpolator in set(["idw", "kriging"]):
+                return base_interpolator + SQLITE_BACKEND
+            else:
+                return base_interpolator
+
+        if backend == RAW_IN_MEMORY:
+            return base_interpolator
+
+        if backend == DISK_CACHED:
+            if base_interpolator in set(["idw", "kriging"]):
+                return base_interpolator + SQLITE_BACKEND
+
+        raise SpatializeError(f"Backend '{backend}' not implemented for base interpolator '{base_interpolator}'")
+
+
+
+
