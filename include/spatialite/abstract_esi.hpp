@@ -49,7 +49,12 @@ namespace sptlz{
 	std::string get_esi_type(std::string path){
 		sqlite3 *db;
 		sqlite3_stmt *stmt;
+		char* err_msg = 0;
+
 		int rc = sqlite3_open_v2(path.c_str(), &db, SQLITE_OPEN_READONLY, NULL);
+
+		sqlite3_exec(db, "PRAGMA synchronous = OFF", NULL, NULL, &err_msg);
+        sqlite3_exec(db, "PRAGMA journal_mode = MEMORY", NULL, NULL, &err_msg);
 
 		// ask if database was open ok
 		if(rc) {
@@ -100,7 +105,12 @@ namespace sptlz{
 			std::vector<float> values;
 
 			void open_database(std::string path){
+			    char* err_msg = 0;
 				int rc = sqlite3_open_v2(path.c_str(), &(this->db), SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE, NULL);
+
+				sqlite3_exec(this->db, "PRAGMA synchronous = OFF", NULL, NULL, &err_msg);
+                sqlite3_exec(this->db, "PRAGMA journal_mode = MEMORY", NULL, NULL, &err_msg);
+
 
 				// ask if database was open ok
 				if(rc) {
@@ -1521,9 +1531,11 @@ namespace sptlz{
 				std::mt19937 my_rand(seed);
 				std::uniform_int_distribution<int> uni_int(0, random_range);
 
+                std::cout << "[spatialite] opening database ..." << std::endl;
 				// open the database
 				this->open_database(path);
 
+                std::cout << "[spatialite] creating tables ..." << std::endl;
 				// create tree tables
 				this->create_table("leaves", "CREATE TABLE 'leaves'('id' INTEGER PRIMARY KEY, 'tree_id' INTEGER, 'tau' REAL, 'cut' REAL, 'height' INTEGER, 'axis' INTEGER, 'lower' INTEGER REFERENCES leaves, 'greater' INTEGER REFERENCES leaves);");
 				this->create_table("bboxes", "CREATE TABLE 'bboxes'('id' INTEGER PRIMARY KEY, 'tree_id' INTEGER, 'leaf_id' INTEGER REFERENCES leaves, 'axis' INTEGER, 'lower_bound' REAL, 'upper_bound' REAL);");
@@ -1560,6 +1572,7 @@ namespace sptlz{
 					}
 				}
 
+                std::cout << "[spatialite] adding samples ..." << std::endl;
 				// add samples to db
 				this->add_samples(&(this->coords), &(this->values));
 
@@ -1568,13 +1581,17 @@ namespace sptlz{
 				float lambda = bbox_sum_interval(bbox);
 				lambda = 1.0/(lambda - alpha*lambda);
 
+                std::cout << "[spatialite] building trees (" << n_tree << ") ..." << std::endl;
 				// build trees
 				for(i=0; i<n_tree; i++){
+				    std::cout << "[spatialite] current tree: " << i << " ..." << std::endl;
 					this->create_tree(&id_count, i, lambda, bbox, uni_int(my_rand));
 				}
 
+                std::cout << "[spatialite] setting samples to leaves ..." << std::endl;
 				// set samples to leaves
 				this->set_samples_to_leaves();
+				std::cout << "[spatialite] done." << std::endl;
 			}
 
 			ESI(std::string path){

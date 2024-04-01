@@ -4,23 +4,19 @@ from rich.progress import track
 from spatialize import SpatializeError
 
 
-def is_notebook():
+def in_notebook():
     try:
         from IPython import get_ipython
-
-        if "IPKernelApp" not in get_ipython().config:  # pragma: no cover
-            raise ImportError("console")
+        if 'IPKernelApp' not in get_ipython().config:  # pragma: no cover
             return False
-        if "VSCODE_PID" in os.environ:  # pragma: no cover
-            raise ImportError("vscode")
-            return False
-    except:
+    except ImportError:
         return False
-    else:  # pragma: no cover
-        return True
+    except AttributeError:
+        return False
+    return True
 
 
-if is_notebook():
+if in_notebook():
     from tqdm.notebook import tqdm
 else:
     from tqdm import tqdm
@@ -70,7 +66,7 @@ def signature_overload(pivot_arg, common_args, specific_args):
 
 
 def get_progress_bar(list_like_obj, desc):
-    if is_notebook():
+    if in_notebook():
         it = tqdm(range(len(list_like_obj)), desc=desc)
     else:
         it = track(range(len(list_like_obj)), description=desc)

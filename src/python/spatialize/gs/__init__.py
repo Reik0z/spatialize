@@ -1,54 +1,56 @@
 import libspatialize as lsp
 import libspatialite as lsplt
 from spatialize import SpatializeError
-from spatialize._util import is_notebook
+from spatialize._util import in_notebook
 
 # backend constants
 SQLITE_BACKEND = "lite"
 [IDW, KRIGING] = ["idw", "kriging"]
 [IDWSQLite, KRIGINSQLite] = [IDW + SQLITE_BACKEND, KRIGING + SQLITE_BACKEND]
 
-# backend options
-[RAW_IN_MEMORY, IN_MEMORY, DISK_CACHED] = ["raw-in-memory", "in-memory", "disk-cached"]
 
 class LibSpatializeFacade:
+    # backend options
+    class BackendOptions:
+        [RAW_IN_MEMORY, IN_MEMORY, DISK_CACHED] = ["raw-in-memory", "in-memory", "disk-cached"]
+
     esi_hash_map = {
         2: {IDW: {"estimate": lsp.estimation_esi_idw,
-                    "loo": lsp.loo_esi_idw,
-                    "kfold": lsp.kfold_esi_idw},
+                  "loo": lsp.loo_esi_idw,
+                  "kfold": lsp.kfold_esi_idw},
             KRIGING: {"estimate": lsp.estimation_esi_kriging_2d,
-                        "loo": lsp.loo_esi_kriging_2d,
-                        "kfold": lsp.kfold_esi_kriging_2d},
+                      "loo": lsp.loo_esi_kriging_2d,
+                      "kfold": lsp.kfold_esi_kriging_2d},
             IDWSQLite: {"estimate": lsplt.estimation_esi_idw,
                         "loo": lsplt.loo_esi_idw,
                         "kfold": lsplt.kfold_esi_idw},
             KRIGINSQLite: {"estimate": lsplt.estimation_esi_kriging,
-                            "loo": lsplt.loo_esi_kriging,
-                            "kfold": lsplt.kfold_esi_kriging},
+                           "loo": lsplt.loo_esi_kriging,
+                           "kfold": lsplt.kfold_esi_kriging},
             },
         3: {IDW: {"estimate": lsp.estimation_esi_idw,
-                    "loo": lsp.loo_esi_idw,
-                    "kfold": lsp.kfold_esi_idw},
+                  "loo": lsp.loo_esi_idw,
+                  "kfold": lsp.kfold_esi_idw},
             KRIGING: {"estimate": lsp.estimation_esi_kriging_3d,
-                        "loo": lsp.loo_esi_kriging_3d,
-                        "kfold": lsp.kfold_esi_kriging_3d},
+                      "loo": lsp.loo_esi_kriging_3d,
+                      "kfold": lsp.kfold_esi_kriging_3d},
             IDWSQLite: {"estimate": lsplt.estimation_esi_idw,
                         "loo": lsplt.loo_esi_idw,
                         "kfold": lsplt.kfold_esi_idw},
             KRIGINSQLite: {"estimate": lsplt.estimation_esi_kriging,
-                            "loo": lsplt.loo_esi_kriging,
-                            "kfold": lsplt.kfold_esi_kriging},
+                           "loo": lsplt.loo_esi_kriging,
+                           "kfold": lsplt.kfold_esi_kriging},
             },
         4: {IDW: {"estimate": lsp.estimation_esi_idw,
-                    "loo": lsp.loo_esi_idw,
-                    "kfold": lsp.kfold_esi_idw},
+                  "loo": lsp.loo_esi_idw,
+                  "kfold": lsp.kfold_esi_idw},
             IDWSQLite: {"estimate": lsplt.estimation_esi_idw,
                         "loo": lsplt.loo_esi_idw,
                         "kfold": lsplt.kfold_esi_idw},
             },
         5: {IDW: {"estimate": lsp.estimation_esi_idw,
-                    "loo": lsp.loo_esi_idw,
-                    "kfold": lsp.kfold_esi_idw},
+                  "loo": lsp.loo_esi_idw,
+                  "kfold": lsp.kfold_esi_idw},
             IDWSQLite: {"estimate": lsplt.estimation_esi_idw,
                         "loo": lsplt.loo_esi_idw,
                         "kfold": lsplt.kfold_esi_idw},
@@ -85,22 +87,21 @@ class LibSpatializeFacade:
     def get_kriging_model_number(cls, model):
         return LibSpatializeFacade.esi_kriging_models[model]
 
+    @classmethod
     def raw_operator(cls, base_interpolator, backend):
         if backend is None:  # set the backend automatically
-            if is_notebook() and base_interpolator in set(["idw", "kriging"]):
+            if in_notebook():  # and base_interpolator in set(["idw", "kriging"]):
+                print("in notebook ...")
                 return base_interpolator + SQLITE_BACKEND
             else:
+                print("out of notebook ...")
                 return base_interpolator
 
-        if backend == RAW_IN_MEMORY:
+        if backend == LibSpatializeFacade.BackendOptions.RAW_IN_MEMORY:
             return base_interpolator
 
-        if backend == DISK_CACHED:
+        if backend == LibSpatializeFacade.BackendOptions.DISK_CACHED:
             if base_interpolator in set(["idw", "kriging"]):
                 return base_interpolator + SQLITE_BACKEND
 
         raise SpatializeError(f"Backend '{backend}' not implemented for base interpolator '{base_interpolator}'")
-
-
-
-

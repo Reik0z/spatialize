@@ -1,3 +1,4 @@
+import tempfile
 from concurrent.futures.thread import ThreadPoolExecutor
 from multiprocessing import Pool
 
@@ -19,14 +20,17 @@ def default_callback(self):
 # ============================================= PUBLIC API ==========================================================
 @signature_overload(pivot_arg=("base_interpolator", "idw", "base interpolator"),
                     common_args={"k": 10,
-                                 "griddata": False,
+                                 "griddata.py": False,
                                  "n_partitions": [30],
                                  "alpha": list(np.flip(np.arange(0.70, 0.90, 0.01))),
                                  "agg_function": {"mean": af.mean, "median": af.median},
                                  "seed": np.random.randint(1000, 10000),
                                  "folding_seed": np.random.randint(1000, 10000),
                                  "callback": default_callback,
-                                 "backend": None,  # it can be: None, "raw-in-memory", "in-memory", "disk-cached"
+                                 "backend": None,  # it can be: None or one the LibSpatializeFacade.BackendOptions
+                                 "cache_path": None,  # Needed if 'backend' is
+                                                      # LibSpatializeFacade.BackendOptions.DISK_CACHED or
+                                                      # LibSpatializeFacade.BackendOptions.IN_MEMORY
                                  "show_progress": True},
                     specific_args={
                         "idw": {"exponent": list(np.arange(1.0, 15.0, 1.0))},
@@ -57,7 +61,7 @@ def esi_hparams_search(points, values, xi, **kwargs):
     param_grid = ParameterGrid(grid)
 
     p_xi = xi
-    if kwargs["griddata"]:
+    if kwargs["griddata.py"]:
         p_xi, _ = flatten_grid_data(xi)
 
     # run the scenarios
@@ -120,7 +124,11 @@ def esi_nongriddata(points, values, xi, **kwargs):
                                  "prec_function": pf.mse_precision,
                                  "seed": np.random.randint(1000, 10000),
                                  "callback": default_callback,
-                                 "backend": None},  # it can be: None, "raw-in-memory", "in-memory", "disk-cached"
+                                 "backend": None,  # it can be: None or one the LibSpatializeFacade.BackendOptions
+                                 "cache_path": None  # Needed if 'backend' is
+                                                     # LibSpatializeFacade.BackendOptions.DISK_CACHED or
+                                                     # LibSpatializeFacade.BackendOptions.IN_MEMORY
+                                 },
                     specific_args={
                         "idw": {"exponent": 2.0},
                         "kriging": {"model": 1, "nugget": 0.1, "range": 5000.0}
@@ -159,5 +167,15 @@ def build_arg_list(points, values, xi, nonpos_args):
         l_args.insert(-2, nonpos_args["nugget"])
         l_args.insert(-2, nonpos_args["range"])
         l_args.insert(-2, nonpos_args["seed"])
+
+    cached_disk, in_memory = LibSpatializeFacade.BackendOptions.DISK_CACHED, LibSpatializeFacade.BackendOptions.IN_MEMORY
+    print(f'backend: {nonpos_args["backend"]}')
+    if nonpos_args["backend"] in set([None, cached_disk, in_memory]):
+        cache_path = nonpos_args["cache_path"]
+        print(f'cache path: {nonpos_args["cache_path"]}')
+        if cache_path is None:
+            cache_path = tempfile.TemporaryDirectory().name
+            print(f'cache path: {cache_path}')
+        l_args.insert(0, cache_path)
 
     return l_args
