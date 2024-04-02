@@ -721,6 +721,9 @@ namespace sptlz{
 				std::stringstream aux("");
 				aux << "BEGIN TRANSACTION;";
 				aux << sql.c_str();
+				std::cout << "[spatialite]" << std::endl;
+				std::cout << sql.c_str() << std::endl;
+				std::cout << "[spatialite]" << std::endl;
 				aux << "COMMIT;";
 				query = aux.str();
 				rc = sqlite3_exec(this->db, query.c_str(), NULL, NULL, &err_msg);
@@ -1616,6 +1619,8 @@ namespace sptlz{
 				int n_dims = this->get_int_param("n_dims");
 				int n_tree = this->get_int_param("n_tree");
 
+                std::cout << "[spatialite] estimating ..." << std::endl;
+
 				// check locations have same dimensions as samples
 				for(i_loc=0; i_loc<n_loc; i_loc++){
 					n = locations->at(i_loc).size();
@@ -1624,12 +1629,16 @@ namespace sptlz{
 					}
 				}
 
+                std::cout << "[spatialite] clearing queries ..." << std::endl;
 				// clear the queries table
 				this->clear_queries();
+				std::cout << "[spatialite] adding queries to the db ..." << std::endl;
 				// add queries to db
 				this->add_queries(locations);
+				std::cout << "[spatialite] setting queries to leaves ..." << std::endl;
 				// get leaf for every location in every tree
 				this->set_queries_to_leaves();
+				std::cout << "[spatialite] getting samples by leaf id ..." << std::endl;
 				// retrive all samples by the leaf where they belong
 				leaf_samples = this->get_samples_id_by_leaf();
 				// create result array
@@ -1638,6 +1647,7 @@ namespace sptlz{
 					result.push_back({});
 				}
 
+                std::cout << "[spatialite] computing  ..." << std::endl;
 				// for all locations
 				for(i_tree=0; i_tree<n_tree; i_tree++){
 					leaf_queries = this->get_leaves_n_queries(i_tree);
