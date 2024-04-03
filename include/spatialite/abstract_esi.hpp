@@ -111,6 +111,7 @@ namespace sptlz{
 				sqlite3_exec(this->db, "PRAGMA synchronous = OFF", NULL, NULL, &err_msg);
                 sqlite3_exec(this->db, "PRAGMA journal_mode = MEMORY", NULL, NULL, &err_msg);
                 sqlite3_exec(this->db, "PRAGMA temp_store = 2", NULL, NULL, &err_msg);
+                sqlite3_exec(this->db, "PRAGMA cache_size=-100000", NULL, NULL, &err_msg);
 
 
 				// ask if database was open ok
