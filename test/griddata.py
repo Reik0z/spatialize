@@ -45,7 +45,7 @@ grid_z3, grid_z3p = esi_griddata(points, values, (grid_x, grid_y),
                                  base_interpolator="idw",
                                  callback=progress,
                                  exponent=1.0,
-                                 n_partitions=500, alpha=0.975,
+                                 n_partitions=100, alpha=0.975,
                                  agg_function=af.median, prec_function=pf.mse_precision,
                                  backend=LibSpatializeFacade.BackendOptions.DISK_CACHED,
                                  cache_path="/Users/alvaro/Projects/GitHub/spatialize/test/testdata/output/griddata.db"

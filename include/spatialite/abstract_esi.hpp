@@ -106,12 +106,12 @@ namespace sptlz{
 
 			void open_database(std::string path){
 			    char* err_msg = 0;
-				int rc = sqlite3_open_v2(path.c_str(), &(this->db), SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE, NULL);
+				int rc = sqlite3_open_v2(path.c_str(), &(this->db), SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE | SQLITE_OPEN_MEMORY, NULL);
 
 				sqlite3_exec(this->db, "PRAGMA synchronous = OFF", NULL, NULL, &err_msg);
                 sqlite3_exec(this->db, "PRAGMA journal_mode = MEMORY", NULL, NULL, &err_msg);
                 sqlite3_exec(this->db, "PRAGMA temp_store = 2", NULL, NULL, &err_msg);
-                sqlite3_exec(this->db, "PRAGMA cache_size=-100000", NULL, NULL, &err_msg);
+                sqlite3_exec(this->db, "PRAGMA cache_size=-300000", NULL, NULL, &err_msg);
 
 
 				// ask if database was open ok
@@ -366,7 +366,7 @@ namespace sptlz{
 				sqlite3_finalize(stmt);
 			}
 
-			void add_leaf(int tree_id, std::vector<float> *node){
+			void add_leaf(int tree_id, std::vector<float> *node, int use_local_transaction=1){
 				sqlite3_stmt *stmt;
 
 				std::string query = "INSERT INTO 'leaves' (id, tree_id, tau, cut, height, axis, lower, greater) VALUES(?,?,?,?,?,?,?,?);";
@@ -381,7 +381,10 @@ namespace sptlz{
 					throw std::runtime_error(msg.str());
 				}
 
-				this->begin_transaction();
+                if (use_local_transaction == 1) {
+                    std::cout << "[spatialite] beginning transaction ..." << std::endl;
+				    this->begin_transaction();
+				}
 					// build insertion
 					rc = sqlite3_bind_int(stmt, 1, (int)node->at(0));
 					if(rc) {
@@ -460,7 +463,9 @@ namespace sptlz{
 						sqlite3_close_v2(this->db);
 						throw std::runtime_error(msg.str());
 					}
-				this->end_transaction();
+				if (use_local_transaction == 1) {
+				    this->end_transaction();
+				}
 
 				sqlite3_finalize(stmt);
 			}
@@ -1112,7 +1117,7 @@ namespace sptlz{
 				return(result);
 			}
 
-			void create_tree(int *id_count, int tree_id, float lambda, std::vector<float> bbox, int seed=28){
+			void create_tree(int *id_count, int tree_id, float lambda, std::vector<float> bbox, int seed=28, int use_local_transaction=1){
 				int ndim = (int) bbox.size()/2;
 				std::mt19937 my_rand(seed);
 				std::uniform_int_distribution<int> uni_int(0, ndim-1);
@@ -1169,7 +1174,7 @@ namespace sptlz{
 							bbox_queue.push(aux_bbox);
 						}else{
 							// added to the db
-							this->add_leaf(tree_id, &aux_node);
+							this->add_leaf(tree_id, &aux_node, use_local_transaction);
 							this->add_bbox(tree_id, (int) aux_node.at(0), &aux_bbox);
 						}
 
@@ -1195,12 +1200,12 @@ namespace sptlz{
 							bbox_queue.push(aux_bbox);
 						}else{
 							// added to the db
-							this->add_leaf(tree_id, &aux_node);
+							this->add_leaf(tree_id, &aux_node, use_local_transaction);
 							this->add_bbox(tree_id, (int) aux_node.at(0), &aux_bbox);
 						}
 
 						// add current node to the db
-						this->add_leaf(tree_id, &cur_node);
+						this->add_leaf(tree_id, &cur_node, use_local_transaction);
 						this->add_bbox(tree_id, (int) cur_node.at(0), &cur_bbox);
 					}
 				}
@@ -1587,11 +1592,14 @@ namespace sptlz{
 				lambda = 1.0/(lambda - alpha*lambda);
 
                 std::cout << "[spatialite] building trees (" << n_tree << ") ..." << std::endl;
+
 				// build trees
+				this->begin_transaction();
 				for(i=0; i<n_tree; i++){
 				    std::cout << "[spatialite] current tree: " << i << " ..." << std::endl;
-					this->create_tree(&id_count, i, lambda, bbox, uni_int(my_rand));
+					this->create_tree(&id_count, i, lambda, bbox, uni_int(my_rand), 0);
 				}
+				this->end_transaction();
 
                 std::cout << "[spatialite] setting samples to leaves ..." << std::endl;
 				// set samples to leaves
