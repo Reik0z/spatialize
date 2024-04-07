@@ -184,6 +184,12 @@ namespace sptlz{
 			void begin_transaction(){
 				// begin transaction
 				char* err_msg = 0;
+				int ac = sqlite3_get_autocommit(this->db);
+				if (ac == 0) {  // a transaction is already open and cannot open a transaction within
+				                // a transaction.
+				    return;
+				}
+
 				int rc = sqlite3_exec(this->db, "BEGIN TRANSACTION;", NULL, NULL, &err_msg);
 				if(rc) {
 					std::stringstream msg("");
@@ -197,6 +203,11 @@ namespace sptlz{
 			void end_transaction(){
 				// end transaction
 				char* err_msg = 0;
+				int ac = sqlite3_get_autocommit(this->db);
+				if (ac == 1) {  // no transaction is open.
+				    return;
+				}
+
 				int rc = sqlite3_exec(this->db, "COMMIT;", NULL, NULL, &err_msg);
 				if(rc) {
 					std::stringstream msg("");
