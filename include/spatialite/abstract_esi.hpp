@@ -106,7 +106,8 @@ namespace sptlz{
 
 			void open_database(std::string path){
 			    char* err_msg = 0;
-				int rc = sqlite3_open_v2(path.c_str(), &(this->db), SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE | SQLITE_OPEN_MEMORY, NULL);
+				// int rc = sqlite3_open_v2(path.c_str(), &(this->db), SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE | SQLITE_OPEN_MEMORY, NULL);
+				int rc = sqlite3_open_v2(path.c_str(), &(this->db), SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE, NULL);
 
 				sqlite3_exec(this->db, "PRAGMA synchronous = OFF", NULL, NULL, &err_msg);
                 sqlite3_exec(this->db, "PRAGMA journal_mode = MEMORY", NULL, NULL, &err_msg);
