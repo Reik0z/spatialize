@@ -1565,7 +1565,7 @@ namespace sptlz{
 				// create points tables
 				this->create_table("positions", "CREATE TABLE 'positions'('id' INTEGER PRIMARY KEY, 'sample_id' INTEGER, 'axis' INTEGER, 'coord' REAL);");
 				this->create_table("samples", "CREATE TABLE 'samples'('id' INTEGER PRIMARY KEY, 'value' REAL);");
-				this->create_table("queries", "CREATE TABLE 'queries'('id' INTEGER PRIMARY KEY, 'query_id' INTEGER, 'axis' INTEGER, 'coord' REAL);");
+				this->create_table("queries", "CREATE TABLE 'queries'('id' INTEGER PRIMARY KEY, 'query_id' INTEGER, 'axis' INTEGER REFERENCES leaves(axis), 'coord' REAL);");
 				// create aux tables
 				this->create_table("samples_matches", "CREATE TABLE 'samples_matches'('id' INTEGER PRIMARY KEY AUTOINCREMENT, 'tree_id' INTEGER, 'sample_id' INTEGER, 'leaf_id' INTEGER);");
 				this->create_table("queries_matches", "CREATE TABLE 'queries_matches'('id' INTEGER PRIMARY KEY AUTOINCREMENT, 'tree_id' INTEGER, 'query_id' INTEGER, 'leaf_id' INTEGER);");
