@@ -12,6 +12,8 @@
 #include <sqlite3.h>
 #include "utils.hpp"
 
+#include <chrono>
+
 namespace sptlz{
 
 	std::vector<float> coords_bbox(std::vector<std::vector<float>> *coords){
@@ -745,7 +747,17 @@ namespace sptlz{
 				std::cout << "[spatialite]" << std::endl;
 				aux << "COMMIT;";
 				query = aux.str();
+
+                std::cout << "[spatialite] ---> recursive query" << std::endl;
+                std::chrono::time_point<std::chrono::system_clock> start, stop;
+				start = std::chrono::system_clock::now();
+
 				rc = sqlite3_exec(this->db, query.c_str(), NULL, NULL, &err_msg);
+
+				stop = std::chrono::system_clock::now();
+                std::chrono::duration<double> elapsed_seconds = stop - start;
+				std::cout << "[spatialite] ---> elapsed time:" << elapsed_seconds.count() << "s" << std::endl;
+
 
 				// verify creation was ok
 				if(rc) {
