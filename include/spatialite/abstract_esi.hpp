@@ -55,8 +55,11 @@ namespace sptlz{
 
 		int rc = sqlite3_open_v2(path.c_str(), &db, SQLITE_OPEN_READONLY, NULL);
 
-		sqlite3_exec(db, "PRAGMA synchronous = OFF", NULL, NULL, &err_msg);
+        sqlite3_exec(db, "PRAGMA synchronous = OFF", NULL, NULL, &err_msg);
         sqlite3_exec(db, "PRAGMA journal_mode = MEMORY", NULL, NULL, &err_msg);
+        sqlite3_exec(db, "PRAGMA temp_store = MEMORY", NULL, NULL, &err_msg);
+        sqlite3_exec(db, "PRAGMA cache_size=-1000000", NULL, NULL, &err_msg);
+        sqlite3_exec(db, "PRAGMA locking_mode=EXCLUSIVE", NULL, NULL, &err_msg);
 
 		// ask if database was open ok
 		if(rc) {
@@ -108,7 +111,6 @@ namespace sptlz{
 
 			void open_database(std::string path){
 			    char* err_msg = 0;
-				// int rc = sqlite3_open_v2(path.c_str(), &(this->db), SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE | SQLITE_OPEN_MEMORY, NULL);
 				int rc = sqlite3_open_v2(path.c_str(), &(this->db), SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE, NULL);
 
 				sqlite3_exec(this->db, "PRAGMA synchronous = OFF", NULL, NULL, &err_msg);
@@ -700,11 +702,11 @@ namespace sptlz{
 						"SELECT roots.leaf_id, roots.id, 0, aux.sample_id FROM (SELECT DISTINCT positions.sample_id FROM positions) aux, roots "
 						"UNION ALL "
 						"SELECT CASE WHEN positions.coord < leaves.cut THEN lower ELSE greater END, get_leaf.tree_id, get_leaf.level+1, positions.sample_id "
-						"FROM positions, leaves, get_leaf "
-						"WHERE positions.axis=leaves.axis AND leaves.id=get_leaf.leaf_id AND positions.sample_id=get_leaf.sample_id "
+						"FROM get_leaf, positions, leaves "
+						"WHERE leaves.id=get_leaf.leaf_id AND positions.axis=leaves.axis AND positions.sample_id=get_leaf.sample_id "
 					") "
 					"INSERT INTO samples_matches (tree_id, sample_id, leaf_id)"
-					"SELECT get_leaf.tree_id, maxs.sample_id, get_leaf.leaf_id AS leaf_id FROM get_leaf, (SELECT sample_id, MAX(level) AS level, tree_id FROM get_leaf GROUP BY sample_id, tree_id) maxs WHERE maxs.sample_id=get_leaf.sample_id AND maxs.tree_id=get_leaf.tree_id AND get_leaf.level=maxs.level ORDER BY maxs.sample_id, get_leaf.tree_id;";
+					"SELECT get_leaf.tree_id, maxs.sample_id, get_leaf.leaf_id AS leaf_id FROM get_leaf, (SELECT MAX(level) AS level, sample_id, tree_id FROM get_leaf GROUP BY sample_id, tree_id) maxs WHERE get_leaf.level=maxs.level AND maxs.tree_id=get_leaf.tree_id AND maxs.sample_id=get_leaf.sample_id ORDER BY maxs.sample_id, get_leaf.tree_id;";
 
 				// build query to create the table
 				std::stringstream aux("");
@@ -732,11 +734,11 @@ namespace sptlz{
 						"SELECT roots.leaf_id, roots.id, 0, aux.query_id FROM (SELECT DISTINCT queries.query_id FROM queries) aux, roots "
 						"UNION ALL "
 						"SELECT CASE WHEN queries.coord < leaves.cut THEN lower ELSE greater END, get_leaf.tree_id, get_leaf.level+1, queries.query_id "
-						"FROM queries, leaves, get_leaf "
-						"WHERE queries.axis=leaves.axis AND leaves.id=get_leaf.leaf_id AND queries.query_id=get_leaf.query_id "
+						"FROM get_leaf, leaves CROSS JOIN queries "
+						"WHERE leaves.id=get_leaf.leaf_id AND queries.query_id=get_leaf.query_id AND queries.axis = leaves.axis "
 					") "
 					"INSERT INTO queries_matches (tree_id, query_id, leaf_id)"
-					"SELECT get_leaf.tree_id, maxs.query_id, get_leaf.leaf_id AS leaf_id FROM get_leaf, (SELECT query_id, MAX(level) AS level, tree_id FROM get_leaf GROUP BY query_id, tree_id) maxs WHERE maxs.query_id=get_leaf.query_id AND maxs.tree_id=get_leaf.tree_id AND get_leaf.level=maxs.level ORDER BY maxs.query_id, get_leaf.tree_id;";
+					"SELECT get_leaf.tree_id, maxs.query_id, get_leaf.leaf_id AS leaf_id FROM get_leaf, (SELECT MAX(level) AS level, tree_id, query_id FROM get_leaf GROUP BY query_id, tree_id) maxs WHERE get_leaf.level=maxs.level AND maxs.tree_id=get_leaf.tree_id AND maxs.query_id=get_leaf.query_id ORDER BY maxs.query_id, get_leaf.tree_id;";
 
 				// build query to create the table
 				std::stringstream aux("");

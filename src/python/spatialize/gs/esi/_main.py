@@ -8,7 +8,7 @@ from sklearn.model_selection import ParameterGrid
 from spatialize import SpatializeError
 import spatialize.gs.esi.aggfunction as af
 import spatialize.gs.esi.precfunction as pf
-from spatialize._util import signature_overload, flatten_grid_data, get_progress_bar
+from spatialize._util import signature_overload, flatten_grid_data, get_progress_bar, in_notebook
 from spatialize.gs import LibSpatializeFacade
 
 
@@ -29,8 +29,7 @@ def default_callback(self):
                                  "callback": default_callback,
                                  "backend": None,  # it can be: None or one the LibSpatializeFacade.BackendOptions
                                  "cache_path": None,  # Needed if 'backend' is
-                                                      # LibSpatializeFacade.BackendOptions.DISK_CACHED or
-                                                      # LibSpatializeFacade.BackendOptions.IN_MEMORY
+                                                      # LibSpatializeFacade.BackendOptions.DISK_CACHED
                                  "show_progress": True},
                     specific_args={
                         "idw": {"exponent": list(np.arange(1.0, 15.0, 1.0))},
@@ -126,8 +125,7 @@ def esi_nongriddata(points, values, xi, **kwargs):
                                  "callback": default_callback,
                                  "backend": None,  # it can be: None or one the LibSpatializeFacade.BackendOptions
                                  "cache_path": None  # Needed if 'backend' is
-                                                     # LibSpatializeFacade.BackendOptions.DISK_CACHED or
-                                                     # LibSpatializeFacade.BackendOptions.IN_MEMORY
+                                                     # LibSpatializeFacade.BackendOptions.DISK_CACHED
                                  },
                     specific_args={
                         "idw": {"exponent": 2.0},
@@ -168,14 +166,19 @@ def build_arg_list(points, values, xi, nonpos_args):
         l_args.insert(-2, nonpos_args["range"])
         l_args.insert(-2, nonpos_args["seed"])
 
-    cached_disk, in_memory = LibSpatializeFacade.BackendOptions.DISK_CACHED, LibSpatializeFacade.BackendOptions.IN_MEMORY
-    print(f'backend: {nonpos_args["backend"]}')
-    if nonpos_args["backend"] in set([None, cached_disk, in_memory]):
+    cached_disk = LibSpatializeFacade.BackendOptions.DISK_CACHED
+    print(f'backend: {"auto" if nonpos_args["backend"] is None else nonpos_args["backend"]}')
+    if nonpos_args["backend"] in set([None, cached_disk]):
         cache_path = nonpos_args["cache_path"]
-        print(f'cache path: {nonpos_args["cache_path"]}')
         if cache_path is None:
-            cache_path = tempfile.TemporaryDirectory().name
+            cache_path = tempfile.TemporaryDirectory().name + ".db"
+
+        if nonpos_args["backend"] is None:  # setting the backend automatically
+            if in_notebook():
+                print(f'cache path: {cache_path}')
+                l_args.insert(0, cache_path)
+        else:
             print(f'cache path: {cache_path}')
-        l_args.insert(0, cache_path)
+            l_args.insert(0, cache_path)
 
     return l_args

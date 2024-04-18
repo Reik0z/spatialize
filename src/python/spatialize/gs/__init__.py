@@ -12,7 +12,7 @@ SQLITE_BACKEND = "lite"
 class LibSpatializeFacade:
     # backend options
     class BackendOptions:
-        [RAW_IN_MEMORY, IN_MEMORY, DISK_CACHED] = ["raw-in-memory", "in-memory", "disk-cached"]
+        [IN_MEMORY, DISK_CACHED] = ["in-memory", "disk-cached"]
 
     esi_hash_map = {
         2: {IDW: {"estimate": lsp.estimation_esi_idw,
@@ -89,7 +89,7 @@ class LibSpatializeFacade:
 
     @classmethod
     def raw_operator(cls, base_interpolator, backend):
-        if backend is None:  # set the backend automatically
+        if backend is None:  # setting the backend automatically
             if in_notebook():  # and base_interpolator in set(["idw", "kriging"]):
                 print("in notebook ...")
                 return base_interpolator + SQLITE_BACKEND
@@ -97,7 +97,7 @@ class LibSpatializeFacade:
                 print("out of notebook ...")
                 return base_interpolator
 
-        if backend == LibSpatializeFacade.BackendOptions.RAW_IN_MEMORY:
+        if backend == LibSpatializeFacade.BackendOptions.IN_MEMORY:
             return base_interpolator
 
         if backend == LibSpatializeFacade.BackendOptions.DISK_CACHED:

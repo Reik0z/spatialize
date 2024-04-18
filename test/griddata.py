@@ -1,4 +1,6 @@
 import os
+import hvplot.xarray  # noqa: adds hvplot methods to xarray objects
+import hvplot
 
 import spatialize.gs.esi.aggfunction as af
 import spatialize.gs.esi.precfunction as pf
@@ -45,10 +47,10 @@ grid_z3, grid_z3p = esi_griddata(points, values, (grid_x, grid_y),
                                  base_interpolator="idw",
                                  callback=progress,
                                  exponent=1.0,
-                                 n_partitions=100, alpha=0.7,
+                                 n_partitions=500, alpha=0.95,
                                  agg_function=af.median, prec_function=pf.mse_precision,
-                                 backend=LibSpatializeFacade.BackendOptions.DISK_CACHED,
-                                 cache_path="/Users/alvaro/Projects/GitHub/spatialize/test/testdata/output/griddata.db"
+                                 # backend=LibSpatializeFacade.BackendOptions.DISK_CACHED,
+                                 # cache_path="/Users/alvaro/Projects/GitHub/spatialize/test/testdata/output/griddata.db"
                                  )
 ds3 = xr.DataArray(grid_z3.T)
 ds3p = xr.DataArray(grid_z3p.T)
