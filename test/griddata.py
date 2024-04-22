@@ -1,13 +1,13 @@
-import os
+import numpy as np
 import hvplot.xarray  # noqa: adds hvplot methods to xarray objects
-import hvplot
+import holoviews as hv
 
 import spatialize.gs.esi.aggfunction as af
 import spatialize.gs.esi.precfunction as pf
 from spatialize.gs import LibSpatializeFacade
 from spatialize.gs.esi import esi_griddata
 
-import numpy as np
+hv.extension('matplotlib')
 
 
 def func(x, y):  # a kind of "cubic" function
@@ -57,4 +57,9 @@ ds3p = xr.DataArray(grid_z3p.T)
 
 fig = ds3.hvplot.image(title="esi idw", width=w, height=h, xlabel='X', ylabel='Y')
 fig += ds3p.hvplot.image(title="esi idw precision", width=w, height=h, xlabel='X', ylabel='Y', cmap='seismic')
-fig
+
+fig.opts(
+    enable_3d_apis=False,
+)
+
+hv.save(fig, 'figure.png', dpi=144)
