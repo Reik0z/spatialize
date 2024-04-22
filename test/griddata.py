@@ -1,11 +1,16 @@
 import numpy as np
+import xarray as xr
+import pandas
 import hvplot.xarray  # noqa: adds hvplot methods to xarray objects
+import hvplot.pandas  # noqa
+
 import holoviews as hv
 
 import spatialize.gs.esi.aggfunction as af
 import spatialize.gs.esi.precfunction as pf
 from spatialize.gs import LibSpatializeFacade
 from spatialize.gs.esi import esi_griddata
+from scipy.interpolate import griddata
 
 hv.extension('matplotlib')
 
@@ -20,15 +25,9 @@ rng = np.random.default_rng()
 points = rng.random((1000, 2))
 values = func(points[:, 0], points[:, 1])
 
-from scipy.interpolate import griddata
-
 grid_z0 = griddata(points, values, (grid_x, grid_y), method='nearest')
 grid_z1 = griddata(points, values, (grid_x, grid_y), method='linear')
 grid_z2 = griddata(points, values, (grid_x, grid_y), method='cubic')
-
-import hvplot.pandas  # noqa
-import pandas
-import xarray as xr
 
 ds_points = pandas.DataFrame({"X": points[:, 1] * 100, "Y": points[:, 0] * 200})
 ds = xr.DataArray(func(grid_x, grid_y).T)
@@ -57,9 +56,5 @@ ds3p = xr.DataArray(grid_z3p.T)
 
 fig = ds3.hvplot.image(title="esi idw", width=w, height=h, xlabel='X', ylabel='Y')
 fig += ds3p.hvplot.image(title="esi idw precision", width=w, height=h, xlabel='X', ylabel='Y', cmap='seismic')
-
-fig.opts(
-    enable_3d_apis=False,
-)
 
 hv.save(fig, 'figure.png', dpi=144)

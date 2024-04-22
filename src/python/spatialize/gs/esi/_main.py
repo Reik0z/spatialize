@@ -20,7 +20,7 @@ def default_callback(self):
 # ============================================= PUBLIC API ==========================================================
 @signature_overload(pivot_arg=("base_interpolator", "idw", "base interpolator"),
                     common_args={"k": 10,
-                                 "griddata.py": False,
+                                 "griddata": False,
                                  "n_partitions": [30],
                                  "alpha": list(np.flip(np.arange(0.70, 0.90, 0.01))),
                                  "agg_function": {"mean": af.mean, "median": af.median},
@@ -38,6 +38,8 @@ def default_callback(self):
                                     "range": [10.0, 50.0, 100.0, 200.0]}
                     })
 def esi_hparams_search(points, values, xi, **kwargs):
+    print(f'backend: {"auto" if kwargs["backend"] is None else kwargs["backend"]}')
+
     method, k = "kfold", kwargs["k"]
     if k == points.shape[0] or k == -1:
         method = "loo"
@@ -60,7 +62,7 @@ def esi_hparams_search(points, values, xi, **kwargs):
     param_grid = ParameterGrid(grid)
 
     p_xi = xi
-    if kwargs["griddata.py"]:
+    if kwargs["griddata"]:
         p_xi, _ = flatten_grid_data(xi)
 
     # run the scenarios
@@ -74,6 +76,8 @@ def esi_hparams_search(points, values, xi, **kwargs):
         param_set["base_interpolator"] = kwargs["base_interpolator"]
         param_set["seed"] = kwargs["seed"]
         param_set["callback"] = kwargs["callback"]
+        param_set["backend"] = kwargs["backend"]
+        param_set["cache_path"] = kwargs["cache_path"]
 
         l_args = build_arg_list(points, values, p_xi, param_set)
         if method == "kfold":
@@ -132,6 +136,8 @@ def esi_nongriddata(points, values, xi, **kwargs):
                         "kriging": {"model": 1, "nugget": 0.1, "range": 5000.0}
                     })
 def _call_libspatialize(points, values, xi, **kwargs):
+    print(f'backend: {"auto" if kwargs["backend"] is None else kwargs["backend"]}')
+
     # get the estimator function
     estimate = LibSpatializeFacade.get_operator(points, kwargs["base_interpolator"], "estimate", kwargs["backend"])
 
@@ -167,7 +173,6 @@ def build_arg_list(points, values, xi, nonpos_args):
         l_args.insert(-2, nonpos_args["seed"])
 
     cached_disk = LibSpatializeFacade.BackendOptions.DISK_CACHED
-    print(f'backend: {"auto" if nonpos_args["backend"] is None else nonpos_args["backend"]}')
     if nonpos_args["backend"] in set([None, cached_disk]):
         cache_path = nonpos_args["cache_path"]
         if cache_path is None:
