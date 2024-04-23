@@ -15,13 +15,13 @@ points = rng.random((1000, 2))
 values = func(points[:, 0], points[:, 1])
 
 # *** kriging as base interpolator ***
-# b_params = esi_hparams_search(points, values, (grid_x, grid_y),
-#                               base_interpolator="kriging", griddata=True, k=10,
-#                               model=["spherical", "exponential", "cubic", "gaussian"],
-#                               nugget=[0.0, 0.5, 1.0],
-#                               range=[10.0, 50.0, 100.0, 200.0],
-#                               alpha=[0.7, 0.8, 0.9])
-# print(b_params)
+b_params = esi_hparams_search(points, values, (grid_x, grid_y),
+                              base_interpolator="kriging", griddata=True, k=10,
+                              model=["spherical", "exponential", "cubic", "gaussian"],
+                              nugget=[0.0, 0.5, 1.0],
+                              range=[10.0, 50.0, 100.0, 200.0],
+                              alpha=list(np.flip(np.arange(0.95, 0.97, 0.01))))
+print(b_params)
 
 # *** idw as base interpolator ***
 b_params = esi_hparams_search(points, values, (grid_x, grid_y),
