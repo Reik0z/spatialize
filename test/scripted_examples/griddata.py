@@ -57,4 +57,4 @@ ds3p = xr.DataArray(grid_z3p.T)
 fig = ds3.hvplot.image(title="esi idw", width=w, height=h, xlabel='X', ylabel='Y')
 fig += ds3p.hvplot.image(title="esi idw precision", width=w, height=h, xlabel='X', ylabel='Y', cmap='seismic')
 
-hv.save(fig, 'figure.png', dpi=144)
+hv.save(fig, '../figure.png', dpi=144)
