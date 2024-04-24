@@ -57,7 +57,7 @@ fig += ds3.hvplot.image(title="esi idw", width=w, height=h, xlabel='X', ylabel='
 fig += ds3p.hvplot.image(title="esi idw operational error", width=w, height=h, xlabel='X', ylabel='Y', cmap='seismic') \
        * ds_points.hvplot.points(size=3.0, color="green")
 
-hv.save(fig, '../op_error_idw.png', dpi=144)
+hv.save(fig, 'op_error_idw.png', dpi=144)
 
 grid_z4, grid_z4p = esi_griddata(points, values, (grid_x, grid_y),
                                  base_interpolator="kriging",
@@ -74,4 +74,4 @@ fig += ds4p.hvplot.image(title="esi kriging operational error", width=w, height=
                          cmap='seismic') \
        * ds_points.hvplot.points(size=3.0, color="green")
 
-hv.save(fig, '../op_error_kriging.png', dpi=144)
+hv.save(fig, 'op_error_kriging.png', dpi=144)
