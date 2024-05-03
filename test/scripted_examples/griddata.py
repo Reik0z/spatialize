@@ -47,7 +47,7 @@ grid_z3, grid_z3p = esi_griddata(points, values, (grid_x, grid_y),
                                  callback=progress,
                                  exponent=1.0,
                                  n_partitions=500, alpha=0.95,
-                                 agg_function=af.median, prec_function=pf.mse_precision,
+                                 agg_function=af.median,
                                  # backend=LibSpatializeFacade.BackendOptions.DISK_CACHED,
                                  # cache_path="/Users/alvaro/Projects/GitHub/spatialize/test/testdata/output/griddata.db"
                                  )
@@ -57,4 +57,4 @@ ds3p = xr.DataArray(grid_z3p.T)
 fig = ds3.hvplot.image(title="esi idw", width=w, height=h, xlabel='X', ylabel='Y')
 fig += ds3p.hvplot.image(title="esi idw precision", width=w, height=h, xlabel='X', ylabel='Y', cmap='seismic')
 
-hv.save(fig, '../figure.png', dpi=144)
+hv.save(fig, 'figure.png', dpi=144)
