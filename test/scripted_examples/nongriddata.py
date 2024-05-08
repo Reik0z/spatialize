@@ -51,7 +51,7 @@ ds4p = xr.DataArray(grid_z4p.reshape(w, h) * 100)
 fig = ds4.hvplot.image(title="esi idw", width=w, height=h * 2, xlabel='X', ylabel='Y', cmap='bwr', clim=(0, 4.5))
 fig += ds4p.hvplot.image(title="esi idw UQ", width=w, height=h * 2, xlabel='X', ylabel='Y', cmap='Spectral')
 
-hv.save(fig, '../nongridata_idw.png', dpi=144)
+hv.save(fig, 'nongridata_idw.png', dpi=144)
 
 b_params = esi_hparams_search(points, values, xi,
                               base_interpolator="kriging", griddata=False, k=10,
@@ -72,4 +72,4 @@ ds4p = xr.DataArray(grid_z4p.reshape(w, h) * 100)
 fig = ds4.hvplot.image(title="esi kriging", width=w, height=h * 2, xlabel='X', ylabel='Y', cmap='bwr', clim=(0, 4.5))
 fig += ds4p.hvplot.image(title="esi kriging UQ", width=w, height=h * 2, xlabel='X', ylabel='Y', cmap='Spectral')
 
-hv.save(fig, '../nongridata_kriging.png', dpi=144)
+hv.save(fig, 'nongridata_kriging.png', dpi=144)
