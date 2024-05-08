@@ -44,7 +44,7 @@ grid_z4, grid_z4p = esi_nongriddata(points, values, xi,
                                     base_interpolator="idw",
                                     exponent=5.0,
                                     n_partitions=100, alpha=0.8,
-                                    agg_function=af.mean, prec_function=op_error_precision)
+                                    prec_function=op_error_precision)
 ds4 = xr.DataArray(grid_z4.reshape(w, h))
 ds4p = xr.DataArray(grid_z4p.reshape(w, h) * 100)
 
