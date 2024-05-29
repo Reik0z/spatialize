@@ -1,8 +1,8 @@
 ## CODE ##
-1. Add ESI-Voronoi
-2. Add plain IDW (already implemented in C++)
-3. Create/improve protocol for communicating C++/GPU libraries with python
-4. Improve progress bar in all methods
-5. Add GPU methods (not yet implemented) to python API
+1 [] Add ESI-Voronoi
+2.[] Add plain IDW (already implemented in C++)
+3.[] Create/improve protocol for communicating C++/GPU libraries with python
+4.[] Improve progress bar in all methods
+5.[] Add GPU methods (not yet implemented) to python API
 
 ## DOC ##
