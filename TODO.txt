@@ -4,5 +4,6 @@
 3.[] Create/improve protocol for communicating C++/GPU libraries with python
 4.[] Improve progress bar in all methods
 5.[] Add GPU methods (not yet implemented) to python API
+6.[] Improve design for custom agg functions and precision
 
 ## DOC ##
