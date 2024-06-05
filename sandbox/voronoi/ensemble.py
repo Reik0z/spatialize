@@ -1,3 +1,5 @@
+from collections import deque
+
 import numpy as np
 from .voronoi import VoronoiForest
 from .interpolations import idw_anisotropic_interpolation, optim_anisotropic_idw, idw_interpolation
@@ -41,10 +43,8 @@ class EnsembleIDW:
 
         points = self.locations[['X', 'Y']].values
         c = 0
-        # trees = enumerate(self.forest.trees)
-        trees = zip(range(len(self.forest.trees)), self.forest.trees)
-        # print(list(trees))
-        for location in self.locations.index:
+        trees = deque(list(enumerate(self.forest.trees)))
+        for location in deque(self.locations.index):
             point = points[location]
             values = []
             for tree_idx, tree in trees:
@@ -56,7 +56,7 @@ class EnsembleIDW:
                     pred = idw_interpolation(point, neighbors[['X', 'Y']].values, neighbors[[self.value_col]].values, exp_dist)
                     values.append(pred)
                 p = c / total
-                print(f'processing ... {p}%\r', end="")
+                print(f'processing ... {p * 100}%\r', end="")
             predictions.append(np.array(values) if values else np.array([-99.]))
         print()
         return Reduction(predictions, mean, percentile)

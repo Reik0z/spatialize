@@ -1,5 +1,4 @@
 import numpy as np
-from numba import njit
 from scipy.optimize import minimize
 from .geometry_transformations import get_tras_rot_2d
 
@@ -22,6 +21,7 @@ def idw_interpolation_old(point, data, exp_dist=1.0, smooth=0.0, dists=None, pos
 
     w_norm = weights / np.sum(weights)
     return np.sum(w_norm * data[value_col])
+
 
 def idw_interpolation(point, data, value, exp_dist=1.0, smooth=0.0, dists=None):
     if len(data.shape) < 2:  # only one data
