@@ -20,6 +20,7 @@ class PartitionOptimize:
                        self.data]  #Params for each nucleus
         self.leaf_indices = tree.sample_indexes  #confirmar
 
+
 class EnsembleIDW:
     def __init__(self, size, alpha, samples, locations, value_col='grade'):
         #self.size = size
@@ -52,13 +53,13 @@ class EnsembleIDW:
                 nucleus_index = tree.loc_indexes[location]
                 neighbors = self.ensemble[tree_idx].data[nucleus_index]
                 if not neighbors.empty:
-                    # pred = idw_interpolation(point, neighbors, exp_dist, value_col=self.value_col)
-                    pred = idw_interpolation(point, neighbors[['X', 'Y']].values, neighbors[[self.value_col]].values, exp_dist)
+                    pred = idw_interpolation(point, neighbors, exp_dist, value_col=self.value_col)
                     values.append(pred)
-                p = c / total
-                print(f'processing ... {p * 100}%\r', end="")
+                p, p_prev = (c * 100) // total, -1
+                if p != p_prev:
+                    print(f'---> processing ... {p}%\r', end="")
+                    p_prev = p
             predictions.append(np.array(values) if values else np.array([-99.]))
-        print()
         return Reduction(predictions, mean, percentile)
 
     def cross_validation(self, mean=True, percentile=50, exp_dist=1):

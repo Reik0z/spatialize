@@ -2,7 +2,7 @@ import pandas as pd
 import time
 from voronoi.ensemble import EnsembleIDW
 
-trees = 50
+trees = 5
 alpha = 0.7
 
 nugg_case = 'nugg0.1'

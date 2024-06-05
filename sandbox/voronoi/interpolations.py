@@ -5,7 +5,7 @@ from .geometry_transformations import get_tras_rot_2d
 
 # Classic IDW interpolations 2-D
 # @njit
-def idw_interpolation_old(point, data, exp_dist=1.0, smooth=0.0, dists=None, pos_cols=['X', 'Y'], value_col='grade'):
+def idw_interpolation(point, data, exp_dist=1.0, smooth=0.0, dists=None, pos_cols=['X', 'Y'], value_col='grade'):
     if len(data.shape) < 2:  # only one data
         return np.sum(data[value_col])
     if dists is None:
@@ -21,26 +21,6 @@ def idw_interpolation_old(point, data, exp_dist=1.0, smooth=0.0, dists=None, pos
 
     w_norm = weights / np.sum(weights)
     return np.sum(w_norm * data[value_col])
-
-
-def idw_interpolation(point, data, value, exp_dist=1.0, smooth=0.0, dists=None):
-    if len(data.shape) < 2:  # only one data
-        return np.sum(value)
-
-    if dists is None:
-        # dists = data[pos_cols].apply(lambda x: np.linalg.norm(x - point), engine="numba", axis=1)
-        dists = np.linalg.norm(data - point)
-
-    mask_zero_dist = (dists == 0) * 1
-    # mask for data in the same point position
-    if smooth == 0 and np.sum(mask_zero_dist) > 0:
-        weights = np.zeros(len(dists))
-        weights[mask_zero_dist] = 1.
-    else:
-        weights = 1. / (smooth + dists ** exp_dist)
-
-    w_norm = weights / np.sum(weights)
-    return np.sum(w_norm * value)
 
 
 # ----------------------
