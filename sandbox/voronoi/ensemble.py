@@ -1,4 +1,6 @@
 from collections import deque
+from concurrent.futures import ThreadPoolExecutor
+from multiprocessing import Pool
 
 import numpy as np
 from .voronoi import VoronoiForest
@@ -37,10 +39,58 @@ class EnsembleIDW:
 
     def predict(self, mean=True, percentile=50, exp_dist=1):
         print('Creating Predictions...')
+
+        total = len(self.locations.index) * len(self.forest.trees)
+        print(
+            f"---> total interpolations ({len(self.locations.index)} [locations] x {len(self.forest.trees)} [partitions]): {total}")
+
+        def compute_predictions(locations):
+            preds = []
+            points = self.locations[['X', 'Y']].values
+            c = 0
+            trees = deque(list(enumerate(self.forest.trees)))
+            for location in locations:
+                point = points[location]
+                values = []
+                for tree_idx, tree in trees:
+                    c += 1
+                    nucleus_index = tree.loc_indexes[location]
+                    neighbors = self.ensemble[tree_idx].data[nucleus_index]
+                    if not neighbors.empty:
+                        pred = idw_interpolation(point, neighbors, exp_dist, value_col=self.value_col)
+                        values.append(pred)
+                    p, p_prev = (c * 100) // total, -1
+                    if p != p_prev:
+                        print(f'---> processing ... {p}%\r', end="")
+                        p_prev = p
+                preds.append(np.array(values) if values else np.array([-99.]))
+                return preds
+
+        locations = np.split(self.locations.index, 4)
+        predictions = []
+        with ThreadPoolExecutor() as tpe:
+            # issue tasks and report results
+            futures = []
+            for loc in locations:
+                # futures += [tpe.submit(self.compute_predictions, loc, predictions, exp_dist, total)]
+                futures += [tpe.submit(compute_predictions, loc)]
+
+            for future in futures:
+                r = future.result()
+                predictions.append(r)
+
+        # for i in range(len(locations)):
+        #    self.compute_predictions(deque(locations[i]), predictions, exp_dist, total)
+        print(predictions)
+        return Reduction(predictions, mean, percentile)
+
+    def predict_old(self, mean=True, percentile=50, exp_dist=1):
+        print('Creating Predictions...')
         predictions = []
 
         total = len(self.locations.index) * len(self.forest.trees)
-        print(f"---> total interpolations ({len(self.locations.index)} [locations] x {len(self.forest.trees)} [partitions]): {total}")
+        print(
+            f"---> total interpolations ({len(self.locations.index)} [locations] x {len(self.forest.trees)} [partitions]): {total}")
 
         points = self.locations[['X', 'Y']].values
         c = 0

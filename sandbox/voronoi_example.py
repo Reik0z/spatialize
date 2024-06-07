@@ -1,8 +1,10 @@
+from multiprocessing import freeze_support
+
 import pandas as pd
 import time
 from voronoi.ensemble import EnsembleIDW
 
-trees = 5
+trees = 1
 alpha = 0.7
 
 nugg_case = 'nugg0.1'
@@ -13,7 +15,6 @@ grid = data_sim[['X', 'Y']]
 col_sim = 'sim1'
 case_list = ['5perc']
 
-
 s = time.time()
 file_samples = f'sim_data_{nugg_case}_{case_list[0]}.csv'
 data_samples = pd.read_csv(file_samples)
@@ -22,10 +23,10 @@ samples = data_samples[['X', 'Y', col_sim]]
 esi = EnsembleIDW(trees, alpha, samples, grid, value_col=col_sim)
 result = esi.predict()
 
-grid_result = grid.copy()
-est_col = 'esi_original_' + col_sim
-grid_result[est_col] = result.estimates
-
-out_filename = f'esi_voronoi_{nugg_case}_{str(alpha)}_{str(trees)}_{case_list[0]}.csv'
-grid_result.to_csv(out_filename, index=False)
+# grid_result = grid.copy()
+# est_col = 'esi_original_' + col_sim
+# grid_result[est_col] = result.estimates
+#
+# out_filename = f'esi_voronoi_{nugg_case}_{str(alpha)}_{str(trees)}_{case_list[0]}.csv'
+# grid_result.to_csv(out_filename, index=False)
 print(f"elapsed time: {time.time() - s:.2f}")
