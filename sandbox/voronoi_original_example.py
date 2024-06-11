@@ -20,7 +20,7 @@ for case in case_list:
     samples = data_samples[['X', 'Y', col_sim]]
 
     esi = EnsembleIDW(trees, alpha, samples, grid, value_col=col_sim)
-    result = esi.predict()
+    result = esi.predict_thread_pool()
 
     grid_result = grid.copy()
     est_col = 'esi_original_' + col_sim

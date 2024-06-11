@@ -1,8 +1,13 @@
 import multiprocessing
+import sys
 from collections import deque
 from concurrent.futures import ThreadPoolExecutor
 import time
 from multiprocessing import Pool
+
+import pandas as pd
+from dask.dataframe import from_pandas
+from dask.distributed import Client
 
 import numpy as np
 from .voronoi import VoronoiForest
@@ -40,6 +45,52 @@ class EnsembleIDW:
         self.ensemble = [Partition(tree, samples) for tree in self.forest.trees]
 
     def predict(self, mean=True, percentile=50, exp_dist=1):
+        print('Creating Predictions...')
+
+        total = len(self.locations.index) * len(self.forest.trees)
+        print(
+            f"---> total interpolations ({len(self.locations.index)} [locations] x {len(self.forest.trees)} [partitions]): {total}")
+
+        points = self.locations[['X', 'Y']].values
+
+        def compute_predictions(locations):
+            # c = 0
+            preds = self.locations[self.locations.index.isin(locations)]
+            preds.loc[:, "pred"] = -99
+            trees = deque(list(enumerate(self.forest.trees)))
+            for location in locations:
+                point = points[location]
+                for tree_idx, tree in trees:
+                    # c += 1
+                    nucleus_index = tree.loc_indexes[location]
+                    neighbors = self.ensemble[tree_idx].data[nucleus_index]
+                    if not neighbors.empty:
+                        pred = idw_interpolation(point, neighbors, exp_dist, value_col=self.value_col)
+                        try:
+                            preds.loc[location, "pred"] = pred
+                        except KeyError:
+                            pass
+                    # p, p_prev = (c * 100) // total, -1
+                    # if p != p_prev:
+                    #     print(f'---> processing ... {p}%\r', end="")
+                    #     p_prev = p
+            return preds
+
+        client = Client()
+
+        workers = multiprocessing.cpu_count()
+        print(f"workers: {workers}")
+        locations = np.split(self.locations.index, workers)
+
+        futures = client.map(compute_predictions, locations)
+        results = client.gather(futures)
+        computations = pd.concat(results).sort_index()
+
+        print(computations.head())
+
+        return Reduction(computations[['pred']].values, mean, percentile)
+
+    def predict_thread_pool(self, mean=True, percentile=50, exp_dist=1):
         print('Creating Predictions...')
 
         total = len(self.locations.index) * len(self.forest.trees)
