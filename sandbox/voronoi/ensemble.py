@@ -6,6 +6,8 @@ import time
 from multiprocessing import Pool
 
 import pandas as pd
+pd.options.mode.chained_assignment = None
+
 from dask.dataframe import from_pandas
 from dask.distributed import Client
 
@@ -79,7 +81,9 @@ class EnsembleIDW:
         client = Client()
 
         workers = multiprocessing.cpu_count()
-        print(f"workers: {workers}")
+        print(f"num of cpu's: {workers}")
+        client.cluster.scale(workers)
+
         locations = np.split(self.locations.index, workers)
 
         futures = client.map(compute_predictions, locations)

@@ -203,3 +203,6 @@ build/
 .DS_Store
 dist/
 test/testdata/output/
+
+#Dask locks
+*.lock
