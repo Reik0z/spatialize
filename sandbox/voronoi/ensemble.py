@@ -33,7 +33,7 @@ class PartitionOptimize:
 
 
 class EnsembleIDW:
-    def __init__(self, size, alpha, samples, locations, value_col='grade'):
+    def __init__(self, size, alpha, samples, locations, value_col='grade', callback=lambda x: x):
         #self.size = size
         #self.alpha = alpha
         self.samples = samples
@@ -78,9 +78,10 @@ class EnsembleIDW:
                     #     p_prev = p
             return preds
 
-        client = Client()
-
         workers = multiprocessing.cpu_count()
+        client = Client(n_workers=workers, threads_per_worker=2)
+
+
         print(f"num of cpu's: {workers}")
         client.cluster.scale(workers)
 
