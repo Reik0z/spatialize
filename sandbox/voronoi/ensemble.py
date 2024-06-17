@@ -6,6 +6,9 @@ import time
 from multiprocessing import Pool
 
 import pandas as pd
+
+from . import logging
+
 pd.options.mode.chained_assignment = None
 
 from dask.dataframe import from_pandas
@@ -34,6 +37,7 @@ class PartitionOptimize:
 
 class EnsembleIDW:
     def __init__(self, size, alpha, samples, locations, value_col='grade', callback=lambda x: x):
+        self.callback = callback
         #self.size = size
         #self.alpha = alpha
         self.samples = samples
@@ -50,20 +54,22 @@ class EnsembleIDW:
         print('Creating Predictions...')
 
         total = len(self.locations.index) * len(self.forest.trees)
+        workers = multiprocessing.cpu_count()
+
         print(
             f"---> total interpolations ({len(self.locations.index)} [locations] x {len(self.forest.trees)} [partitions]): {total}")
+
+        self.callback(logging.progress.init(total, workers))
 
         points = self.locations[['X', 'Y']].values
 
         def compute_predictions(locations):
-            # c = 0
             preds = self.locations[self.locations.index.isin(locations)]
             preds.loc[:, "pred"] = -99
             trees = deque(list(enumerate(self.forest.trees)))
             for location in locations:
                 point = points[location]
                 for tree_idx, tree in trees:
-                    # c += 1
                     nucleus_index = tree.loc_indexes[location]
                     neighbors = self.ensemble[tree_idx].data[nucleus_index]
                     if not neighbors.empty:
@@ -72,15 +78,11 @@ class EnsembleIDW:
                             preds.loc[location, "pred"] = pred
                         except KeyError:
                             pass
-                    # p, p_prev = (c * 100) // total, -1
-                    # if p != p_prev:
-                    #     print(f'---> processing ... {p}%\r', end="")
-                    #     p_prev = p
+                        self.callback(logging.progress.inform())
             return preds
 
-        workers = multiprocessing.cpu_count()
-        client = Client(n_workers=workers, threads_per_worker=2)
 
+        client = Client(n_workers=workers, threads_per_worker=2)
 
         print(f"num of cpu's: {workers}")
         client.cluster.scale(workers)
@@ -91,58 +93,11 @@ class EnsembleIDW:
         results = client.gather(futures)
         computations = pd.concat(results).sort_index()
 
+        self.callback(logging.progress.stop())
+
         print(computations.head())
 
         return Reduction(computations[['pred']].values, mean, percentile)
-
-    def predict_thread_pool(self, mean=True, percentile=50, exp_dist=1):
-        print('Creating Predictions...')
-
-        total = len(self.locations.index) * len(self.forest.trees)
-        print(
-            f"---> total interpolations ({len(self.locations.index)} [locations] x {len(self.forest.trees)} [partitions]): {total}")
-
-        points = self.locations[['X', 'Y']].values
-
-        def compute_predictions(locations):
-            preds = []
-            # c = 0
-            trees = deque(list(enumerate(self.forest.trees)))
-            for location in locations:
-                point = points[location]
-                values = []
-                for tree_idx, tree in trees:
-                    # c += 1
-                    nucleus_index = tree.loc_indexes[location]
-                    neighbors = self.ensemble[tree_idx].data[nucleus_index]
-                    if not neighbors.empty:
-                        pred = idw_interpolation(point, neighbors, exp_dist, value_col=self.value_col)
-                        values.append(pred)
-                    # p, p_prev = (c * 100) // total, -1
-                    # if p != p_prev:
-                    #     print(f'---> processing ... {p}%\r', end="")
-                    #     p_prev = p
-                # preds.append(np.array(values) if values else np.array([-99.]))
-                preds.append(values[0] if values else -99.)
-            return preds
-
-        workers = multiprocessing.cpu_count()
-        print(f"workers: {workers}")
-        locations = np.split(self.locations.index, workers)
-
-        s = time.time()
-        with ThreadPoolExecutor(max_workers=workers) as tpe:
-            # issue tasks and report results
-            futures = []
-            for loc in locations:
-                futures += [tpe.submit(compute_predictions, loc)]
-        print(f"*** elapsed time: {time.time() - s:.2f}")
-        predictions = []
-        for future in futures:
-            predictions += future.result()
-
-        # print(predictions)
-        return Reduction(predictions, mean, percentile)
 
     def predict_old(self, mean=True, percentile=50, exp_dist=1):
         print('Creating Predictions...')
