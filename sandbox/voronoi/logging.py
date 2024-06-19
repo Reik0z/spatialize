@@ -1,3 +1,9 @@
+import logging
+from rich.logging import RichHandler
+from rich.progress import Progress
+from tqdm.auto import tqdm
+
+
 class progress:
     init = "init"
     step = "step"
@@ -19,11 +25,17 @@ class progress:
         return {cls.prog: {cls.token: value}}
 
 
-class AsyncProgressBar:
+class AsyncProgressHandler:
     def __init__(self):
         self.total = None
         self.step = None
         self._reset()
+
+    def _done(self):
+        raise NotImplemented
+
+    def _update(self):
+        raise NotImplemented
 
     def __call__(self, msg):
         if not self._pass_protocol(msg):
@@ -34,8 +46,9 @@ class AsyncProgressBar:
             if progress.token in msg[progress.prog]:
                 # no need to process the incoming value
                 self._increment()
-                self._print()
+                self._update()
         if msg[progress.prog] == progress.done:
+            self._done()
             self._reset()
 
     def _init(self, total, step):
@@ -44,36 +57,69 @@ class AsyncProgressBar:
 
     def _reset(self):
         self.count = 0
+        self.p = 0
         self.p_prev = -1
-
-        print()
-        print("done")
 
     def _increment(self):
         self.count += self.step
-
-    def _print(self):
-        try:
-            p = (self.count * 100) // self.total
-            if p > self.p_prev:
-                print(f'processing {p}% out of {self.total} ...\r', end="")
-                self.p_prev = p
-        finally:
-            pass
-
 
     @staticmethod
     def _pass_protocol(msg):
         return isinstance(msg, dict) and progress.prog in msg
 
+    def _update(self):
+        try:
+            self.p = self.count / self.total
+            if self.p > self.p_prev:
+                self.p_prev = self.p
+        finally:
+            pass
 
-class logger:
-    trace = "t"
-    debug = "d"
-    info = "i"
-    warn = "w"
-    error = "e"
-    fatal = "f"
 
-    def log(self, level, msg):
-        pass
+class AsyncProgressCounter(AsyncProgressHandler):
+    def _done(self):
+        print()
+        print("done")
+
+    def _update(self):
+        super()._update()
+        tqdm.write(f'finished {int(self.p * 100)}% of {self.total} interpolations ... \r', end="")
+
+
+class AsyncProgressBar(AsyncProgressHandler):
+
+    def _init(self, total, step):
+        super()._init(total, step)
+        self.pbar = tqdm(total=total, desc="finished", bar_format='{l_bar}{bar:20}{r_bar}{bar:-20b}')
+        # self.pbar = Progress()
+        # self.task = self.pbar.add_task("finished", total=total)
+        # self.pbar.start_task(self.task)
+        # self.pbar.start()
+
+    def _done(self):
+        self.pbar.close()
+        # self.pbar.start_task(self.task)
+        # self.pbar.stop()
+
+    def _update(self):
+        super()._update()
+        self.pbar.update()
+        # self.pbar.update(self.task, advance=self.p)
+        # self.pbar.refresh()
+
+
+FORMAT = "%(message)s"
+logging.basicConfig(
+    level="INFO", format=FORMAT, datefmt="[%X]", handlers=[RichHandler()]
+)
+
+log = logging.getLogger("rich")
+
+
+class level:
+    trace = "TRACE"
+    debug = "DEBUG"
+    info = "INFO"
+    warn = "WARNING"
+    error = "ERROR"
+    fatal = "FATAL"

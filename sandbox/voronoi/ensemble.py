@@ -1,10 +1,5 @@
 import multiprocessing
-import sys
 from collections import deque
-from concurrent.futures import ThreadPoolExecutor
-import time
-from multiprocessing import Pool
-
 import pandas as pd
 
 from . import logging
@@ -50,8 +45,10 @@ class EnsembleIDW:
         print('Creating Partitions...')
         self.ensemble = [Partition(tree, samples) for tree in self.forest.trees]
 
+        self.log = logging.log
+
     def predict(self, mean=True, percentile=50, exp_dist=1):
-        print('Creating Predictions...')
+        self.log.info('Creating Predictions...')
 
         total = len(self.locations.index) * len(self.forest.trees)
         workers = multiprocessing.cpu_count()
@@ -81,7 +78,6 @@ class EnsembleIDW:
                         self.callback(logging.progress.inform())
             return preds
 
-
         client = Client(n_workers=workers, threads_per_worker=2)
 
         print(f"num of cpu's: {workers}")
@@ -95,8 +91,6 @@ class EnsembleIDW:
 
         self.callback(logging.progress.stop())
 
-        print(computations.head())
-
         return Reduction(computations[['pred']].values, mean, percentile)
 
     def predict_old(self, mean=True, percentile=50, exp_dist=1):
@@ -106,6 +100,8 @@ class EnsembleIDW:
         total = len(self.locations.index) * len(self.forest.trees)
         print(
             f"---> total interpolations ({len(self.locations.index)} [locations] x {len(self.forest.trees)} [partitions]): {total}")
+
+        self.callback(logging.progress.init(total))
 
         points = self.locations[['X', 'Y']].values
         c = 0
@@ -120,12 +116,9 @@ class EnsembleIDW:
                 if not neighbors.empty:
                     pred = idw_interpolation(point, neighbors, exp_dist, value_col=self.value_col)
                     values.append(pred)
-                p, p_prev = (c * 100) // total, -1
-                if p != p_prev:
-                    print(f'---> processing ... {p}%\r', end="")
-                    p_prev = p
+                    self.callback(logging.progress.inform())
             predictions.append(np.array(values) if values else np.array([-99.]))
-        print(len(predictions))
+        self.callback(logging.progress.stop())
         return Reduction(predictions, mean, percentile)
 
     def cross_validation(self, mean=True, percentile=50, exp_dist=1):

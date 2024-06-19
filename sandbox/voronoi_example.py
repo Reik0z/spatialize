@@ -3,7 +3,7 @@ from multiprocessing import freeze_support
 import pandas as pd
 import time
 from voronoi.ensemble import EnsembleIDW
-from voronoi.logging import AsyncProgressBar
+from voronoi.logging import AsyncProgressCounter, AsyncProgressBar
 
 
 def main():
@@ -25,7 +25,7 @@ def main():
 
     esi = EnsembleIDW(trees, alpha, samples, grid, value_col=col_sim, callback=AsyncProgressBar())
     s2 = time.time()
-    result = esi.predict()
+    result = esi.predict_old()
     print(f"prediction elapsed time: {time.time() - s2:.2f}s")
 
     grid_result = grid.copy()
@@ -38,5 +38,5 @@ def main():
 
 
 if __name__ == '__main__':
-    freeze_support()
+    # freeze_support()
     main()
