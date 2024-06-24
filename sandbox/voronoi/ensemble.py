@@ -1,17 +1,15 @@
 import multiprocessing
-from collections import deque
 import pandas as pd
+import numpy as np
 
+from dask.distributed import Client
+from collections import deque
+
+from .voronoi import VoronoiForest
+from .interpolations import idw_anisotropic_interpolation, optim_anisotropic_idw, idw_interpolation
 from . import logging
 
 pd.options.mode.chained_assignment = None
-
-from dask.dataframe import from_pandas
-from dask.distributed import Client
-
-import numpy as np
-from .voronoi import VoronoiForest
-from .interpolations import idw_anisotropic_interpolation, optim_anisotropic_idw, idw_interpolation
 
 
 class Partition:
@@ -40,21 +38,22 @@ class EnsembleIDW:
         lamda = alpha * 40
         assert lamda > 1
         self.value_col = value_col
-        print('Creating Voronoi Forest...')
+
+        self.callback(logging.logger.info('creating voronoi forest ...'))
         self.forest = VoronoiForest(samples, locations, size, lamda)
-        print('Creating Partitions...')
+
+        self.callback(logging.logger.info('creating partitions ...'))
         self.ensemble = [Partition(tree, samples) for tree in self.forest.trees]
 
-        self.log = logging.log
-
     def predict(self, mean=True, percentile=50, exp_dist=1):
-        self.log.info('Creating Predictions...')
+        self.callback(logging.logger.info('creating predictions ...'))
 
         total = len(self.locations.index) * len(self.forest.trees)
         workers = multiprocessing.cpu_count()
+        self.callback(logging.logger.debug(f"num of cores found: {workers}"))
 
-        print(
-            f"---> total interpolations ({len(self.locations.index)} [locations] x {len(self.forest.trees)} [partitions]): {total}")
+        msg = f"---> total interpolations ({len(self.locations.index)} [locations] x {len(self.forest.trees)} [partitions]): {total}"
+        self.callback(logging.logger.debug(msg))
 
         self.callback(logging.progress.init(total, workers))
 
@@ -79,8 +78,6 @@ class EnsembleIDW:
             return preds
 
         client = Client(n_workers=workers, threads_per_worker=2)
-
-        print(f"num of cpu's: {workers}")
         client.cluster.scale(workers)
 
         locations = np.split(self.locations.index, workers)

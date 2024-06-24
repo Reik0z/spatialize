@@ -1,13 +1,18 @@
+import logging
 from multiprocessing import freeze_support
 
 import pandas as pd
 import time
 from voronoi.ensemble import EnsembleIDW
-from voronoi.logging import AsyncProgressCounter, AsyncProgressBar
+from voronoi.logging import AsyncProgressCounter, AsyncProgressBar, LogMessage, MessageHandler
+
+from voronoi import logging
 
 
 def main():
-    trees = 1
+    logging.log.setLevel("INFO")
+
+    trees = 50
     alpha = 0.7
 
     nugg_case = 'nugg0.1'
@@ -23,9 +28,12 @@ def main():
     data_samples = pd.read_csv(file_samples)
     samples = data_samples[['X', 'Y', col_sim]]
 
-    esi = EnsembleIDW(trees, alpha, samples, grid, value_col=col_sim, callback=AsyncProgressBar())
+    esi = EnsembleIDW(trees, alpha, samples, grid, value_col=col_sim,
+                      callback=MessageHandler(LogMessage(), AsyncProgressCounter()))
+                      # callback=AsyncProgressCounter())
+
     s2 = time.time()
-    result = esi.predict_old()
+    result = esi.predict()
     print(f"prediction elapsed time: {time.time() - s2:.2f}s")
 
     grid_result = grid.copy()
