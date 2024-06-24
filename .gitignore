@@ -206,3 +206,4 @@ test/testdata/output/
 
 #Dask locks
 *.lock
+*.dirlock

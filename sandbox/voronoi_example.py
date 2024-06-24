@@ -1,12 +1,11 @@
 import logging
-from multiprocessing import freeze_support
 
 import pandas as pd
 import time
 from voronoi.ensemble import EnsembleIDW
-from voronoi.logging import AsyncProgressCounter, AsyncProgressBar, LogMessage, MessageHandler
+from spatialize.logging import AsyncProgressCounter, LogMessage, MessageHandler
 
-from voronoi import logging
+from spatialize import logging
 
 
 def main():

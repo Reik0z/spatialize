@@ -7,7 +7,7 @@ from collections import deque
 
 from .voronoi import VoronoiForest
 from .interpolations import idw_anisotropic_interpolation, optim_anisotropic_idw, idw_interpolation
-from . import logging
+from spatialize import logging
 
 pd.options.mode.chained_assignment = None
 

@@ -187,19 +187,11 @@ class AsyncProgressBar(AsyncProgressHandler):
     def _init(self, total, step):
         super()._init(total, step)
         self.pbar = tqdm(total=total, desc="finished", bar_format='{l_bar}{bar:20}{r_bar}{bar:-20b}')
-        # self.pbar = Progress()
-        # self.task = self.pbar.add_task("finished", total=total)
-        # self.pbar.start_task(self.task)
-        # self.pbar.start()
 
     def _done(self):
         self.pbar.close()
-        # self.pbar.start_task(self.task)
-        # self.pbar.stop()
 
     def _update(self):
         super()._update()
         self.pbar.update()
-        # self.pbar.update(self.task, advance=self.p)
-        # self.pbar.refresh()
 # **************************++++++++++++++++++++++++++++++++++++++++++++++++++++++++
