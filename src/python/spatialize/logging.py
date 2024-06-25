@@ -16,6 +16,21 @@ log = logging.getLogger("rich")
 
 
 # ************************************ PROTOCOL ************************************
+# Messages for logging:
+#
+#   {"message": {"text": "<the log text>", "level": "<DEBUG|INFO|WARNING|ERROR|CRITICAL>"}
+#
+# Messages for showing progress:
+#
+#  1. To start a new progress counting:
+#   {"progress": {"init": <total expected count>, "step": <increment step>}
+#
+#  2. To inform during a progress counting
+#   {"progress": {"token": <value>}
+#
+#  3. To finish a progress counting
+#   {"progress": "done"}
+# **********************************************************************************
 class level:
     debug = "DEBUG"
     info = "INFO"
