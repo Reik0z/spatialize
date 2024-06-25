@@ -1,7 +1,8 @@
 import libspatialize as lsp
 import libspatialite as lsplt
-from spatialize import SpatializeError
+from spatialize import SpatializeError, logging
 from spatialize._util import in_notebook
+from spatialize.logging import log_message
 
 # backend constants
 SQLITE_BACKEND = "lite"
@@ -80,7 +81,7 @@ class LibSpatializeFacade:
             raise SpatializeError(f"Operation '{operation}' not supported for '{operator}' and "
                                   f"{str(d).upper()}-D data")
 
-        print(operator, operation)
+        log_message(logging.logger.debug(f"esi operation: {operation}; local operator: {operator}"))
         return LibSpatializeFacade.esi_hash_map[d][operator][operation]
 
     @classmethod
@@ -91,10 +92,10 @@ class LibSpatializeFacade:
     def raw_operator(cls, base_interpolator, backend):
         if backend is None:  # setting the backend automatically
             if in_notebook():  # and base_interpolator in set(["idw", "kriging"]):
-                print("in notebook ...")
+                log_message(logging.logger.debug("context: in notebook"))
                 return base_interpolator + SQLITE_BACKEND
             else:
-                print("out of notebook ...")
+                log_message(logging.logger.debug("context: out of notebook"))
                 return base_interpolator
 
         if backend == LibSpatializeFacade.BackendOptions.IN_MEMORY:

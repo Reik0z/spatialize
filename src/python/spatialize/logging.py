@@ -1,3 +1,4 @@
+import json
 import logging
 import os
 
@@ -18,15 +19,15 @@ log = logging.getLogger("rich")
 # ************************************ PROTOCOL ************************************
 # Messages for logging:
 #
-#   {"message": {"text": "<the log text>", "level": "<DEBUG|INFO|WARNING|ERROR|CRITICAL>"}
+#   {"message": {"text": "<the log text>", "level": "<DEBUG|INFO|WARNING|ERROR|CRITICAL>"}}
 #
 # Messages for showing progress:
 #
 #  1. To start a new progress counting:
-#   {"progress": {"init": <total expected count>, "step": <increment step>}
+#   {"progress": {"init": <total expected count>, "step": <increment step>}}
 #
 #  2. To inform during a progress counting
-#   {"progress": {"token": <value>}
+#   {"progress": {"token": <value>}}
 #
 #  3. To finish a progress counting
 #   {"progress": "done"}
@@ -89,13 +90,12 @@ class progress:
 # **************************++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 # ********************************* HANDLERS ***************************************
 class MessageHandler:
-    def __init__(self, log_handler, progress_handler):
-        self.log_handler = log_handler
-        self.progress_handler = progress_handler
+    def __init__(self, callbacks):
+        self.callbacks = callbacks
 
     def __call__(self, msg):
-        self.log_handler(msg)
-        self.progress_handler(msg)
+        for callback in self.callbacks:
+            callback(msg)
 
 
 class LogMessage:
@@ -132,6 +132,9 @@ class LogMessage:
         return isinstance(msg, dict) and logger.message in msg
 
 
+log_message = LogMessage()  # to use it in the plain python code
+
+
 class AsyncProgressHandler:
     def __init__(self):
         self.total = None
@@ -145,16 +148,20 @@ class AsyncProgressHandler:
         raise NotImplemented
 
     def __call__(self, msg):
-        if not self._pass_protocol(msg):
+        try:
+            m = self._pass_protocol(msg)
+        except:
             return
-        if isinstance(msg[progress.prog], dict):
-            if progress.init in msg[progress.prog]:
-                self._init(msg[progress.prog][progress.init], msg[progress.prog][progress.step])
-            if progress.token in msg[progress.prog]:
+        # print(type(m), m)
+        if isinstance(m[progress.prog], dict):
+            if progress.init in m[progress.prog]:
+                print(m)
+                self._init(m[progress.prog][progress.init], m[progress.prog][progress.step])
+            if progress.token in m[progress.prog]:
                 # no need to process the incoming value
                 self._increment()
                 self._update()
-        if msg[progress.prog] == progress.done:
+        if m[progress.prog] == progress.done:
             self._done()
             self._reset()
 
@@ -173,7 +180,12 @@ class AsyncProgressHandler:
 
     @staticmethod
     def _pass_protocol(msg):
-        return isinstance(msg, dict) and progress.prog in msg
+        m = msg
+        if isinstance(msg, str):
+            m = json.loads(msg)
+        if isinstance(m, dict) and progress.prog in m:
+            return m
+        raise TypeError
 
     def _update(self):
         try:

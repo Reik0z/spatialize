@@ -28,7 +28,7 @@ def main():
     samples = data_samples[['X', 'Y', col_sim]]
 
     esi = EnsembleIDW(trees, alpha, samples, grid, value_col=col_sim,
-                      callback=MessageHandler(LogMessage(), AsyncProgressCounter()))
+                      callback=MessageHandler([LogMessage(), AsyncProgressCounter()]))
                       # callback=AsyncProgressCounter())
 
     s2 = time.time()

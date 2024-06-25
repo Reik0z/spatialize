@@ -348,6 +348,11 @@ namespace sptlz{
 				std::vector<std::vector<int>> locations_by_leaf;
 				int aux, n = mondrian_forest.size();
 
+				// {"progress": {"init": <total expected count>, "step": <increment step>}}
+				json.str("");
+				json << "{\"progress\": { \"init\":" << n << ", \"step\":" << 1 <<"}}";
+				visitor(json.str());
+
 				for(int i=0; i<n; i++){
 					// get tree
 					auto mt = mondrian_forest.at(i);
@@ -372,10 +377,16 @@ namespace sptlz{
 							}
 						}
 					}
+					// {"progress": {"token": <value>}}
 					json.str("");
-					json << "{\"percentage\": " << 100.0*(i+1.0)/n << "}";
+					json << "{\"progress\": {\"token\":" << 100.0*(i+1.0)/n << "}}";
 					visitor(json.str());
 				}
+
+				// {"progress": "done"}
+				json.str("");
+				json << "{\"progress\": \"done\"}";
+				visitor(json.str());
 				return(results);
 			}
 

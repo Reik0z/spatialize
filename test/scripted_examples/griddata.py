@@ -8,11 +8,16 @@ import holoviews as hv
 
 import spatialize.gs.esi.aggfunction as af
 import spatialize.gs.esi.precfunction as pf
+from spatialize import logging
 from spatialize.gs import LibSpatializeFacade
 from spatialize.gs.esi import esi_griddata
 from scipy.interpolate import griddata
 
 hv.extension('matplotlib')
+
+import spatialize.logging
+
+logging.log.setLevel("DEBUG")
 
 
 def func(x, y):  # a kind of "cubic" function
@@ -37,14 +42,8 @@ ds2 = xr.DataArray(grid_z2.T)
 
 w, h = 500, 600
 
-
-def progress(s):
-    print(f'processing ... {int(float(s.split()[1][:-1]))}%\r', end="")
-
-
 grid_z3, grid_z3p = esi_griddata(points, values, (grid_x, grid_y),
                                  base_interpolator="idw",
-                                 callback=progress,
                                  exponent=1.0,
                                  n_partitions=500, alpha=0.95,
                                  agg_function=af.median,

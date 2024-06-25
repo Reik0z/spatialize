@@ -5,17 +5,16 @@ from multiprocessing import Pool
 import numpy as np
 from sklearn.model_selection import ParameterGrid
 
-from spatialize import SpatializeError
+from spatialize import SpatializeError, logging
 import spatialize.gs.esi.aggfunction as af
 import spatialize.gs.esi.precfunction as pf
 from spatialize._util import signature_overload, flatten_grid_data, get_progress_bar, in_notebook
 from spatialize.gs import LibSpatializeFacade
+from spatialize.logging import MessageHandler, LogMessage, AsyncProgressCounter, log_message
 
 
-def default_callback(self):
-    pass
-
-
+def default_callback(msg):
+    return MessageHandler([LogMessage(), AsyncProgressCounter()])(msg)
 
 # ============================================= PUBLIC API ==========================================================
 @signature_overload(pivot_arg=("base_interpolator", "idw", "base interpolator"),
@@ -38,7 +37,7 @@ def default_callback(self):
                                     "range": [10.0, 50.0, 100.0, 200.0]}
                     })
 def esi_hparams_search(points, values, xi, **kwargs):
-    print(f'backend: {"auto" if kwargs["backend"] is None else kwargs["backend"]}')
+    log_message(logging.logger.info(f'backend: {"auto" if kwargs["backend"] is None else kwargs["backend"]}'))
 
     method, k = "kfold", kwargs["k"]
     if k == points.shape[0] or k == -1:
@@ -136,7 +135,7 @@ def esi_nongriddata(points, values, xi, **kwargs):
                         "kriging": {"model": 1, "nugget": 0.1, "range": 5000.0}
                     })
 def _call_libspatialize(points, values, xi, **kwargs):
-    print(f'backend: {"auto" if kwargs["backend"] is None else kwargs["backend"]}')
+    log_message(logging.logger.info(f'backend: {"auto" if kwargs["backend"] is None else kwargs["backend"]}'))
 
     # get the estimator function
     estimate = LibSpatializeFacade.get_operator(points, kwargs["base_interpolator"], "estimate", kwargs["backend"])
@@ -180,10 +179,10 @@ def build_arg_list(points, values, xi, nonpos_args):
 
         if nonpos_args["backend"] is None:  # setting the backend automatically
             if in_notebook():
-                print(f'cache path: {cache_path}')
+                log_message(logging.logger.debug(f'cache path: {cache_path}'))
                 l_args.insert(0, cache_path)
         else:
-            print(f'cache path: {cache_path}')
+            log_message(logging.logger.debug(f'cache path: {cache_path}'))
             l_args.insert(0, cache_path)
 
     return l_args
