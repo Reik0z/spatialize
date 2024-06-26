@@ -2,7 +2,7 @@
 1 [] Add ESI-Voronoi
 2.[] Add plain IDW (already implemented in C++)
 3.[√] Create/improve protocol for communicating C++/GPU libraries with python
-4.[] Improve progress bar in all methods
+4.[] Implement progress bar in all methods using some queue manager (e.g.: PySiQ)
 5.[] Add GPU methods (not yet implemented) to python API
 6.[] Improve design for custom agg functions and precision
 7.[√] Improve logging system

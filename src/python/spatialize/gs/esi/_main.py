@@ -8,7 +8,8 @@ from sklearn.model_selection import ParameterGrid
 from spatialize import SpatializeError, logging
 import spatialize.gs.esi.aggfunction as af
 import spatialize.gs.esi.precfunction as pf
-from spatialize._util import signature_overload, flatten_grid_data, get_progress_bar, in_notebook
+from spatialize._util import signature_overload, get_progress_bar, in_notebook
+from spatialize._math_util import flatten_grid_data
 from spatialize.gs import LibSpatializeFacade
 from spatialize.logging import MessageHandler, LogMessage, AsyncProgressCounter, log_message, \
     SingletonAsyncProgressCounter

@@ -348,6 +348,11 @@ namespace sptlz{
 				std::vector<std::vector<int>> locations_by_leaf;
 				int aux, n = mondrian_forest.size();
 
+				// {"message": {"text": "<the log text>", "level": "<DEBUG|INFO|WARNING|ERROR|CRITICAL>"}}
+				json.str("");
+				json << "{\"message\": { \"text\":\"" << "[C++|ESI->estimate] computing estimates" << "\", \"level\":\"" << "DEBUG" <<"\"}}";
+				visitor(json.str());
+
 				// {"progress": {"init": <total expected count>, "step": <increment step>}}
 				json.str("");
 				json << "{\"progress\": { \"init\":" << n << ", \"step\":" << 1 <<"}}";

@@ -1,9 +1,13 @@
 import json
 import logging
 import os
+import time
 
+import numpy as np
 from rich.logging import RichHandler
 from tqdm.auto import tqdm
+
+from spatialize._util import SingletonType
 
 FORMAT = "%(message)s"
 logging.basicConfig(
@@ -98,7 +102,7 @@ class MessageHandler:
             callback(msg)
 
 
-class LogMessage:
+class LogMessage:  # callback function
 
     def __init__(self):
         pass
@@ -106,11 +110,13 @@ class LogMessage:
     def __call__(self, msg):
         global log
 
-        if not self._pass_protocol(msg):
+        try:
+            m = self._pass_protocol(msg)
+        except:
             return
 
-        lev = msg[logger.message][logger.level]
-        text = msg[logger.message][logger.text]
+        lev = m[logger.message][logger.level]
+        text = m[logger.message][logger.text]
 
         if lev == level.debug:
             log.debug(text)
@@ -129,20 +135,21 @@ class LogMessage:
 
     @staticmethod
     def _pass_protocol(msg):
-        return isinstance(msg, dict) and logger.message in msg
+        m = msg
+        if isinstance(msg, str):
+            m = json.loads(msg)
+        if isinstance(m, dict) and logger.message in m:
+            return m
+        raise TypeError
 
 
 log_message = LogMessage()  # to use it in the plain python code
 
 
-class AsyncProgressHandler:
-    def __init__(self):
-        self.total = 0
-        self.step = 0
-        self._reset()
+class AsyncProgressHandler:  # callback function
 
     def _done(self):
-        raise NotImplemented
+        self.elapsed_time = time.time() - self.start_time
 
     def _update(self):
         raise NotImplemented
@@ -152,10 +159,11 @@ class AsyncProgressHandler:
             m = self._pass_protocol(msg)
         except:
             return
-        # print(type(m), m)
+
         if isinstance(m[progress.prog], dict):
             if progress.init_ in m[progress.prog]:
                 self._init(m[progress.prog][progress.init_], m[progress.prog][progress.step])
+                self._reset()
             if progress.token in m[progress.prog]:
                 # no need to process the incoming value
                 self._increment()
@@ -165,6 +173,7 @@ class AsyncProgressHandler:
             self._reset()
 
     def _init(self, total, step):
+        self.start_time = time.time()
         self.total = total
         self.step = step
 
@@ -197,10 +206,11 @@ class AsyncProgressHandler:
             pass
 
 
-class AsyncProgressCounter(AsyncProgressHandler):
+class AsyncProgressCounter(AsyncProgressHandler):  # callback function
     def _done(self):
+        super()._done()
         tqdm.write(os.linesep)
-        tqdm.write("done")
+        tqdm.write(f"done (elpased time: {np.round(self.elapsed_time, 2)}s)")
 
     def _update(self):
         super()._update()
@@ -208,17 +218,7 @@ class AsyncProgressCounter(AsyncProgressHandler):
             tqdm.write(f'finished {int(self.p)}% of {self.total} iterations ... \r', end="")
 
 
-class SingletonMeta(type):
-    _instances = {}
-
-    def __call__(cls, *args, **kwargs):
-        if cls not in cls._instances:
-            instance = super().__call__(*args, **kwargs)
-            cls._instances[cls] = instance
-        return cls._instances[cls]
-
-
-class SingletonAsyncProgressCounter(AsyncProgressCounter, metaclass=SingletonMeta):
+class SingletonAsyncProgressCounter(AsyncProgressCounter, metaclass=SingletonType):
     pass
 
 
