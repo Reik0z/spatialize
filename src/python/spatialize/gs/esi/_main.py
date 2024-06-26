@@ -10,11 +10,12 @@ import spatialize.gs.esi.aggfunction as af
 import spatialize.gs.esi.precfunction as pf
 from spatialize._util import signature_overload, flatten_grid_data, get_progress_bar, in_notebook
 from spatialize.gs import LibSpatializeFacade
-from spatialize.logging import MessageHandler, LogMessage, AsyncProgressCounter, log_message
+from spatialize.logging import MessageHandler, LogMessage, AsyncProgressCounter, log_message, \
+    SingletonAsyncProgressCounter
 
 
 def default_callback(msg):
-    return MessageHandler([LogMessage(), AsyncProgressCounter()])(msg)
+    return MessageHandler([LogMessage(), SingletonAsyncProgressCounter()])(msg)
 
 # ============================================= PUBLIC API ==========================================================
 @signature_overload(pivot_arg=("base_interpolator", "idw", "base interpolator"),

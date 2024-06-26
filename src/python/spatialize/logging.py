@@ -67,7 +67,7 @@ class logger:
 
 
 class progress:
-    init = "init"
+    init_ = "init"
     step = "step"
     token = "token"
     done = "done"
@@ -76,7 +76,7 @@ class progress:
 
     @classmethod
     def init(cls, total, increment_step=1):
-        return {cls.prog: {cls.init: total, cls.step: increment_step}}
+        return {cls.prog: {cls.init_: total, cls.step: increment_step}}
 
     @classmethod
     def stop(cls):
@@ -137,8 +137,8 @@ log_message = LogMessage()  # to use it in the plain python code
 
 class AsyncProgressHandler:
     def __init__(self):
-        self.total = None
-        self.step = None
+        self.total = 0
+        self.step = 0
         self._reset()
 
     def _done(self):
@@ -154,9 +154,8 @@ class AsyncProgressHandler:
             return
         # print(type(m), m)
         if isinstance(m[progress.prog], dict):
-            if progress.init in m[progress.prog]:
-                print(m)
-                self._init(m[progress.prog][progress.init], m[progress.prog][progress.step])
+            if progress.init_ in m[progress.prog]:
+                self._init(m[progress.prog][progress.init_], m[progress.prog][progress.step])
             if progress.token in m[progress.prog]:
                 # no need to process the incoming value
                 self._increment()
@@ -207,6 +206,20 @@ class AsyncProgressCounter(AsyncProgressHandler):
         super()._update()
         if self.ready_to_update:
             tqdm.write(f'finished {int(self.p)}% of {self.total} iterations ... \r', end="")
+
+
+class SingletonMeta(type):
+    _instances = {}
+
+    def __call__(cls, *args, **kwargs):
+        if cls not in cls._instances:
+            instance = super().__call__(*args, **kwargs)
+            cls._instances[cls] = instance
+        return cls._instances[cls]
+
+
+class SingletonAsyncProgressCounter(AsyncProgressCounter, metaclass=SingletonMeta):
+    pass
 
 
 class AsyncProgressBar(AsyncProgressHandler):
