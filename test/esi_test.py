@@ -21,7 +21,7 @@ def test_griddata_kriging():
     from spatialize.gs.esi import esi_griddata
 
     grid_z3, grid_z3p = esi_griddata(points, values, (grid_x, grid_y),
-                                     base_interpolator="idw",
+                                     local_interpolator="idw",
                                      n_partitions=100, alpha=0.99,
                                      exponent=7.0,
                                      agg_function=af.mean, prec_function=pf.mae_precision)
@@ -29,16 +29,16 @@ def test_griddata_kriging():
 
 class ESIModule(unittest.TestCase):
     def test_overload_decorator(self):
-        @signature_overload(pivot_arg=("base_interpolator", "idw", "base interpolator"),
+        @signature_overload(pivot_arg=("local_interpolator", "idw", "local interpolator"),
                             common_args={"m": 2},
                             specific_args={
                                 "idw": {"c": 7},
                                 "kriging": {"k": 100}
                             })
         def f(a, b, **kwargs):
-            if kwargs["base_interpolator"] == "idw":
+            if kwargs["local_interpolator"] == "idw":
                 extra = kwargs["c"]
-            if kwargs["base_interpolator"] == "kriging":
+            if kwargs["local_interpolator"] == "kriging":
                 extra = kwargs["k"]
 
             m = kwargs["m"]
@@ -49,35 +49,35 @@ class ESIModule(unittest.TestCase):
         self.assertEqual(r, 14)
 
         # take the default value for c (=7)
-        r = f(2, 3, base_interpolator="idw")
+        r = f(2, 3, local_interpolator="idw")
         self.assertEqual(r, 14)
 
         # modify the default value for c (=8)
-        r = f(2, 3, base_interpolator="idw", c=8)
+        r = f(2, 3, local_interpolator="idw", c=8)
         self.assertEqual(r, 15)
 
         # try an argument not in the context of idw
         try:
-            f(2, 4, base_interpolator="idw", d=5)
+            f(2, 4, local_interpolator="idw", d=5)
         except SpatializeError as e:
-            self.assertEqual(str(e), "Argument 'd' not recognized for 'idw' base interpolator")
+            self.assertEqual(str(e), "Argument 'd' not recognized for 'idw' local interpolator")
 
         # try an argument not in the context of kriging
         try:
-            f(2, 4, base_interpolator="kriging", c=5)
+            f(2, 4, local_interpolator="kriging", c=5)
         except SpatializeError as e:
-            self.assertEqual(str(e), "Argument 'c' not recognized for 'kriging' base interpolator")
+            self.assertEqual(str(e), "Argument 'c' not recognized for 'kriging' local interpolator")
 
-        r = f(2, 4, base_interpolator="kriging")
+        r = f(2, 4, local_interpolator="kriging")
         self.assertEqual(r, 108)
 
-        r = f(2, 4, base_interpolator="kriging", k=101)
+        r = f(2, 4, local_interpolator="kriging", k=101)
         self.assertEqual(r, 109)
 
         try:
-            f(2, 4, base_interpolator="rbf", k=101)
+            f(2, 4, local_interpolator="rbf", k=101)
         except SpatializeError as e:
-            self.assertEqual(str(e), "Base interpolator 'rbf' not supported")
+            self.assertEqual(str(e), "local interpolator 'rbf' not supported")
 
     def test_griddata(self):
         grid_x, grid_y = np.mgrid[0:1:100j, 0:1:200j]
@@ -91,14 +91,14 @@ class ESIModule(unittest.TestCase):
         from spatialize.gs.esi import esi_griddata
 
         _, _ = esi_griddata(points, values, (grid_x, grid_y),
-                            base_interpolator="idw",
+                            local_interpolator="idw",
                             callback=self.progress,
                             exponent=7.0,
                             n_partitions=100, alpha=0.97,
                             agg_function=af.mean, prec_function=pf.mae_precision)
 
         _, _ = esi_griddata(points, values, (grid_x, grid_y),
-                            base_interpolator="kriging",
+                            local_interpolator="kriging",
                             callback=self.progress,
                             model="cubic", nugget=0.1, range=5000.0,
                             n_partitions=100, alpha=0.97,
@@ -113,7 +113,7 @@ class ESIModule(unittest.TestCase):
 
         # from spatialize.gs.esi import esi_hparams_search
         # b_params = esi_hparams_search(points, values, (grid_x, grid_y),
-        #                               base_interpolator="kriging", griddata.py=True, k=10,
+        #                               local_interpolator="kriging", griddata.py=True, k=10,
         #                               alpha=(0.70, 0.65))
         # print(b_params)
 
@@ -122,12 +122,12 @@ class ESIModule(unittest.TestCase):
 
         # from spatialize.gs.esi import esi_hparams_search
         # b_params = esi_hparams_search(points, values, (grid_x, grid_y),
-        #                               base_interpolator="idw", griddata.py=True, k=10,
+        #                               local_interpolator="idw", griddata.py=True, k=10,
         #                               alpha=list(reversed((0.5, 0.6, 0.8, 0.9, 0.95))))
 
         # from spatialize.gs.esi import esi_hparams_search
         # b_params = esi_hparams_search(points, values, (grid_x, grid_y),
-        #                               base_interpolator="idw", griddata.py=True, k=10,
+        #                               local_interpolator="idw", griddata.py=True, k=10,
         #                               alpha=(0.985, 0.97, 0.95))
         # print(b_params)
 

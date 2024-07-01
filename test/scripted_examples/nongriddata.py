@@ -35,13 +35,13 @@ op_error_precision=pf.OpErrorPrecision(np.abs(np.min(values) - np.max(values)))
 
 
 b_params = esi_hparams_search(points, values, xi,
-                              base_interpolator="idw", griddata=False, k=10,
+                              local_interpolator="idw", griddata=False, k=10,
                               exponent=list(np.arange(1.0, 15.0, 1.0)),
                               alpha=(0.5, 0.6, 0.8, 0.9, 0.95))
 b_params
 
 grid_z4, grid_z4p = esi_nongriddata(points, values, xi,
-                                    base_interpolator="idw",
+                                    local_interpolator="idw",
                                     exponent=5.0,
                                     n_partitions=100, alpha=0.8,
                                     prec_function=op_error_precision)
@@ -54,7 +54,7 @@ fig += ds4p.hvplot.image(title="esi idw UQ", width=w, height=h * 2, xlabel='X', 
 hv.save(fig, 'nongridata_idw.png', dpi=144)
 
 b_params = esi_hparams_search(points, values, xi,
-                              base_interpolator="kriging", griddata=False, k=10,
+                              local_interpolator="kriging", griddata=False, k=10,
                               model=["spherical", "exponential", "cubic", "gaussian"],
                               nugget=[0.0, 0.5, 1.0],
                               range=[100.0, 500.0, 1000.0, 5000.0],
@@ -62,7 +62,7 @@ b_params = esi_hparams_search(points, values, xi,
 b_params
 
 grid_z4, grid_z4p = esi_nongriddata(points, values, xi,
-                                    base_interpolator="kriging",
+                                    local_interpolator="kriging",
                                     model="cubic", nugget=0.0, range=1000.0,
                                     n_partitions=100, alpha=0.93,
                                     agg_function=af.median, prec_function=op_error_precision)

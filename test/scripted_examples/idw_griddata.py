@@ -5,11 +5,14 @@ import hvplot.xarray  # noqa: adds hvplot methods to xarray objects
 import hvplot.pandas  # noqa
 
 import holoviews as hv
-
-from spatialize.gs.idw import griddata as spat_griddata
 from scipy.interpolate import griddata
 
+from spatialize import logging
+from spatialize.gs.idw import idw_griddata
+
 hv.extension('matplotlib')
+
+logging.log.setLevel("DEBUG")
 
 
 def func(x, y):  # a kind of "cubic" function
@@ -34,9 +37,12 @@ ds2 = xr.DataArray(grid_z2.T)
 
 w, h = 500, 600
 
-grid_z3 = spat_griddata(points, values, (grid_x, grid_y), exponent=2.0)
+grid_z3 = idw_griddata(points, values, (grid_x, grid_y),
+                       exponent=0.5,
+                       )
+
 ds3 = xr.DataArray(grid_z3.T)
 
-fig = ds3.hvplot.image(title="esi idw", width=w, height=h, xlabel='X', ylabel='Y', cmap='seismic')
+fig = ds3.hvplot.image(title="plain idw", width=w, height=h, xlabel='X', ylabel='Y', cmap='seismic')
 
-hv.save(fig, 'figure.png', dpi=144)
+hv.save(fig, 'plain_idw_figure.png', dpi=144)

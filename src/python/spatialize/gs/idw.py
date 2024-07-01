@@ -1,13 +1,31 @@
-from spatialize.gs.esi import esi_griddata
-import spatialize.gs.esi.aggfunction as af
+import numpy as np
+
+import spatialize.gs
+from spatialize import SpatializeError
+from spatialize._math_util import flatten_grid_data
+from spatialize.gs import LibSpatializeFacade
 
 
-def griddata(points, values, xi, exponent=1.0):
-    grid_z3, _ = esi_griddata(points, values, xi,
-                              base_interpolator="idw",
-                              exponent=exponent,
-                              n_partitions=1, alpha=-1000,
-                              # agg_function=af.identity
-                              )
+def idw_griddata(points, values, xi, **kwargs):
+    ng_xi, original_shape = flatten_grid_data(xi)
+    estimation = idw_nongriddata(points, values, ng_xi, **kwargs)
+    return estimation.reshape(original_shape)
 
-    return grid_z3
+
+def idw_nongriddata(points, values, xi, radius=100, exponent=2.0, callback=lambda x: None):
+    # get the estimator function
+    estimate = LibSpatializeFacade.get_operator(points,
+                                                spatialize.gs.PLAINIDW,
+                                                "estimate", LibSpatializeFacade.BackendOptions.IN_MEMORY)
+
+    # get the argument list
+    l_args = [np.float32(points), np.float32(values),
+              radius, exponent, np.float32(xi), callback]
+
+    # run
+    try:
+        estimation = estimate(*l_args)
+    except Exception as e:
+        raise SpatializeError(e)
+
+    return estimation

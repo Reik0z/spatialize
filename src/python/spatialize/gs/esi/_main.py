@@ -15,11 +15,11 @@ from spatialize.logging import MessageHandler, LogMessage, AsyncProgressCounter,
     SingletonAsyncProgressCounter
 
 
-def default_callback(msg):
+def default_singleton_callback(msg):
     return MessageHandler([LogMessage(), SingletonAsyncProgressCounter()])(msg)
 
 # ============================================= PUBLIC API ==========================================================
-@signature_overload(pivot_arg=("base_interpolator", "idw", "base interpolator"),
+@signature_overload(pivot_arg=("local_interpolator", "idw", "local interpolator"),
                     common_args={"k": 10,
                                  "griddata": False,
                                  "n_partitions": [30],
@@ -27,7 +27,7 @@ def default_callback(msg):
                                  "agg_function": {"mean": af.mean, "median": af.median},
                                  "seed": np.random.randint(1000, 10000),
                                  "folding_seed": np.random.randint(1000, 10000),
-                                 "callback": default_callback,
+                                 "callback": default_singleton_callback,
                                  "backend": None,  # it can be: None or one the LibSpatializeFacade.BackendOptions
                                  "cache_path": None,  # Needed if 'backend' is
                                                       # LibSpatializeFacade.BackendOptions.DISK_CACHED
@@ -46,15 +46,15 @@ def esi_hparams_search(points, values, xi, **kwargs):
         method = "loo"
 
     # get the cross validation function
-    cross_validate = LibSpatializeFacade.get_operator(points, kwargs["base_interpolator"], method, kwargs["backend"])
+    cross_validate = LibSpatializeFacade.get_operator(points, kwargs["local_interpolator"], method, kwargs["backend"])
 
     grid = {"n_partitions": kwargs["n_partitions"],
             "alpha": kwargs["alpha"]}
 
-    if kwargs["base_interpolator"] == "idw":
+    if kwargs["local_interpolator"] == "idw":
         grid["exponent"] = kwargs["exponent"]
 
-    if kwargs["base_interpolator"] == "kriging":
+    if kwargs["local_interpolator"] == "kriging":
         grid["model"] = kwargs["model"]
         grid["nugget"] = kwargs["nugget"]
         grid["range"] = kwargs["range"]
@@ -74,7 +74,7 @@ def esi_hparams_search(points, values, xi, **kwargs):
 
     def run_scenario(i):
         param_set = param_grid[i].copy()
-        param_set["base_interpolator"] = kwargs["base_interpolator"]
+        param_set["local_interpolator"] = kwargs["local_interpolator"]
         param_set["seed"] = kwargs["seed"]
         param_set["callback"] = kwargs["callback"]
         param_set["backend"] = kwargs["backend"]
@@ -100,7 +100,7 @@ def esi_hparams_search(points, values, xi, **kwargs):
     best_key = list(results.keys())[0]
     best_params = param_grid[best_key[1]]
     best_params["agg_function"] = kwargs["agg_function"][best_key[0]]
-    best_params["base_interpolator"] = kwargs["base_interpolator"]
+    best_params["local_interpolator"] = kwargs["local_interpolator"]
 
     # this is just a reminder that a better way to return
     # search results needs to be implemented
@@ -121,13 +121,13 @@ def esi_nongriddata(points, values, xi, **kwargs):
 
 
 # =========================================== END of PUBLIC API ======================================================
-@signature_overload(pivot_arg=("base_interpolator", "idw", "base interpolator"),
+@signature_overload(pivot_arg=("local_interpolator", "idw", "local interpolator"),
                     common_args={"n_partitions": 100,
                                  "alpha": 0.8,
                                  "agg_function": af.mean,
                                  "prec_function": pf.mse_precision,
                                  "seed": np.random.randint(1000, 10000),
-                                 "callback": default_callback,
+                                 "callback": default_singleton_callback,
                                  "backend": None,  # it can be: None or one the LibSpatializeFacade.BackendOptions
                                  "cache_path": None  # Needed if 'backend' is
                                                      # LibSpatializeFacade.BackendOptions.DISK_CACHED
@@ -140,7 +140,7 @@ def _call_libspatialize(points, values, xi, **kwargs):
     log_message(logging.logger.info(f'backend: {"auto" if kwargs["backend"] is None else kwargs["backend"]}'))
 
     # get the estimator function
-    estimate = LibSpatializeFacade.get_operator(points, kwargs["base_interpolator"], "estimate", kwargs["backend"])
+    estimate = LibSpatializeFacade.get_operator(points, kwargs["local_interpolator"], "estimate", kwargs["backend"])
 
     # get the argument list
     l_args = build_arg_list(points, values, xi, kwargs)
@@ -163,11 +163,11 @@ def build_arg_list(points, values, xi, nonpos_args):
               nonpos_args["n_partitions"], nonpos_args["alpha"], np.float32(xi), nonpos_args["callback"]]
 
     # add specific args
-    if nonpos_args["base_interpolator"] == "idw":
+    if nonpos_args["local_interpolator"] == "idw":
         l_args.insert(-2, nonpos_args["exponent"])
         l_args.insert(-2, nonpos_args["seed"])
 
-    if nonpos_args["base_interpolator"] == "kriging":
+    if nonpos_args["local_interpolator"] == "kriging":
         l_args.insert(-2, LibSpatializeFacade.get_kriging_model_number(nonpos_args["model"]))
         l_args.insert(-2, nonpos_args["nugget"])
         l_args.insert(-2, nonpos_args["range"])

@@ -15,8 +15,6 @@ from scipy.interpolate import griddata
 
 hv.extension('matplotlib')
 
-import spatialize.logging
-
 logging.log.setLevel("DEBUG")
 
 
@@ -43,7 +41,7 @@ ds2 = xr.DataArray(grid_z2.T)
 w, h = 500, 600
 
 grid_z3, grid_z3p = esi_griddata(points, values, (grid_x, grid_y),
-                                 base_interpolator="idw",
+                                 local_interpolator="idw",
                                  exponent=1.0,
                                  n_partitions=500, alpha=0.95,
                                  agg_function=af.median,

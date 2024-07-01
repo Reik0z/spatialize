@@ -77,7 +77,7 @@ values = func(points[:, 0], points[:, 1])
 def idw(points, values, grid):
     progress = ProgressVisitor("idw ... ", in_notebook=True)
     _, _ = esi_griddata(points, values, grid,
-                        base_interpolator="idw",
+                        local_interpolator="idw",
                         callback=progress,
                         exponent=7.0,
                         n_partitions=100, alpha=0.985,
@@ -88,7 +88,7 @@ def idw(points, values, grid):
 
 def kriging(points, values, grid):
     _, _ = esi_griddata(points, values, grid,
-                        base_interpolator="kriging",
+                        local_interpolator="kriging",
                         callback=progress,
                         model="cubic", nugget=0.1, range=5000.0,
                         n_partitions=100, alpha=0.97,
@@ -97,7 +97,7 @@ def kriging(points, values, grid):
 
 def gsearch_kriging(points, values, grid):
     b_params = esi_hparams_search(points, values, grid,
-                                  base_interpolator="kriging", griddata=True, k=10,
+                                  local_interpolator="kriging", griddata=True, k=10,
                                   show_progress=False,
                                   callback=progress,
                                   alpha=(0.70, 0.65))
@@ -106,7 +106,7 @@ def gsearch_kriging(points, values, grid):
 
 def gsearch_idw(points, values, grid):
     b_params = esi_hparams_search(points, values, grid,
-                                  base_interpolator="idw", griddata=True, k=-1,
+                                  local_interpolator="idw", griddata=True, k=-1,
                                   show_progress=True,
                                   alpha=list(reversed((0.5, 0.6, 0.8, 0.9, 0.95))))
     print(b_params)

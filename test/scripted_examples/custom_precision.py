@@ -44,7 +44,7 @@ def progress(s):
 
 
 grid_z3, grid_z3p = esi_griddata(points, values, (grid_x, grid_y),
-                                 base_interpolator="idw",
+                                 local_interpolator="idw",
                                  callback=progress,
                                  exponent=1.0,
                                  n_partitions=500, alpha=0.95,
@@ -60,7 +60,7 @@ fig += ds3p.hvplot.image(title="esi idw operational error", width=w, height=h, x
 hv.save(fig, 'op_error_idw.png', dpi=144)
 
 grid_z4, grid_z4p = esi_griddata(points, values, (grid_x, grid_y),
-                                 base_interpolator="kriging",
+                                 local_interpolator="kriging",
                                  callback=progress,
                                  model="spherical", nugget=0.0, range=10.0,
                                  n_partitions=100, alpha=0.9,
