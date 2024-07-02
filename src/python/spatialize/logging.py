@@ -222,6 +222,11 @@ class SingletonAsyncProgressCounter(AsyncProgressCounter, metaclass=SingletonTyp
     pass
 
 
+class SingletonNullMsgHandler(metaclass=SingletonType):
+    def __call__(self, *args, **kwargs):
+        pass
+
+
 class AsyncProgressBar(AsyncProgressHandler):
 
     def _init(self, total, step):
@@ -239,3 +244,7 @@ class AsyncProgressBar(AsyncProgressHandler):
 # **************************++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 def default_singleton_callback(msg):
     return MessageHandler([LogMessage(), SingletonAsyncProgressCounter()])(msg)
+
+
+def singleton_null_callback(msg):
+    return SingletonNullMsgHandler()(msg)

@@ -400,6 +400,16 @@ namespace sptlz{
 				std::vector<std::vector<float>> results(coords.size());
 				int n = mondrian_forest.size();
 
+				// {"message": {"text": "<the log text>", "level": "<DEBUG|INFO|WARNING|ERROR|CRITICAL>"}}
+				json.str("");
+				json << "{\"message\": { \"text\":\"" << "[C++|ESI->leave_one_out] computing estimates" << "\", \"level\":\"" << "DEBUG" <<"\"}}";
+				visitor(json.str());
+
+				// {"progress": {"init": <total expected count>, "step": <increment step>}}
+				json.str("");
+				json << "{\"progress\": { \"init\":" << n << ", \"step\":" << 1 <<"}}";
+				visitor(json.str());
+
 				for(int i=0; i<n; i++){
 					// get tree
 					auto mt = mondrian_forest.at(i);
@@ -413,10 +423,16 @@ namespace sptlz{
 							}
 						}
 					}
+					// {"progress": {"token": <value>}}
 					json.str("");
-					json << "{\"percentage\": " << 100.0*(i+1.0)/n << "}";
+					json << "{\"progress\": {\"token\":" << 100.0*(i+1.0)/n << "}}";
 					visitor(json.str());
 				}
+
+				// {"progress": "done"}
+				json.str("");
+				json << "{\"progress\": \"done\"}";
+				visitor(json.str());
 				return(results);
 			}
 
@@ -427,6 +443,16 @@ namespace sptlz{
 				auto folds = get_folds(values.size(), k, uni_float(fold_rand));
 				std::vector<std::vector<float>> results(coords.size());
 				int n = mondrian_forest.size();
+
+				// {"message": {"text": "<the log text>", "level": "<DEBUG|INFO|WARNING|ERROR|CRITICAL>"}}
+				json.str("");
+				json << "{\"message\": { \"text\":\"" << "[C++|ESI->k_fold] computing estimates" << "\", \"level\":\"" << "DEBUG" <<"\"}}";
+				visitor(json.str());
+
+				// {"progress": {"init": <total expected count>, "step": <increment step>}}
+				json.str("");
+				json << "{\"progress\": { \"init\":" << n << ", \"step\":" << 1 <<"}}";
+				visitor(json.str());
 
 				for(int i=0; i<n; i++){
 					// get tree
@@ -440,10 +466,16 @@ namespace sptlz{
 							}
 						}
 					}
+					// {"progress": {"token": <value>}}
 					json.str("");
-					json << "{\"percentage\": " << 100.0*(i+1.0)/n << "}";
+					json << "{\"progress\": {\"token\":" << 100.0*(i+1.0)/n << "}}";
 					visitor(json.str());
 				}
+
+				// {"progress": "done"}
+				json.str("");
+				json << "{\"progress\": \"done\"}";
+				visitor(json.str());
 				return(results);
 			}
 	};

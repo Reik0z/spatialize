@@ -38,7 +38,8 @@ ds2 = xr.DataArray(grid_z2.T)
 w, h = 500, 600
 
 grid_z3 = idw_griddata(points, values, (grid_x, grid_y),
-                       exponent=0.5,
+                       exponent=1.0,
+                       radius=10
                        )
 
 ds3 = xr.DataArray(grid_z3.T)
