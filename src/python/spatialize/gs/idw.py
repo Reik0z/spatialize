@@ -3,6 +3,7 @@ import numpy as np
 import spatialize.gs
 from spatialize import SpatializeError
 from spatialize._math_util import flatten_grid_data
+from spatialize.logging import default_singleton_callback
 from spatialize.gs import LibSpatializeFacade
 
 
@@ -12,7 +13,8 @@ def idw_griddata(points, values, xi, **kwargs):
     return estimation.reshape(original_shape)
 
 
-def idw_nongriddata(points, values, xi, radius=100, exponent=2.0, callback=lambda x: None):
+def idw_nongriddata(points, values, xi, radius=100, exponent=2.0,
+                    callback=default_singleton_callback):
     # get the estimator function
     estimate = LibSpatializeFacade.get_operator(points,
                                                 spatialize.gs.PLAINIDW,

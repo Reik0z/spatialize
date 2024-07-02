@@ -54,14 +54,30 @@ namespace sptlz{
 				float value;
 				int n = locations->size();
 
-        for(int i=0; i<n; i++){
-					json.str("");
-					json << "{\"percentage\": " << 100.0*(i+1.0)/n << "}";
-					visitor(json.str());
-          auto nbs = this->kdt->query_ball(&(locations->at(i)), radius, 2.0);
-          value = this->estimate_point(&nbs, &(locations->at(i)));
-          result.push_back(value);
-        }
+				// {"message": {"text": "<the log text>", "level": "<DEBUG|INFO|WARNING|ERROR|CRITICAL>"}}
+				json.str("");
+				json << "{\"message\": { \"text\":\"" << "[C++|NN->estimate] computing estimates" << "\", \"level\":\"" << "DEBUG" <<"\"}}";
+				visitor(json.str());
+
+				// {"progress": {"init": <total expected count>, "step": <increment step>}}
+				json.str("");
+				json << "{\"progress\": { \"init\":" << n << ", \"step\":" << 1 <<"}}";
+				visitor(json.str());
+
+                for(int i=0; i<n; i++){
+                  // {"progress": {"token": <value>}}
+                  json.str("");
+                  json << "{\"progress\": {\"token\":" << 100.0*(i+1.0)/n << "}}";
+                  visitor(json.str());
+                  auto nbs = this->kdt->query_ball(&(locations->at(i)), radius, 2.0);
+                  value = this->estimate_point(&nbs, &(locations->at(i)));
+                  result.push_back(value);
+                }
+
+				// {"progress": "done"}
+				json.str("");
+				json << "{\"progress\": \"done\"}";
+				visitor(json.str());
 
 				return(result);
 			}
@@ -72,14 +88,30 @@ namespace sptlz{
 				float value;
 				int n = coords.size();
 
-        for(int i=0; i<n; i++){
-					json.str("");
-					json << "{\"percentage\": " << 100.0*(i+1.0)/n << "}";
-					visitor(json.str());
-          auto nbs = this->kdt->query_ball(&(coords.at(i)), radius, 2.0);
-          value = this->estimate_loo(&nbs, i);
-          result.push_back(value);
-        }
+				// {"message": {"text": "<the log text>", "level": "<DEBUG|INFO|WARNING|ERROR|CRITICAL>"}}
+				json.str("");
+				json << "{\"message\": { \"text\":\"" << "[C++|NN->leave_one_out] computing estimates" << "\", \"level\":\"" << "DEBUG" <<"\"}}";
+				visitor(json.str());
+
+				// {"progress": {"init": <total expected count>, "step": <increment step>}}
+				json.str("");
+				json << "{\"progress\": { \"init\":" << n << ", \"step\":" << 1 <<"}}";
+				visitor(json.str());
+
+                for(int i=0; i<n; i++){
+                  // {"progress": {"token": <value>}}
+                  json.str("");
+                  json << "{\"progress\": {\"token\":" << 100.0*(i+1.0)/n << "}}";
+                  visitor(json.str());
+                  auto nbs = this->kdt->query_ball(&(coords.at(i)), radius, 2.0);
+                  value = this->estimate_loo(&nbs, i);
+                  result.push_back(value);
+                }
+
+				// {"progress": "done"}
+				json.str("");
+				json << "{\"progress\": \"done\"}";
+				visitor(json.str());
 
 				return(result);
 			}
@@ -93,14 +125,30 @@ namespace sptlz{
 				float value;
 				int n = coords.size();
 
-        for(int i=0; i<n; i++){
-					json.str("");
-					json << "{\"percentage\": " << 100.0*(i+1.0)/n << "}";
-					visitor(json.str());
-          auto nbs = this->kdt->query_ball(&(coords.at(i)), radius, 2.0);
-          value = this->estimate_kfold(&nbs, i, &folds);
-          result.push_back(value);
-        }
+				// {"message": {"text": "<the log text>", "level": "<DEBUG|INFO|WARNING|ERROR|CRITICAL>"}}
+				json.str("");
+				json << "{\"message\": { \"text\":\"" << "[C++|NN->k_fold] computing estimates" << "\", \"level\":\"" << "DEBUG" <<"\"}}";
+				visitor(json.str());
+
+				// {"progress": {"init": <total expected count>, "step": <increment step>}}
+				json.str("");
+				json << "{\"progress\": { \"init\":" << n << ", \"step\":" << 1 <<"}}";
+				visitor(json.str());
+
+                for(int i=0; i<n; i++){
+                  // {"progress": {"token": <value>}}
+                  json.str("");
+                  json << "{\"progress\": {\"token\":" << 100.0*(i+1.0)/n << "}}";
+                  visitor(json.str());
+                  auto nbs = this->kdt->query_ball(&(coords.at(i)), radius, 2.0);
+                  value = this->estimate_kfold(&nbs, i, &folds);
+                  result.push_back(value);
+                }
+
+				// {"progress": "done"}
+				json.str("");
+				json << "{\"progress\": \"done\"}";
+				visitor(json.str());
 
 				return(result);
 			}

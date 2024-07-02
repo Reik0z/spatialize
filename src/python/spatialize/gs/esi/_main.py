@@ -1,6 +1,4 @@
 import tempfile
-from concurrent.futures.thread import ThreadPoolExecutor
-from multiprocessing import Pool
 
 import numpy as np
 from sklearn.model_selection import ParameterGrid
@@ -11,12 +9,8 @@ import spatialize.gs.esi.precfunction as pf
 from spatialize._util import signature_overload, get_progress_bar, in_notebook
 from spatialize._math_util import flatten_grid_data
 from spatialize.gs import LibSpatializeFacade
-from spatialize.logging import MessageHandler, LogMessage, AsyncProgressCounter, log_message, \
-    SingletonAsyncProgressCounter
+from spatialize.logging import log_message, default_singleton_callback
 
-
-def default_singleton_callback(msg):
-    return MessageHandler([LogMessage(), SingletonAsyncProgressCounter()])(msg)
 
 # ============================================= PUBLIC API ==========================================================
 @signature_overload(pivot_arg=("local_interpolator", "idw", "local interpolator"),

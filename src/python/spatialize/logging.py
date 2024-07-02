@@ -234,4 +234,8 @@ class AsyncProgressBar(AsyncProgressHandler):
     def _update(self):
         super()._update()
         self.pbar.update()
+
+
 # **************************++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+def default_singleton_callback(msg):
+    return MessageHandler([LogMessage(), SingletonAsyncProgressCounter()])(msg)
