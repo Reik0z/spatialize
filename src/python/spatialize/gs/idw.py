@@ -13,7 +13,7 @@ def idw_griddata(points, values, xi, **kwargs):
     return estimation.reshape(original_shape)
 
 
-def idw_nongriddata(points, values, xi, radius=100, exponent=2.0,
+def idw_nongriddata(points, values, xi, radius=np.inf, exponent=1.0,
                     callback=default_singleton_callback):
     # get the estimator function
     estimate = LibSpatializeFacade.get_operator(points,
