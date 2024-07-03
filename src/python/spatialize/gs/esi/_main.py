@@ -9,7 +9,7 @@ import spatialize.gs.esi.precfunction as pf
 from spatialize._util import signature_overload, get_progress_bar, in_notebook
 from spatialize._math_util import flatten_grid_data
 from spatialize.gs import LibSpatializeFacade
-from spatialize.logging import log_message, default_singleton_callback
+from spatialize.logging import log_message, default_singleton_callback, singleton_null_callback
 
 
 # ============================================= PUBLIC API ==========================================================
@@ -25,7 +25,7 @@ from spatialize.logging import log_message, default_singleton_callback
                                  "backend": None,  # it can be: None or one the LibSpatializeFacade.BackendOptions
                                  "cache_path": None,  # Needed if 'backend' is
                                                       # LibSpatializeFacade.BackendOptions.DISK_CACHED
-                                 "show_progress": True},
+                                 },
                     specific_args={
                         "idw": {"exponent": list(np.arange(1.0, 15.0, 1.0))},
                         "kriging": {"model": ["spherical", "exponential", "cubic", "gaussian"],
@@ -63,14 +63,12 @@ def esi_hparams_search(points, values, xi, **kwargs):
     # run the scenarios
     results = {}
     it = range(len(param_grid))
-    if kwargs["show_progress"]:
-        it = get_progress_bar(range(len(param_grid)), "searching the grid ...")
 
     def run_scenario(i):
         param_set = param_grid[i].copy()
         param_set["local_interpolator"] = kwargs["local_interpolator"]
         param_set["seed"] = kwargs["seed"]
-        param_set["callback"] = kwargs["callback"]
+        param_set["callback"] = singleton_null_callback
         param_set["backend"] = kwargs["backend"]
         param_set["cache_path"] = kwargs["cache_path"]
 
@@ -84,8 +82,11 @@ def esi_hparams_search(points, values, xi, **kwargs):
         for agg_func_name, agg_func in kwargs["agg_function"].items():
             results[(agg_func_name, i)] = np.nanmean(np.abs(values - agg_func(cv)))
 
+    kwargs["callback"](logging.progress.init(len(param_grid), 1))
     for i in it:
         run_scenario(i)
+        kwargs["callback"](logging.progress.inform())
+    kwargs["callback"](logging.progress.stop())
 
     # sort results
     results = dict(sorted(results.items(), key=lambda x: x[1], reverse=False))
