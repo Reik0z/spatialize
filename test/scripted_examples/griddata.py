@@ -14,7 +14,6 @@ from spatialize.gs.esi import esi_griddata
 from scipy.interpolate import griddata
 
 hv.extension('matplotlib')
-
 logging.log.setLevel("DEBUG")
 
 

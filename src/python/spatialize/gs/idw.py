@@ -1,4 +1,5 @@
 import numpy as np
+import pandas as pd
 from sklearn.model_selection import ParameterGrid
 
 import spatialize.gs
@@ -13,7 +14,6 @@ def idw_hparams_search(points, values, xi,
                        griddata=False,
                        radius=(10, 100, 1000, 10000, 100000, np.inf),
                        exponent=tuple(np.arange(1.0, 15.0, 1.0)),
-                       seed=np.random.randint(1000, 10000),
                        folding_seed=np.random.randint(1000, 10000),
                        callback=default_singleton_callback
                        ):
@@ -70,12 +70,14 @@ def idw_hparams_search(points, values, xi,
     best_key = list(results.keys())[0]
     best_params = param_grid[best_key]
 
-    # this is just a reminder that a better way to return
-    # search results needs to be implemented
-    #
-    # for k, v in results.items():
-    #     print(f"({k[0], param_grid[k[1]]}) ---> {v}")
-    return best_params
+    # create a dataframe with all results
+    result_data = pd.DataFrame(columns=list(grid.keys()) + ["cv_error"])
+    for k, v in results.items():
+        d = {"cv_error": v}
+        d.update(param_grid[k])
+        result_data = pd.concat([result_data, pd.DataFrame(d, index=[k])])
+
+    return best_params, result_data
 
 
 def idw_griddata(points, values, xi, **kwargs):

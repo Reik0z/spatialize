@@ -8,5 +8,6 @@
 7.[√] Improve logging system
 8.[] Improve grid-search return to show more info on the search findings
 9.[] Add support for categorical variables
+10.[] Implement grid search in parallel
 
 ## DOC ##
