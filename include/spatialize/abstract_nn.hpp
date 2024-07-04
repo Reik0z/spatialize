@@ -68,7 +68,10 @@ namespace sptlz{
                   // {"progress": {"token": <value>}}
                   json.str("");
                   json << "{\"progress\": {\"token\":" << 100.0*(i+1.0)/n << "}}";
+                  if (PyErr_CheckSignals() != 0)  // to allow ctrl-c from user
+                      exit(0);
                   visitor(json.str());
+
                   auto nbs = this->kdt->query_ball(&(locations->at(i)), radius, 2.0);
                   value = this->estimate_point(&nbs, &(locations->at(i)));
                   result.push_back(value);
@@ -102,6 +105,8 @@ namespace sptlz{
                   // {"progress": {"token": <value>}}
                   json.str("");
                   json << "{\"progress\": {\"token\":" << 100.0*(i+1.0)/n << "}}";
+                  if (PyErr_CheckSignals() != 0)  // to allow ctrl-c from user
+                      exit(0);
                   visitor(json.str());
                   auto nbs = this->kdt->query_ball(&(coords.at(i)), radius, 2.0);
                   value = this->estimate_loo(&nbs, i);
@@ -139,6 +144,8 @@ namespace sptlz{
                   // {"progress": {"token": <value>}}
                   json.str("");
                   json << "{\"progress\": {\"token\":" << 100.0*(i+1.0)/n << "}}";
+                  if (PyErr_CheckSignals() != 0)  // to allow ctrl-c from user
+                      exit(0);
                   visitor(json.str());
                   auto nbs = this->kdt->query_ball(&(coords.at(i)), radius, 2.0);
                   value = this->estimate_kfold(&nbs, i, &folds);
