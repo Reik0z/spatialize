@@ -19,14 +19,25 @@ values = func(points[:, 0], points[:, 1])
 
 b_params, data = idw_hparams_search(points, values, (grid_x, grid_y),
                                     griddata=True, k=10,
+                                    # radius=[np.inf],
                                     )
 
 print(data)
-# print(data.cv_error[not np.isfinite(data['cv_error'])])
 
 import matplotlib.pyplot as plt
 
-# plot = data.plot(y='cv_error', kind='line')
-plot = data.plot.hist(column=['exponent'])
-# plt.hist(data[np.isfinite(data['cv_error'])].values)
+
+cv_error = data[['cv_error']]
+min_error = cv_error.min()['cv_error']
+max_radius = data[['radius']].max()['radius']
+
+print(min_error, max_radius)
+
+b_param = data[data.cv_error <= min_error & data.radius == max_radius]
+
+print(b_param)
+
+plot = cv_error.hist(xrot=45)
+
+
 plt.show()
