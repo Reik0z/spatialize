@@ -19,7 +19,6 @@ values = func(points[:, 0], points[:, 1])
 
 b_params, data = idw_hparams_search(points, values, (grid_x, grid_y),
                                     griddata=True, k=10,
-                                    # radius=[np.inf],
                                     )
 
 print(data)
@@ -29,15 +28,15 @@ import matplotlib.pyplot as plt
 
 cv_error = data[['cv_error']]
 min_error = cv_error.min()['cv_error']
-max_radius = data[['radius']].max()['radius']
 
-print(min_error, max_radius)
+b_param = data[data.cv_error <= min_error]
 
-b_param = data[data.cv_error <= min_error & data.radius == max_radius]
-
+b_param.sort_values(by='radius', ascending=True, inplace=True)
 print(b_param)
 
-plot = cv_error.hist(xrot=45)
+b_param.sort_values(by='radius', ascending=False, inplace=True)
+print(b_param)
 
+plot = cv_error.hist(xrot=30)
 
 plt.show()
