@@ -1,5 +1,6 @@
 import numpy as np
 import pandas as pd
+from matplotlib import pyplot as plt
 from sklearn.model_selection import ParameterGrid
 
 import spatialize.gs
@@ -7,6 +8,45 @@ from spatialize import SpatializeError, logging
 from spatialize._math_util import flatten_grid_data
 from spatialize.logging import default_singleton_callback, singleton_null_callback
 from spatialize.gs import LibSpatializeFacade
+
+
+class GridSearchResult:
+    def __init__(self, search_result_data):
+        self.search_result_data = search_result_data
+
+        data = self.search_result_data
+        self.cv_error = data[['cv_error']]
+        min_error = self.cv_error.min()['cv_error']
+        self.best_params = data[data.cv_error <= min_error]
+
+    def cv_error_plot(self, **kwargs):
+        fig = plt.figure(figsize=(10, 4), dpi=150)
+        gs = fig.add_gridspec(1, 2, wspace=0.45)
+        (ax1, ax2) = gs.subplots()
+        fig.suptitle("Cross Validation Error")
+        self.cv_error.plot(kind='hist', ax=ax1,
+                           title="Histogram",
+                           rot=25,
+                           colormap="Accent",
+                           legend=False)
+        self.cv_error.plot(kind='line', ax=ax2,
+                           y='cv_error',
+                           xlabel="Result Data Index",
+                           ylabel="Error",
+                           colormap="Accent",
+                           legend=False)
+
+    def best_result(self, **kwargs):
+        pass
+
+
+class IDWGridSearchResult(GridSearchResult):
+    def __init__(self, search_result_data):
+        super().__init__(search_result_data)
+
+    def best_result(self, optimize_data_usage=False, **kwargs):
+        b_param = self.best_params.sort_values(by='radius', ascending=optimize_data_usage)
+        return b_param.iloc[0].to_dict()
 
 
 def idw_hparams_search(points, values, xi,
@@ -63,13 +103,6 @@ def idw_hparams_search(points, values, xi,
         callback(logging.progress.inform())
     callback(logging.progress.stop())
 
-    # sort results
-    results = dict(sorted(results.items(), key=lambda x: x[1], reverse=False))
-
-    # look for the best params combination
-    best_key = list(results.keys())[0]
-    best_params = param_grid[best_key]
-
     # create a dataframe with all results
     result_data = pd.DataFrame(columns=list(grid.keys()) + ["cv_error"])
     for k, v in results.items():
@@ -77,7 +110,7 @@ def idw_hparams_search(points, values, xi,
         d.update(param_grid[k])
         result_data = pd.concat([result_data, pd.DataFrame(d, index=[k])])
 
-    return best_params, result_data
+    return IDWGridSearchResult(result_data)
 
 
 def idw_griddata(points, values, xi, **kwargs):
