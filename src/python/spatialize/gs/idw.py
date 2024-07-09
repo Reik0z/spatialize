@@ -31,7 +31,7 @@ class GridSearchResult:
                            legend=False)
         self.cv_error.plot(kind='line', ax=ax2,
                            y='cv_error',
-                           xlabel="Result Data Index",
+                           xlabel="Search result data index",
                            ylabel="Error",
                            colormap="Accent",
                            legend=False)
