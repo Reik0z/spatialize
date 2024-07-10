@@ -1,3 +1,5 @@
+from matplotlib import pyplot as plt
+
 from spatialize.gs.esi import esi_hparams_search
 import spatialize.gs.esi.aggfunction as af
 import numpy as np
@@ -15,20 +17,25 @@ points = rng.random((1000, 2))
 values = func(points[:, 0], points[:, 1])
 
 # *** kriging as local interpolator ***
-b_params = esi_hparams_search(points, values, (grid_x, grid_y),
-                              local_interpolator="kriging", griddata=True, k=10,
-                              model=["spherical", "exponential", "cubic", "gaussian"],
-                              nugget=[0.0, 0.5, 1.0],
-                              range=[10.0, 50.0, 100.0, 200.0],
-                              alpha=[0.97, 0.96, 0.95])
-print(b_params)
+# b_params = esi_hparams_search(points, values, (grid_x, grid_y),
+#                               local_interpolator="kriging", griddata=True, k=10,
+#                               model=["spherical", "exponential", "cubic", "gaussian"],
+#                               nugget=[0.0, 0.5, 1.0],
+#                               range=[10.0, 50.0, 100.0, 200.0],
+#                               alpha=[0.97, 0.96, 0.95])
+# print(b_params)
 
 # *** idw as local interpolator ***
-b_params = esi_hparams_search(points, values, (grid_x, grid_y),
+result = esi_hparams_search(points, values, (grid_x, grid_y),
                               local_interpolator="idw", griddata=True, k=10,
                               exponent=list(np.arange(1.0, 15.0, 1.0)),
                               alpha=(0.5, 0.6, 0.8, 0.9))
-print(b_params)
+print(result.best_result())
+print(result.best_params)
+result.plot_cv_error()
+plt.show()
+
+exit(0)
 
 # *** refining iwd as local interpolator ***
 b_params = esi_hparams_search(points, values, (grid_x, grid_y),

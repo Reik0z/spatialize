@@ -1,43 +1,15 @@
+import multiprocessing
+
 import numpy as np
 import pandas as pd
-from matplotlib import pyplot as plt
 from sklearn.model_selection import ParameterGrid
 
 import spatialize.gs
 from spatialize import SpatializeError, logging
 from spatialize._math_util import flatten_grid_data
-from spatialize.logging import default_singleton_callback, singleton_null_callback
+from spatialize.logging import default_singleton_callback, singleton_null_callback, log_message
 from spatialize.gs import LibSpatializeFacade
-
-
-class GridSearchResult:
-    def __init__(self, search_result_data):
-        self.search_result_data = search_result_data
-
-        data = self.search_result_data
-        self.cv_error = data[['cv_error']]
-        min_error = self.cv_error.min()['cv_error']
-        self.best_params = data[data.cv_error <= min_error]
-
-    def cv_error_plot(self, **kwargs):
-        fig = plt.figure(figsize=(10, 4), dpi=150)
-        gs = fig.add_gridspec(1, 2, wspace=0.45)
-        (ax1, ax2) = gs.subplots()
-        fig.suptitle("Cross Validation Error")
-        self.cv_error.plot(kind='hist', ax=ax1,
-                           title="Histogram",
-                           rot=25,
-                           colormap="Accent",
-                           legend=False)
-        self.cv_error.plot(kind='line', ax=ax2,
-                           y='cv_error',
-                           xlabel="Search result data index",
-                           ylabel="Error",
-                           colormap="Accent",
-                           legend=False)
-
-    def best_result(self, **kwargs):
-        pass
+from spatialize._util import GridSearchResult
 
 
 class IDWGridSearchResult(GridSearchResult):
@@ -46,14 +18,14 @@ class IDWGridSearchResult(GridSearchResult):
 
     def best_result(self, optimize_data_usage=False, **kwargs):
         b_param = self.best_params.sort_values(by='radius', ascending=optimize_data_usage)
-        return b_param.iloc[0].to_dict()
+        return b_param.iloc[0].to_dict(index=True)
 
 
 def idw_hparams_search(points, values, xi,
                        k=10,
                        griddata=False,
                        radius=(10, 100, 1000, 10000, 100000, np.inf),
-                       exponent=tuple(np.arange(1.0, 15.0, 1.0)),
+                       exponent=tuple(np.arange(0.1, 5.0, 0.1)),
                        folding_seed=np.random.randint(1000, 10000),
                        callback=default_singleton_callback
                        ):
@@ -79,7 +51,6 @@ def idw_hparams_search(points, values, xi,
 
     # run the scenarios
     results = {}
-    it = range(len(param_grid))
 
     def run_scenario(i):
         param_set = param_grid[i].copy()
@@ -96,11 +67,12 @@ def idw_hparams_search(points, values, xi,
 
         cv = cross_validate(*l_args)
         results[i] = np.nanmean(np.abs(values - cv))
+        callback(logging.progress.inform())
 
     callback(logging.progress.init(len(param_grid), 1))
+    it = range(len(param_grid))
     for i in it:
         run_scenario(i)
-        callback(logging.progress.inform())
     callback(logging.progress.stop())
 
     # create a dataframe with all results
@@ -120,7 +92,15 @@ def idw_griddata(points, values, xi, **kwargs):
 
 
 def idw_nongriddata(points, values, xi, radius=np.inf, exponent=1.0,
-                    callback=default_singleton_callback):
+                    callback=default_singleton_callback,
+                    search_best_params=None):
+    if search_best_params is None:
+        rad = radius
+        exp = exponent
+    else:
+        log_message(logging.logger.debug(f"using best params found: {search_best_params}"))
+        rad, exp = search_best_params["radius"], search_best_params["exponent"]
+
     # get the estimator function
     estimate = LibSpatializeFacade.get_operator(points,
                                                 spatialize.gs.PLAINIDW,
@@ -128,7 +108,7 @@ def idw_nongriddata(points, values, xi, radius=np.inf, exponent=1.0,
 
     # get the argument list
     l_args = [np.float32(points), np.float32(values),
-              radius, exponent, np.float32(xi), callback]
+              rad, exp, np.float32(xi), callback]
 
     # run
     try:

@@ -1,5 +1,6 @@
 import libspatialize as lsp
 import libspatialite as lsplt
+
 from spatialize import SpatializeError, logging
 from spatialize._util import in_notebook
 from spatialize.logging import log_message
@@ -118,3 +119,5 @@ class LibSpatializeFacade:
                 return local_interpolator + SQLITE_BACKEND
 
         raise SpatializeError(f"Backend '{backend}' not implemented for local interpolator '{local_interpolator}'")
+
+

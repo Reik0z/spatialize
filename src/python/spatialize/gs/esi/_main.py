@@ -1,16 +1,29 @@
 import tempfile
 
 import numpy as np
+import pandas as pd
 from sklearn.model_selection import ParameterGrid
 
 from spatialize import SpatializeError, logging
 import spatialize.gs.esi.aggfunction as af
 import spatialize.gs.esi.precfunction as pf
-from spatialize._util import signature_overload, get_progress_bar, in_notebook
+from spatialize._util import signature_overload, in_notebook, GridSearchResult
 from spatialize._math_util import flatten_grid_data
 from spatialize.gs import LibSpatializeFacade
 from spatialize.logging import log_message, default_singleton_callback, singleton_null_callback
 
+
+class ESIGridSearchResult(GridSearchResult):
+    def __init__(self, search_result_data):
+        super().__init__(search_result_data)
+
+    def best_result(self, **kwargs):
+        b_param = self.best_params.sort_values(by='cv_error', ascending=True)
+        row = pd.DataFrame(b_param.iloc[0]).to_dict(index=True)
+        index = list(row.keys())[0]
+        result = row[index]
+        result.update({"result_data_index": index})
+        return result
 
 # ============================================= PUBLIC API ==========================================================
 @signature_overload(pivot_arg=("local_interpolator", "idw", "local interpolator"),
@@ -82,27 +95,25 @@ def esi_hparams_search(points, values, xi, **kwargs):
         for agg_func_name, agg_func in kwargs["agg_function"].items():
             results[(agg_func_name, i)] = np.nanmean(np.abs(values - agg_func(cv)))
 
+        kwargs["callback"](logging.progress.inform())
+
     kwargs["callback"](logging.progress.init(len(param_grid), 1))
     for i in it:
         run_scenario(i)
-        kwargs["callback"](logging.progress.inform())
+
     kwargs["callback"](logging.progress.stop())
 
-    # sort results
-    results = dict(sorted(results.items(), key=lambda x: x[1], reverse=False))
+    # create a dataframe with all results
+    result_data = pd.DataFrame(columns=list(grid.keys()) + ["cv_error"])
+    for k, v in results.items():
+        d = {"agg_func_name": k[0],
+             "cv_error": v,
+             "local_interpolator": kwargs["local_interpolator"],
+             }
+        d.update(param_grid[k[1]])
+        result_data = pd.concat([result_data, pd.DataFrame(d, index=[k[1]])])
 
-    # look for the best params combination
-    best_key = list(results.keys())[0]
-    best_params = param_grid[best_key[1]]
-    best_params["agg_function"] = kwargs["agg_function"][best_key[0]]
-    best_params["local_interpolator"] = kwargs["local_interpolator"]
-
-    # this is just a reminder that a better way to return
-    # search results needs to be implemented
-    #
-    # for k, v in results.items():
-    #     print(f"({k[0], param_grid[k[1]]}) ---> {v}")
-    return best_params
+    return ESIGridSearchResult(result_data)
 
 
 def esi_griddata(points, values, xi, **kwargs):

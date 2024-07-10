@@ -1,3 +1,4 @@
+from matplotlib import pyplot as plt
 from rich.progress import track
 
 from spatialize import SpatializeError
@@ -80,3 +81,35 @@ class SingletonType(type):
             instance = super().__call__(*args, **kwargs)
             cls._instances[cls] = instance
         return cls._instances[cls]
+
+
+class GridSearchResult:
+    def __init__(self, search_result_data):
+        self.search_result_data = search_result_data
+
+        data = self.search_result_data
+        self.cv_error = data[['cv_error']]
+        min_error = self.cv_error.min()['cv_error']
+        self.best_params = data[data.cv_error <= min_error]
+
+    def plot_cv_error(self, **kwargs):
+        fig = plt.figure(figsize=(10, 4), dpi=150)
+        gs = fig.add_gridspec(1, 2, wspace=0.45)
+        (ax1, ax2) = gs.subplots()
+        fig.suptitle("Cross Validation Error")
+        self.cv_error.plot(kind='hist', ax=ax1,
+                           title="Histogram",
+                           rot=25,
+                           color='skyblue', # edgecolor='black',
+                           # colormap="Accent",
+                           legend=False)
+        self.cv_error.plot(kind='line', ax=ax2,
+                           y='cv_error',
+                           xlabel="Search result data index",
+                           ylabel="Error",
+                           color='skyblue', # edgecolor='black',
+                           # colormap="Accent",
+                           legend=False)
+
+    def best_result(self, **kwargs):
+        pass
