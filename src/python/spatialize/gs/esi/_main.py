@@ -14,22 +14,24 @@ from spatialize.logging import log_message, default_singleton_callback, singleto
 
 
 class ESIGridSearchResult(GridSearchResult):
-    def __init__(self, search_result_data):
+    def __init__(self, search_result_data, agg_function_map):
         super().__init__(search_result_data)
+        self.agg_func_map = agg_function_map
 
     def best_result(self, **kwargs):
         b_param = self.best_params.sort_values(by='cv_error', ascending=True)
         row = pd.DataFrame(b_param.iloc[0]).to_dict(index=True)
         index = list(row.keys())[0]
         result = row[index]
-        result.update({"result_data_index": index})
+        result.update({"result_data_index": index, "agg_function": self.agg_func_map[result["agg_func_name"]]})
         return result
+
 
 # ============================================= PUBLIC API ==========================================================
 @signature_overload(pivot_arg=("local_interpolator", "idw", "local interpolator"),
                     common_args={"k": 10,
                                  "griddata": False,
-                                 "n_partitions": [30],
+                                 "n_partitions": [100],
                                  "alpha": list(np.flip(np.arange(0.70, 0.90, 0.01))),
                                  "agg_function": {"mean": af.mean, "median": af.median},
                                  "seed": np.random.randint(1000, 10000),
@@ -37,7 +39,7 @@ class ESIGridSearchResult(GridSearchResult):
                                  "callback": default_singleton_callback,
                                  "backend": None,  # it can be: None or one the LibSpatializeFacade.BackendOptions
                                  "cache_path": None,  # Needed if 'backend' is
-                                                      # LibSpatializeFacade.BackendOptions.DISK_CACHED
+                                 # LibSpatializeFacade.BackendOptions.DISK_CACHED
                                  },
                     specific_args={
                         "idw": {"exponent": list(np.arange(1.0, 15.0, 1.0))},
@@ -46,7 +48,8 @@ class ESIGridSearchResult(GridSearchResult):
                                     "range": [10.0, 50.0, 100.0, 200.0]}
                     })
 def esi_hparams_search(points, values, xi, **kwargs):
-    log_message(logging.logger.info(f'backend: {"auto" if kwargs["backend"] is None else kwargs["backend"]}'))
+    log_message(logging.logger.debug(f"searching best params ..."))
+    log_message(logging.logger.debug(f'backend: {"auto" if kwargs["backend"] is None else kwargs["backend"]}'))
 
     method, k = "kfold", kwargs["k"]
     if k == points.shape[0] or k == -1:
@@ -111,9 +114,12 @@ def esi_hparams_search(points, values, xi, **kwargs):
              "local_interpolator": kwargs["local_interpolator"],
              }
         d.update(param_grid[k[1]])
-        result_data = pd.concat([result_data, pd.DataFrame(d, index=[k[1]])])
+        if not result_data.empty:
+            result_data = pd.concat([result_data, pd.DataFrame(d, index=[k[1]])])
+        else:
+            result_data = pd.DataFrame(d, index=[k[1]])
 
-    return ESIGridSearchResult(result_data)
+    return ESIGridSearchResult(result_data, kwargs["agg_function"])
 
 
 def esi_griddata(points, values, xi, **kwargs):
@@ -135,15 +141,25 @@ def esi_nongriddata(points, values, xi, **kwargs):
                                  "seed": np.random.randint(1000, 10000),
                                  "callback": default_singleton_callback,
                                  "backend": None,  # it can be: None or one the LibSpatializeFacade.BackendOptions
-                                 "cache_path": None  # Needed if 'backend' is
-                                                     # LibSpatializeFacade.BackendOptions.DISK_CACHED
+                                 "cache_path": None,  # Needed if 'backend' is
+                                 # LibSpatializeFacade.BackendOptions.DISK_CACHED
+                                 "best_params_found": None
                                  },
                     specific_args={
                         "idw": {"exponent": 2.0},
                         "kriging": {"model": 1, "nugget": 0.1, "range": 5000.0}
                     })
 def _call_libspatialize(points, values, xi, **kwargs):
-    log_message(logging.logger.info(f'backend: {"auto" if kwargs["backend"] is None else kwargs["backend"]}'))
+    log_message(logging.logger.debug('calling libspatialize'))
+    log_message(logging.logger.debug(f'backend: {"auto" if kwargs["backend"] is None else kwargs["backend"]}'))
+
+    if not kwargs["best_params_found"] is None:
+        log_message(logging.logger.debug(f"using best params found: {kwargs['best_params_found']}"))
+        for k in kwargs["best_params_found"]:
+            try:
+                kwargs[k] = kwargs["best_params_found"][k]
+            except KeyError:
+                pass
 
     # get the estimator function
     estimate = LibSpatializeFacade.get_operator(points, kwargs["local_interpolator"], "estimate", kwargs["backend"])

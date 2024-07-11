@@ -10,7 +10,7 @@ import holoviews as hv
 import hvplot.xarray  # noqa: adds hvplot methods to xarray objects
 import xarray as xr
 
-logging.log.setLevel("ERROR")
+logging.log.setLevel("DEBUG")
 
 
 def main():
@@ -37,7 +37,7 @@ def main():
 
     # using result to estimate
     grid_z3 = idw_griddata(points, values, (grid_x, grid_y),
-                           search_best_params=result.best_result(optimize_data_usage=False))
+                           best_params_found=result.best_result(optimize_data_usage=False))
 
     # just plotting
     ds3 = xr.DataArray(grid_z3.T)

@@ -100,15 +100,13 @@ class GridSearchResult:
         self.cv_error.plot(kind='hist', ax=ax1,
                            title="Histogram",
                            rot=25,
-                           color='skyblue', # edgecolor='black',
-                           # colormap="Accent",
+                           color='skyblue',
                            legend=False)
         self.cv_error.plot(kind='line', ax=ax2,
                            y='cv_error',
                            xlabel="Search result data index",
                            ylabel="Error",
-                           color='skyblue', # edgecolor='black',
-                           # colormap="Accent",
+                           color='skyblue',
                            legend=False)
 
     def best_result(self, **kwargs):

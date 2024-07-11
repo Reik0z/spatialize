@@ -18,7 +18,11 @@ class IDWGridSearchResult(GridSearchResult):
 
     def best_result(self, optimize_data_usage=False, **kwargs):
         b_param = self.best_params.sort_values(by='radius', ascending=optimize_data_usage)
-        return b_param.iloc[0].to_dict(index=True)
+        row = pd.DataFrame(b_param.iloc[0]).to_dict(index=True)
+        index = list(row.keys())[0]
+        result = row[index]
+        result.update({"result_data_index": index})
+        return result
 
 
 def idw_hparams_search(points, values, xi,
@@ -29,6 +33,8 @@ def idw_hparams_search(points, values, xi,
                        folding_seed=np.random.randint(1000, 10000),
                        callback=default_singleton_callback
                        ):
+    log_message(logging.logger.debug(f"searching best params ..."))
+
     method = "kfold"
     if k == points.shape[0] or k == -1:
         method = "loo"
@@ -80,7 +86,10 @@ def idw_hparams_search(points, values, xi,
     for k, v in results.items():
         d = {"cv_error": v}
         d.update(param_grid[k])
-        result_data = pd.concat([result_data, pd.DataFrame(d, index=[k])])
+        if not result_data.empty:
+            result_data = pd.concat([result_data, pd.DataFrame(d, index=[k])])
+        else:
+            result_data = pd.DataFrame(d, index=[k])
 
     return IDWGridSearchResult(result_data)
 
@@ -93,13 +102,15 @@ def idw_griddata(points, values, xi, **kwargs):
 
 def idw_nongriddata(points, values, xi, radius=np.inf, exponent=1.0,
                     callback=default_singleton_callback,
-                    search_best_params=None):
-    if search_best_params is None:
+                    best_params_found=None):
+    log_message(logging.logger.debug("running idw"))
+
+    if best_params_found is None:
         rad = radius
         exp = exponent
     else:
-        log_message(logging.logger.debug(f"using best params found: {search_best_params}"))
-        rad, exp = search_best_params["radius"], search_best_params["exponent"]
+        log_message(logging.logger.debug(f"using best params found: {best_params_found}"))
+        rad, exp = best_params_found["radius"], best_params_found["exponent"]
 
     # get the estimator function
     estimate = LibSpatializeFacade.get_operator(points,
