@@ -972,7 +972,12 @@ static PyObject *estimation_esi_idw(PyObject *self, PyObject *args){
 #ifdef DEBUG
   std::cout << "[C++] building the output model" << "\n";
 #endif
-  model_list = esi_idw_to_dict(esi);
+
+  // avoid model construction until we have
+  // a more efficient way to pass it through
+  //
+  // model_list = esi_idw_to_dict(esi);
+  model_list = Py_BuildValue("");
 
   delete esi;
   if (Py_REFCNT(esi) != 0) {
@@ -1116,7 +1121,11 @@ static PyObject *loo_esi_idw(PyObject *self, PyObject *args){
   aux = (float *)PyArray_DATA(estimation);
   memcpy(&aux[0], &output.data()[0], output.size()*sizeof(float));
 
-  model_list = esi_idw_to_dict(esi);
+  // avoid model construction until we have
+  // a more efficient way to pass it through
+  //
+  // model_list = esi_idw_to_dict(esi);
+  model_list = Py_BuildValue("");
 
   delete esi;
   if (Py_REFCNT(esi) != 0) {
@@ -1261,7 +1270,11 @@ static PyObject *kfold_esi_idw(PyObject *self, PyObject *args){
   aux = (float *)PyArray_DATA(estimation);
   memcpy(&aux[0], &output.data()[0], output.size()*sizeof(float));
 
-  model_list = esi_idw_to_dict(esi);
+  // avoid model construction until we have
+  // a more efficient way to pass it through
+  //
+  // model_list = esi_idw_to_dict(esi);
+  model_list = Py_BuildValue("");
 
   delete esi;
   if (Py_REFCNT(esi) != 0) {
@@ -1389,7 +1402,11 @@ static PyObject *estimation_esi_kriging_2d(PyObject *self, PyObject *args){
   aux = (float *)PyArray_DATA(estimation);
   memcpy(&aux[0], &output.data()[0], output.size()*sizeof(float));
 
-  model_list = esi_kriging_to_dict(esi);
+  // avoid model construction until we have
+  // a more efficient way to pass it through
+  //
+  // model_list = esi_idw_to_dict(esi);
+  model_list = Py_BuildValue("");
 
   delete esi;
   if (Py_REFCNT(esi) != 0) {
@@ -1499,6 +1516,10 @@ static PyObject *loo_esi_kriging_2d(PyObject *self, PyObject *args){
   }
 
   // ##### THE METHOD ITSELF #####
+  #ifdef DEBUG
+  std::cout << "[C++] preparing to call ESI kriging leave-one-out" << "\n";
+  #endif
+
   auto bbox = sptlz::samples_coords_bbox(&c_loc);
   auto bbox2 = sptlz::samples_coords_bbox(&c_smp);
   for(int i=0;i<smp_sh[1];i++){
@@ -1508,7 +1529,15 @@ static PyObject *loo_esi_kriging_2d(PyObject *self, PyObject *args){
   float lambda = sptlz::bbox_sum_interval(bbox);
   lambda = 1/(lambda-alpha*lambda);
 
+  // #ifdef DEBUG
+  std::cout << "[C++] creating ESI kriging instance" << "\n";
+  // #endif
+
   sptlz::ESI_Kriging* esi = new sptlz::ESI_Kriging(c_smp, c_val, lambda, forest_size, bbox, model, nugget, range, seed);
+
+  // #ifdef DEBUG
+  std::cout << "[C++] calling ESI kriging leave-one-out" << "\n";
+  // #endif
   auto r = esi->leave_one_out([func](std::string s){
     PyObject *tup = Py_BuildValue("(s)", s.c_str());
     PyObject_Call(func, tup, NULL);
@@ -1522,7 +1551,11 @@ static PyObject *loo_esi_kriging_2d(PyObject *self, PyObject *args){
   aux = (float *)PyArray_DATA(estimation);
   memcpy(&aux[0], &output.data()[0], output.size()*sizeof(float));
 
-  model_list = esi_kriging_to_dict(esi);
+  // avoid model construction until we have
+  // a more efficient way to pass it through
+  //
+  // model_list = esi_idw_to_dict(esi);
+  model_list = Py_BuildValue("");
 
   delete esi;
   if (Py_REFCNT(esi) != 0) {
@@ -1654,7 +1687,11 @@ static PyObject *kfold_esi_kriging_2d(PyObject *self, PyObject *args){
   aux = (float *)PyArray_DATA(estimation);
   memcpy(&aux[0], &output.data()[0], output.size()*sizeof(float));
 
-  model_list = esi_kriging_to_dict(esi);
+  // avoid model construction until we have
+  // a more efficient way to pass it through
+  //
+  // model_list = esi_idw_to_dict(esi);
+  model_list = Py_BuildValue("");
 
   delete esi;
   if (Py_REFCNT(esi) != 0) {
@@ -1789,7 +1826,11 @@ static PyObject *estimation_esi_kriging_3d(PyObject *self, PyObject *args){
   aux = (float *)PyArray_DATA(estimation);
   memcpy(&aux[0], &output.data()[0], output.size()*sizeof(float));
 
-  model_list = esi_kriging_to_dict(esi);
+  // avoid model construction until we have
+  // a more efficient way to pass it through
+  //
+  // model_list = esi_idw_to_dict(esi);
+  model_list = Py_BuildValue("");
 
   delete esi;
   if (Py_REFCNT(esi) != 0) {
@@ -1920,7 +1961,11 @@ static PyObject *loo_esi_kriging_3d(PyObject *self, PyObject *args){
   aux = (float *)PyArray_DATA(estimation);
   memcpy(&aux[0], &output.data()[0], output.size()*sizeof(float));
 
-  model_list = esi_kriging_to_dict(esi);
+  // avoid model construction until we have
+  // a more efficient way to pass it through
+  //
+  // model_list = esi_idw_to_dict(esi);
+  model_list = Py_BuildValue("");
 
   delete esi;
   if (Py_REFCNT(esi) != 0) {
@@ -2052,7 +2097,11 @@ static PyObject *kfold_esi_kriging_3d(PyObject *self, PyObject *args){
   aux = (float *)PyArray_DATA(estimation);
   memcpy(&aux[0], &output.data()[0], output.size()*sizeof(float));
 
-  model_list = esi_kriging_to_dict(esi);
+  // avoid model construction until we have
+  // a more efficient way to pass it through
+  //
+  // model_list = esi_idw_to_dict(esi);
+  model_list = Py_BuildValue("");
 
   delete esi;
   if (Py_REFCNT(esi) != 0) {

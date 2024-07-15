@@ -385,6 +385,8 @@ namespace sptlz{
 					// {"progress": {"token": <value>}}
 					json.str("");
 					json << "{\"progress\": {\"token\":" << 100.0*(i+1.0)/n << "}}";
+					if (PyErr_CheckSignals() != 0)  // to allow ctrl-c from user
+                      exit(0);
 					visitor(json.str());
 				}
 
@@ -399,6 +401,10 @@ namespace sptlz{
 				std::stringstream json;
 				std::vector<std::vector<float>> results(coords.size());
 				int n = mondrian_forest.size();
+
+                // #ifdef DEBUG
+                // std::cout << "[C++] inside leave-one-out" << "\n";
+                // #endif
 
 				// {"message": {"text": "<the log text>", "level": "<DEBUG|INFO|WARNING|ERROR|CRITICAL>"}}
 				json.str("");
@@ -426,6 +432,8 @@ namespace sptlz{
 					// {"progress": {"token": <value>}}
 					json.str("");
 					json << "{\"progress\": {\"token\":" << 100.0*(i+1.0)/n << "}}";
+					if (PyErr_CheckSignals() != 0)  // to allow ctrl-c from user
+                      exit(0);
 					visitor(json.str());
 				}
 
@@ -469,6 +477,8 @@ namespace sptlz{
 					// {"progress": {"token": <value>}}
 					json.str("");
 					json << "{\"progress\": {\"token\":" << 100.0*(i+1.0)/n << "}}";
+					if (PyErr_CheckSignals() != 0)  // to allow ctrl-c from user
+                      exit(0);
 					visitor(json.str());
 				}
 

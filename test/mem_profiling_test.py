@@ -4,6 +4,8 @@ import numpy as np
 from rich.progress import Progress
 from tqdm import tqdm
 
+from spatialize import logging
+
 # if running from 'this' test directory then change to the
 # project root directory
 curr_dir = os.path.split(os.getcwd())[1]
@@ -29,6 +31,7 @@ import spatialize.gs.esi.precfunction as pf
 from spatialize.gs.esi import esi_griddata
 from spatialize.gs.esi import esi_hparams_search
 
+logging.log.setLevel("DEBUG")
 
 def progress(s):
     print(f'processing ... {int(float(s.split()[1][:-1]))}%\r', end="")
@@ -91,29 +94,27 @@ def kriging(points, values, grid):
                         local_interpolator="kriging",
                         # callback=progress,
                         model="cubic", nugget=0.1, range=5000.0,
-                        n_partitions=100, alpha=0.97,
+                        n_partitions=500, alpha=0.97,
                         agg_function=af.mean, prec_function=pf.mae_precision)
 
 
 def gsearch_kriging(points, values, grid):
     b_params = esi_hparams_search(points, values, grid,
-                                  local_interpolator="kriging", griddata=True, k=10,
-                                  show_progress=True,
-                                  # callback=progress,
-                                  alpha=(0.70, 0.65))
+                                  n_partitions=[30],
+                                  local_interpolator="kriging", griddata=True, k=-1,
+                                  alpha=(0.50, 0.65))
     print(b_params)
 
 
 def gsearch_idw(points, values, grid):
     b_params = esi_hparams_search(points, values, grid,
                                   local_interpolator="idw", griddata=True, k=-1,
-                                  show_progress=True,
                                   alpha=list(reversed((0.5, 0.6, 0.8, 0.9, 0.95))))
     print(b_params)
 
 
 if __name__ == "__main__":
-    idw(points, values, (grid_x, grid_y))
+    # idw(points, values, (grid_x, grid_y))
     # kriging(points, values, (grid_x, grid_y))
     # gsearch_kriging(points, values, (grid_x, grid_y))
-    # gsearch_idw(points, values, (grid_x, grid_y))
+    gsearch_idw(points, values, (grid_x, grid_y))

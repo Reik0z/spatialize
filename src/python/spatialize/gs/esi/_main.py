@@ -78,7 +78,6 @@ def esi_hparams_search(points, values, xi, **kwargs):
 
     # run the scenarios
     results = {}
-    it = range(len(param_grid))
 
     def run_scenario(i):
         param_set = param_grid[i].copy()
@@ -100,10 +99,10 @@ def esi_hparams_search(points, values, xi, **kwargs):
 
         kwargs["callback"](logging.progress.inform())
 
+    it = range(len(param_grid))
     kwargs["callback"](logging.progress.init(len(param_grid), 1))
     for i in it:
         run_scenario(i)
-
     kwargs["callback"](logging.progress.stop())
 
     # create a dataframe with all results
