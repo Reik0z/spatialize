@@ -153,6 +153,10 @@ def _call_libspatialize(points, values, xi, **kwargs):
     log_message(logging.logger.debug(f'backend: {"auto" if kwargs["backend"] is None else kwargs["backend"]}'))
 
     if not kwargs["best_params_found"] is None:
+        try:
+            del kwargs["best_params_found"]["n_partitions"]  # this param can be overwritten all cases
+        except KeyError:
+            pass
         log_message(logging.logger.debug(f"using best params found: {kwargs['best_params_found']}"))
         for k in kwargs["best_params_found"]:
             try:
@@ -173,6 +177,8 @@ def _call_libspatialize(points, values, xi, **kwargs):
         raise SpatializeError(e)
 
     estimation = kwargs["agg_function"](esi_samples)
+
+    log_message(logging.logger.debug(f'applying "{kwargs["prec_function"]}" precision function'))
     precision = kwargs["prec_function"](estimation, esi_samples)
 
     return estimation, precision
@@ -194,17 +200,10 @@ def build_arg_list(points, values, xi, nonpos_args):
         l_args.insert(-2, nonpos_args["range"])
         l_args.insert(-2, nonpos_args["seed"])
 
-    cached_disk = LibSpatializeFacade.BackendOptions.DISK_CACHED
-    if nonpos_args["backend"] in set([None, cached_disk]):
+    if nonpos_args["backend"] == LibSpatializeFacade.BackendOptions.DISK_CACHED:
         cache_path = nonpos_args["cache_path"]
         if cache_path is None:
             cache_path = tempfile.TemporaryDirectory().name + ".db"
-
-        if nonpos_args["backend"] is None:  # setting the backend automatically
-            if in_notebook():
-                log_message(logging.logger.debug(f'cache path: {cache_path}'))
-                l_args.insert(0, cache_path)
-        else:
             log_message(logging.logger.debug(f'cache path: {cache_path}'))
             l_args.insert(0, cache_path)
 

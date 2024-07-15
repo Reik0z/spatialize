@@ -3,19 +3,33 @@ import numpy as np
 from spatialize.gs.esi.aggfunction import mean
 
 
-def mse_precision(estimation, esi_samples):
-    return apply_loss_function(estimation, esi_samples,
-                               lambda x, y: (x - y) ** 2,
-                               mean)
+def precision(function):
+    function_name = function.__name__
+    module_name = function.__module__
+
+    class inner_function:
+        def __call__(self, estimation, esi_samples):
+            return _apply_loss_function(estimation, esi_samples,
+                                        function,
+                                        mean)
+
+        def __repr__(self):
+            return f"<decorated--{module_name}.{function_name}>"
+
+    return inner_function()
 
 
-def mae_precision(estimation, esi_samples):
-    return apply_loss_function(estimation, esi_samples,
-                               lambda x, y: np.abs(x - y),
-                               mean)
+@precision
+def mse_precision(x, y):
+    return (x - y) ** 2
 
 
-class OpErrorPrecision:
+@precision
+def mae_precision(x, y):
+    return np.abs(x - y)
+
+
+class OperationalErrorPrecision:
     def __init__(self, dyn_range=None):
         self.dyn_range = dyn_range
 
@@ -24,13 +38,14 @@ class OpErrorPrecision:
         if dyn_range is None:
             dyn_range = np.abs(np.min(estimation) - np.max(estimation))
 
-        def op_error(x, y):
+        @precision
+        def _op_error(x, y):
             return np.abs(x - y) / dyn_range
 
-        return apply_loss_function(estimation, esi_samples, op_error, mean)
+        return _op_error(estimation, esi_samples)
 
 
-def apply_loss_function(estimation, esi_samples, loss_function, agg_function):
+def _apply_loss_function(estimation, esi_samples, loss_function, agg_function):
     loss = np.empty(esi_samples.shape)
     for i in range(loss.shape[1]):
         loss[:, i] = loss_function(esi_samples[:, i], estimation)

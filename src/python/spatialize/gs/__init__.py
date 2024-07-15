@@ -106,8 +106,13 @@ class LibSpatializeFacade:
         if backend is None:  # setting the backend automatically
             if in_notebook():
                 log_message(logging.logger.debug("context: in notebook"))
-                return local_interpolator + SQLITE_BACKEND
+
+                # at the moment, runs IN_MEMORY, but when it's available,
+                # we will have to check if there is GPU, or if we are
+                # in google-colab, and run on GPU.
+                return local_interpolator
             else:
+                # run IN_MEMORY
                 log_message(logging.logger.debug("context: out of notebook"))
                 return local_interpolator
 
