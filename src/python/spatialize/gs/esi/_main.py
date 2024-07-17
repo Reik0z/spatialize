@@ -133,7 +133,7 @@ def esi_nongriddata(points, values, xi, **kwargs):
 
 # =========================================== END of PUBLIC API ======================================================
 @signature_overload(pivot_arg=("local_interpolator", "idw", "local interpolator"),
-                    common_args={"n_partitions": 100,
+                    common_args={"n_partitions": 500,
                                  "alpha": 0.8,
                                  "agg_function": af.mean,
                                  "prec_function": pf.mse_precision,

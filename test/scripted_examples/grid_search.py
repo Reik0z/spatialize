@@ -25,13 +25,30 @@ points = rng.random((1000, 2))
 values = func(points[:, 0], points[:, 1])
 
 # *** kriging as local interpolator ***
-b_params = esi_hparams_search(points, values, (grid_x, grid_y),
-                              local_interpolator="kriging", griddata=True, k=10,
-                              model=["spherical", "exponential", "cubic", "gaussian"],
-                              nugget=[0.0, 0.5, 1.0],
-                              range=[10.0, 50.0, 100.0, 200.0],
-                              alpha=[0.97, 0.96, 0.95])
-print(b_params)
+result = esi_hparams_search(points, values, (grid_x, grid_y),
+                            local_interpolator="kriging", griddata=True, k=10,
+                            model=["spherical", "exponential", "cubic", "gaussian"],
+                            nugget=[0.0, 0.5, 1.0],
+                            range=[10.0, 50.0, 100.0, 200.0],
+                            alpha=[0.97, 0.96, 0.95])
+result.plot_cv_error()
+plt.show()
+
+# use the result to run the algorithm
+w, h = 500, 600
+
+grid_z3, grid_z3p = esi_griddata(points, values, (grid_x, grid_y),
+                                 best_params_found=result.best_result()
+                                 )
+ds3 = xr.DataArray(grid_z3.T)
+ds3p = xr.DataArray(grid_z3p.T)
+
+fig = ds3.hvplot.image(title="esi kriging", width=w, height=h, xlabel='X', ylabel='Y')
+fig += ds3p.hvplot.image(title="esi kriging precision", width=w, height=h, xlabel='X', ylabel='Y', cmap='seismic')
+
+hv.save(fig, 'gs_kriging_griddata_figure.png', dpi=144)
+
+exit(0)
 
 # *** idw as local interpolator ***
 
