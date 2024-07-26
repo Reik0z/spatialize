@@ -7,6 +7,8 @@ import numpy as np
 import pandas as pd
 from tqdm import tqdm
 
+
+
 # if running from 'this' test directory then change to the
 # project root directory
 curr_dir = os.path.split(os.getcwd())[1]
@@ -21,15 +23,20 @@ except ImportError:
     # we are in dev env so the compiled library
     # must be in the project root directory.
     sys.path.append('.')
+    sys.path.append('..')
+
+sys.path.append('./src/python/')
+sys.path.append('../src/python/')
 
 import libspatialize as sp
 
+from spatialize.logging import default_singleton_callback
 # this is the 'k' for k-fold
 k = 10
 
 
 def pperc(s):
-    print(f'processing ... {int(float(s.split()[1][:-1]))}%\r', end="")
+    default_singleton_callback(s)
 
 
 def test_partitions():
@@ -290,16 +297,38 @@ def test_esi_kri_3d(op='estimate'):
         df.to_csv('./test/testdata/output/kfold_pyesi_kri_3d.csv', index=False)
 
 
+def test_voronoi_idw(op='estimate'):
+    samples = pd.read_csv('./test/testdata/data.csv')
+    with open('./test/testdata/grid.dat', 'r') as data:
+        lines = data.readlines()
+        lines = [l.strip().split() for l in lines[5:]]
+        aux = np.float32(lines)
+    locations = pd.DataFrame(aux, columns=['X', 'Y', 'Z'])
+
+    if op == 'estimate':
+        model, values = sp.estimation_voronoi_idw(np.float32(samples[['x', 'y']].values),
+                                                  np.float32(samples[['cu']].values[:, 0]), 500, 1.01, 2.0, 206936,
+                                                  np.float32(locations[['X', 'Y']].values), pperc)
+        df = pd.DataFrame(locations, columns=['X', 'Y', 'Z'])
+        df['py_cu'] = np.nanmean(values, axis=1)
+        df.to_csv('./test/testdata/output/pyvoronoi_idw.csv', index=False)
+
+
 if __name__ == '__main__':
     t1 = time.time()
-    test_nn_idw(op='estimate')
-    print('test nn_idw: ', time.time() - t1, '[s]', flush=True)
+    test_voronoi_idw(op='estimate')
+    print('test voronoi_idw: ', time.time() - t1, '[s]', flush=True)
     t1 = time.time()
-    test_nn_idw(op='loo')
-    print('test loo_nn_idw: ', time.time() - t1, '[s]', flush=True)
-    t1 = time.time()
-    test_nn_idw(op='kfold')
-    print('test kfold_nn_idw: ', time.time() - t1, '[s]', flush=True)
+
+    # t1 = time.time()
+    # test_nn_idw(op='estimate')
+    # print('test nn_idw: ', time.time() - t1, '[s]', flush=True)
+    # t1 = time.time()
+    # test_nn_idw(op='loo')
+    # print('test loo_nn_idw: ', time.time() - t1, '[s]', flush=True)
+    # t1 = time.time()
+    # test_nn_idw(op='kfold')
+    # print('test kfold_nn_idw: ', time.time() - t1, '[s]', flush=True)
 
     # t1 = time.time()
     # test_esi_idw_2d(op='estimate')

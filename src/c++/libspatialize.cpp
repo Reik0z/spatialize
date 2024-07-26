@@ -8,127 +8,128 @@
 #include "spatialize/nn_idw.hpp"
 #include "spatialize/esi_idw.hpp"
 #include "spatialize/esi_kriging.hpp"
+#include "spatialize/voronoi_idw.hpp"
 
 // c to py
-static PyObject *float2d_to_list(std::vector<std::vector<float>> *f2d){
-  PyObject *list = Py_BuildValue("[]"), *aux;
+// static PyObject *float2d_to_list(std::vector<std::vector<float>> *f2d){
+//   PyObject *list = Py_BuildValue("[]"), *aux;
+//
+//   for(auto f1d: *f2d){
+//     aux = Py_BuildValue("[]");
+//     for(auto v: f1d){
+//       PyList_Append(aux, Py_BuildValue("f", v));
+//     }
+//     PyList_Append(list, aux);
+//   }
+//   return(list);
+// }
 
-  for(auto f1d: *f2d){
-    aux = Py_BuildValue("[]");
-    for(auto v: f1d){
-      PyList_Append(aux, Py_BuildValue("f", v));
-    }
-    PyList_Append(list, aux);
-  }
-  return(list);
-}
+// static PyObject *int2d_to_list(std::vector<std::vector<int>> *i2d){
+//   PyObject *list = Py_BuildValue("[]"), *aux;
+//
+//   for(auto i1d: *i2d){
+//     aux = Py_BuildValue("[]");
+//     for(auto v: i1d){
+//       PyList_Append(aux, Py_BuildValue("i", v));
+//     }
+//     PyList_Append(list, aux);
+//   }
+//   return(list);
+// }
 
-static PyObject *int2d_to_list(std::vector<std::vector<int>> *i2d){
-  PyObject *list = Py_BuildValue("[]"), *aux;
+// static PyObject *float1d_to_list(std::vector<float> *f1d){
+//   PyObject *list = Py_BuildValue("[]");
+//   for(auto v: *f1d){
+//     PyList_Append(list, Py_BuildValue("f", v));
+//   }
+//   return(list);
+// }
 
-  for(auto i1d: *i2d){
-    aux = Py_BuildValue("[]");
-    for(auto v: i1d){
-      PyList_Append(aux, Py_BuildValue("i", v));
-    }
-    PyList_Append(list, aux);
-  }
-  return(list);
-}
+// static PyObject *int1d_to_list(std::vector<int> *i1d){
+//   PyObject *list = Py_BuildValue("[]");
+//   for(auto v: *i1d){
+//     PyList_Append(list, Py_BuildValue("i", v));
+//   }
+//   return(list);
+// }
 
-static PyObject *float1d_to_list(std::vector<float> *f1d){
-  PyObject *list = Py_BuildValue("[]");
-  for(auto v: *f1d){
-    PyList_Append(list, Py_BuildValue("f", v));
-  }
-  return(list);
-}
+// static PyObject *nodetree_as_dict(sptlz::MondrianNode* node){
+//   if(node==NULL){
+//     Py_RETURN_NONE;
+//   }else{
+//     PyObject *dict = Py_BuildValue("{s:O, s:O, s:O, s:O, s:O, s:O, s:O, s:O}",
+//       "leaf_id", Py_BuildValue("i", node->leaf_id),
+//       "bbox", float2d_to_list(&(node->bbox)),
+//       "tau", Py_BuildValue("f", node->tau),
+//       "cut", Py_BuildValue("f", node->cut),
+//       "height", Py_BuildValue("i", node->height),
+//       "axis", Py_BuildValue("i", node->axis),
+//       "left", nodetree_as_dict(node->left),
+//       "right", nodetree_as_dict(node->right)
+//     );
+//     return(dict);
+//   }
+// }
 
-static PyObject *int1d_to_list(std::vector<int> *i1d){
-  PyObject *list = Py_BuildValue("[]");
-  for(auto v: *i1d){
-    PyList_Append(list, Py_BuildValue("i", v));
-  }
-  return(list);
-}
+// static PyObject *nodelist_to_idlist(std::vector<sptlz::MondrianNode*> *nodes){
+//   PyObject *list = Py_BuildValue("[]"), *aux;
+//   std::ignore = aux;
+//
+//   for(auto node: *nodes){
+//     PyList_Append(list, Py_BuildValue("i", node->leaf_id));
+//   }
+//   return(list);
+// }
 
-static PyObject *nodetree_as_dict(sptlz::MondrianNode* node){
-  if(node==NULL){
-    Py_RETURN_NONE;
-  }else{
-    PyObject *dict = Py_BuildValue("{s:O, s:O, s:O, s:O, s:O, s:O, s:O, s:O}",
-      "leaf_id", Py_BuildValue("i", node->leaf_id),
-      "bbox", float2d_to_list(&(node->bbox)),
-      "tau", Py_BuildValue("f", node->tau),
-      "cut", Py_BuildValue("f", node->cut),
-      "height", Py_BuildValue("i", node->height),
-      "axis", Py_BuildValue("i", node->axis),
-      "left", nodetree_as_dict(node->left),
-      "right", nodetree_as_dict(node->right)
-    );
-    return(dict);
-  }
-}
+// static PyObject *tree_as_dict(sptlz::ESI *esi, int i){
+//   sptlz::MondrianTree *t = esi->get_tree(i);
+//   PyObject *dict = Py_BuildValue("{s:O, s:O, s:O, s:O, s:O, s:O}",
+//     "root", nodetree_as_dict(t->root),
+//     "leaves_id", nodelist_to_idlist(&(t->leaves)),
+//     "leaf_for_sample", int1d_to_list(&(t->leaf_for_sample)),
+//     "samples_by_leaf", int2d_to_list(&(t->samples_by_leaf)),
+//     "leaf_params", float2d_to_list(&(t->leaf_params)),
+//     "ndim", Py_BuildValue("i", t->ndim)
+//   );
+//
+//   return(dict);
+// }
 
-static PyObject *nodelist_to_idlist(std::vector<sptlz::MondrianNode*> *nodes){
-  PyObject *list = Py_BuildValue("[]"), *aux;
-  std::ignore = aux;
-
-  for(auto node: *nodes){
-    PyList_Append(list, Py_BuildValue("i", node->leaf_id));
-  }
-  return(list);
-}
-
-static PyObject *tree_as_dict(sptlz::ESI *esi, int i){
-  sptlz::MondrianTree *t = esi->get_tree(i);
-  PyObject *dict = Py_BuildValue("{s:O, s:O, s:O, s:O, s:O, s:O}",
-    "root", nodetree_as_dict(t->root),
-    "leaves_id", nodelist_to_idlist(&(t->leaves)),
-    "leaf_for_sample", int1d_to_list(&(t->leaf_for_sample)),
-    "samples_by_leaf", int2d_to_list(&(t->samples_by_leaf)),
-    "leaf_params", float2d_to_list(&(t->leaf_params)),
-    "ndim", Py_BuildValue("i", t->ndim)
-  );
-
-  return(dict);
-}
-
-static PyObject *esi_idw_to_dict(sptlz::ESI_IDW *esi){
-  PyObject *list = Py_BuildValue("[]");
-  for(int i=0; i<esi->forest_size(); i++){
-    PyList_Append(list, tree_as_dict(esi, i));
-  }
-
-  PyObject *dict = Py_BuildValue("{s:i, s:O, s:O, s:O, s:O}",
-    "esi_type", 1,
-    "coords", float2d_to_list(esi->get_coords()),
-    "values", float1d_to_list(esi->get_values()),
-    "mondrian_forest", list,
-    "exponent", Py_BuildValue("f", esi->get_exponent())
-  );
-
-  return(dict);
-}
-
-
-static PyObject *esi_kriging_to_dict(sptlz::ESI_Kriging *esi){
-  PyObject *list = Py_BuildValue("[]");
-  for(int i=0; i<esi->forest_size(); i++){
-    PyList_Append(list, tree_as_dict(esi, i));
-  }
-
-  PyObject *dict = Py_BuildValue("{s:i, s:O, s:O, s:O, s:O, s:O, s:O}",
-    "esi_type", 2,
-    "coords", float2d_to_list(esi->get_coords()),
-    "values", float1d_to_list(esi->get_values()),
-    "mondrian_forest", list,
-    "variogram_model", Py_BuildValue("i", esi->get_variogram_model()),
-    "range", Py_BuildValue("f", esi->get_range()),
-    "nugget", Py_BuildValue("f", esi->get_nugget())
-  );
-  return(dict);
-}
+// static PyObject *esi_idw_to_dict(sptlz::ESI_IDW *esi){
+//   PyObject *list = Py_BuildValue("[]");
+//   for(int i=0; i<esi->forest_size(); i++){
+//     PyList_Append(list, tree_as_dict(esi, i));
+//   }
+//
+//   PyObject *dict = Py_BuildValue("{s:i, s:O, s:O, s:O, s:O}",
+//     "esi_type", 1,
+//     "coords", float2d_to_list(esi->get_coords()),
+//     "values", float1d_to_list(esi->get_values()),
+//     "mondrian_forest", list,
+//     "exponent", Py_BuildValue("f", esi->get_exponent())
+//   );
+//
+//   return(dict);
+// }
+//
+//
+// static PyObject *esi_kriging_to_dict(sptlz::ESI_Kriging *esi){
+//   PyObject *list = Py_BuildValue("[]");
+//   for(int i=0; i<esi->forest_size(); i++){
+//     PyList_Append(list, tree_as_dict(esi, i));
+//   }
+//
+//   PyObject *dict = Py_BuildValue("{s:i, s:O, s:O, s:O, s:O, s:O, s:O}",
+//     "esi_type", 2,
+//     "coords", float2d_to_list(esi->get_coords()),
+//     "values", float1d_to_list(esi->get_values()),
+//     "mondrian_forest", list,
+//     "variogram_model", Py_BuildValue("i", esi->get_variogram_model()),
+//     "range", Py_BuildValue("f", esi->get_range()),
+//     "nugget", Py_BuildValue("f", esi->get_nugget())
+//   );
+//   return(dict);
+// }
 
 // py to c
 std::vector<std::vector<float>> list_to_float2d(PyObject* po){
@@ -2120,6 +2121,184 @@ static PyObject *kfold_esi_kriging_3d(PyObject *self, PyObject *args){
   return(Py_BuildValue("O,O", model_list, (PyObject *)estimation));
 }
 
+
+static PyObject *estimation_voronoi_idw(PyObject *self, PyObject *args){
+  PyObject *func, *aux_str, *model_list;
+  PyArrayObject *samples, *values, *scattered;
+  float *aux;
+  std::vector<std::vector<float>> c_smp, c_loc, r;
+  std::vector<float> c_val;
+  int forest_size, has_call, seed;
+  float alpha, exp;
+  std::string fname;
+  PyArrayObject *estimation;
+
+#ifdef DEBUG
+  std::cout << "[C++] parsing arguments" << "\n";
+#endif
+  // parse arguments
+  if (!PyArg_ParseTuple(args, "O!O!iffiO!O", &PyArray_Type, &samples, &PyArray_Type, &values, &forest_size, &alpha, &exp, &seed, &PyArray_Type, &scattered, &func)) {
+    PyErr_SetString(PyExc_TypeError, "[1] Argument do not match");
+    return((PyObject *) NULL);
+  }
+
+  has_call = PyObject_HasAttrString(func, "__call__");
+  if(has_call==0){
+    PyErr_SetString(PyExc_TypeError, "[2] Not callable object");
+    return((PyObject *) NULL);
+  }
+  aux_str = PyObject_GetAttrString(func, "__class__");
+  aux_str = PyObject_GetAttrString(aux_str, "__name__");
+  fname = PyUnicode_AsUTF8(aux_str);
+
+  // Argument validations
+  if (PyArray_NDIM(samples)!=2){
+    PyErr_SetString(PyExc_TypeError, "[3] samples must be a 2 dimensions array");
+    return((PyObject *) NULL);
+  }
+  if (PyArray_NDIM(values)!=1){
+    PyErr_SetString(PyExc_TypeError, "[4] values must be a 1 dimensions array");
+    return((PyObject *) NULL);
+  }
+  if (PyArray_NDIM(scattered)!=2){
+    PyErr_SetString(PyExc_TypeError, "[5] scattered must be a 2 dimensions array");
+    return((PyObject *) NULL);
+  }
+
+  npy_intp *smp_sh = PyArray_SHAPE(samples);
+  npy_intp *sct_sh = PyArray_SHAPE(scattered);
+  if (sct_sh[1]!=smp_sh[1]){
+    PyErr_SetString(PyExc_TypeError, "[6] scattered should have same elements per row as samples");
+    return((PyObject *) NULL);
+  }
+
+#ifdef DEBUG
+  std::cout << "[C++] checking data format" << "\n";
+#endif
+  // Check if C contiguous data (if not we should transpose)
+  aux = (float *)PyArray_DATA(samples);
+  if (PyArray_CHKFLAGS(samples, NPY_ARRAY_F_CONTIGUOUS)==1){
+    for(int i=0; i<smp_sh[0]; i++){
+      c_val.clear();
+      for(int j=0; j<smp_sh[1]; j++){
+        c_val.push_back(aux[j*smp_sh[0]+i]);
+      }
+      c_smp.push_back(c_val);
+    }
+  }else{
+    for(int i=0; i<smp_sh[0]; i++){
+      c_val.clear();
+      for(int j=0; j<smp_sh[1]; j++){
+        c_val.push_back(aux[smp_sh[1]*i+j]);
+      }
+      c_smp.push_back(c_val);
+    }
+  }
+
+  if (Py_REFCNT(aux) != 0) {
+      Py_SET_REFCNT(aux, 0);
+  }
+  aux = (float *)PyArray_DATA(scattered);
+
+  if (PyArray_CHKFLAGS(scattered, NPY_ARRAY_F_CONTIGUOUS)==1){
+    for(int i=0; i<sct_sh[0]; i++){
+      c_val.clear();
+      for(int j=0; j<sct_sh[1]; j++){
+        c_val.push_back(aux[j*sct_sh[0]+i]);
+      }
+      c_loc.push_back(c_val);
+    }
+  }else{
+    for(int i=0; i<sct_sh[0]; i++){
+      c_val.clear();
+      for(int j=0; j<sct_sh[1]; j++){
+        c_val.push_back(aux[sct_sh[1]*i+j]);
+      }
+      c_loc.push_back(c_val);
+    }
+  }
+
+  if (Py_REFCNT(aux) != 0) {
+      Py_SET_REFCNT(aux, 0);
+  }
+  aux = (float *)PyArray_DATA(values);
+
+  c_val = std::vector<float>(smp_sh[0]);
+  memcpy(&c_val[0], &aux[0], c_val.size()*sizeof(float));
+  if (Py_REFCNT(aux) != 0) {
+      Py_SET_REFCNT(aux, 0);
+  }
+
+  // ##### THE METHOD ITSELF #####
+#ifdef DEBUG
+  std::cout << "[C++] arranging parameters" << "\n";
+#endif
+  auto bbox = sptlz::samples_coords_bbox(&c_loc);
+  auto bbox2 = sptlz::samples_coords_bbox(&c_smp);
+  for(int i=0;i<smp_sh[1];i++){
+    if(bbox2.at(i).at(0) < bbox.at(i).at(0)){bbox.at(i).at(0) = bbox2.at(i).at(0);}
+    if(bbox2.at(i).at(1) > bbox.at(i).at(1)){bbox.at(i).at(1) = bbox2.at(i).at(1);}
+  }
+  float lambda = sptlz::bbox_sum_interval(bbox);
+  lambda = 1/(lambda-alpha*lambda);
+
+#ifdef DEBUG
+  std::cout << "[C++] building voronoi" << "\n";
+#endif
+  sptlz::VORONOI_IDW* voronoi = new sptlz::VORONOI_IDW(c_smp, c_val, lambda, forest_size, bbox, exp, seed);
+
+#ifdef DEBUG
+  std::cout << "[C++] calling voronoi" << "\n";
+#endif
+    r = voronoi->estimate(&c_loc, [func](std::string s){
+    PyObject *tup = Py_BuildValue("(s)", s.c_str());
+    PyObject_Call(func, tup, NULL);
+    return(0);
+  });
+
+#ifdef DEBUG
+  std::cout << "[C++] formatting the output" << "\n";
+#endif
+  auto output = sptlz::as_1d_array(&r);
+
+  // stuff to return data to python
+  if (Py_REFCNT(aux) != 0) {
+      Py_SET_REFCNT(aux, 0);
+  }
+
+  const npy_intp dims[2] = {(int)r.size(), forest_size};
+  estimation = (PyArrayObject *) PyArray_SimpleNew(2, dims, NPY_FLOAT);
+  aux = (float *)PyArray_DATA(estimation);
+  memcpy(&aux[0], &output.data()[0], output.size()*sizeof(float));
+
+#ifdef DEBUG
+  std::cout << "[C++] building the output model" << "\n";
+#endif
+
+  // avoid model construction until we have
+  // a more efficient way to pass it through
+  //
+  // model_list = esi_idw_to_dict(esi);
+  model_list = Py_BuildValue("");
+
+  delete voronoi;
+  if (Py_REFCNT(voronoi) != 0) {
+      Py_SET_REFCNT(voronoi, 0);
+  }
+
+  std::vector<float>().swap(output);
+  std::vector<std::vector<float>>().swap(c_smp);
+  std::vector<std::vector<float>>().swap(c_loc);
+  std::vector<std::vector<float>>().swap(r);
+  std::vector<float>().swap(c_val);
+
+  if (Py_REFCNT(aux) != 0) {
+      Py_SET_REFCNT(aux, 0);
+  }
+
+  return(Py_BuildValue("O,O", model_list, (PyObject *)estimation));
+}
+
 static PyMethodDef SpatializeMethods[] = {
   { "get_partitions_using_esi", get_partitions_using_esi, METH_VARARGS, "get several partitions using MondrianTree" },
 
@@ -2142,6 +2321,8 @@ static PyMethodDef SpatializeMethods[] = {
   { "estimation_esi_kriging_3d", estimation_esi_kriging_3d, METH_VARARGS, "Esi using Kriging on 3 dimensions to estimate" },
   { "loo_esi_kriging_3d", loo_esi_kriging_3d, METH_VARARGS, "Leave-one-out validation for Esi using Kriging on 3 dimensions" },
   { "kfold_esi_kriging_3d", kfold_esi_kriging_3d, METH_VARARGS, "K-fold validation for Esi using Kriging on 3 dimensions" },
+
+  { "estimation_voronoi_idw", estimation_voronoi_idw, METH_VARARGS, "IDW using VORONOI ESI to estimate" },
 
   { NULL, NULL, 0, NULL }
 };
