@@ -118,11 +118,11 @@ namespace sptlz{
 				if ((prob==1) && (this->left != NULL) && (point[this->idx_division]-max_distance <= this->med) && (point[this->idx_division]+max_distance >= this->min)){
 					auto lresult = this->left->query_nn(coords, n_coords, n_dims, point, k, p, max_distance);
 					std::copy(lresult.begin(), lresult.end(), std::back_inserter(result));
-					if (result.size()>=k){
+					if ((int)result.size()>=k){
 						std::sort(result.begin(), result.end(), [](std::pair<T,int> p1, std::pair<T,int> p2){
 							return(p1.first < p2.first);
 						});
-						for(int i=k;i<result.size();i++){
+						for(size_t i=k;i<result.size();i++){
 							result.pop_back();
 						}
 						max_distance = result[k-1].first;
@@ -133,11 +133,11 @@ namespace sptlz{
 				if ((this->right != NULL) && (point[this->idx_division]-max_distance <= this->max) && (point[this->idx_division]+max_distance >= this->med)){
 					auto rresult = this->right->query_nn(coords, n_coords, n_dims, point, k, p, max_distance);
 					std::copy(rresult.begin(), rresult.end(), std::back_inserter(result));
-					if (result.size()>=k){
+					if ((int)result.size()>=k){
 						std::sort(result.begin(), result.end(), [](std::pair<T,int> p1, std::pair<T,int> p2){
 							return(p1.first < p2.first);
 						});
-						for(int i=k;i<result.size();i++){
+						for(size_t i=k;i<result.size();i++){
 							result.pop_back();
 						}
 						max_distance = result[k-1].first;
@@ -148,11 +148,11 @@ namespace sptlz{
 				if ((prob==2) && (this->left != NULL) && (point[this->idx_division]-max_distance <= this->med) && (point[this->idx_division]+max_distance >= this->min)){
 					auto lresult = this->left->query_nn(coords, n_coords, n_dims, point, k, p, max_distance);
 					std::copy(lresult.begin(), lresult.end(), std::back_inserter(result));
-					if (result.size()>=k){
+					if ((int)result.size()>=k){
 						std::sort(result.begin(), result.end(), [](std::pair<T,int> p1, std::pair<T,int> p2){
 							return(p1.first < p2.first);
 						});
-						for(int i=result.size();i>k;i--){
+						for(int i=(int)result.size();i>k;i--){
 							result.pop_back();
 						}
 						max_distance = result[k-1].first;
@@ -265,7 +265,7 @@ namespace sptlz{
 				if(this->n_coords==0){
 					return(std::make_pair(std::vector<T>({}), std::vector<int>({})));
 				}
-				if (point->size()!=this->n_dims){
+				if ((int)point->size()!=this->n_dims){
 					throw std::runtime_error("<kdtree>[KDTree.query_nn] query point and kdtree coords have different dimensions.");
 				}
 				if (this->root == NULL){
