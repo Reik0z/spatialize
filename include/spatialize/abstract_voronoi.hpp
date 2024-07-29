@@ -25,7 +25,6 @@ namespace sptlz{
 			VoronoiNode(std::vector<std::vector<float>> _nuclei_coords, std::vector<std::vector<float>> *_coords){
 				this->nuclei_coords = _nuclei_coords;
 				this->n_dims = _coords->at(0).size();
-
 			}
 
 			~VoronoiNode(){
@@ -41,7 +40,6 @@ namespace sptlz{
 			std::vector<std::vector<int>> samples_by_leaf;
 			std::vector<std::vector<float>> leaf_params;
 			std::vector<std::vector<float>> nuclei_coords;
-			std::vector<std::pair<std::vector<float>, std::vector<int>>> nearest_samples;
 
 			int vsize, ndim;
 
@@ -51,26 +49,42 @@ namespace sptlz{
 				std::mt19937 my_rand(seed);
 				std::uniform_int_distribution<int> samples_choice(0, (int)coords->size()-1);
 
-				// generate as many choices as voronoi size
-				for (int i=0; i<vsize; ++i) {
-					int sampleid = samples_choice(my_rand);
-					this->nuclei_coords.push_back(coords->at(sampleid));
-					this->samples_by_leaf.push_back({});
-#ifdef DEBUG
-  std::cout << "[C++] tree voronoi sample:" << sampleid << "\n";
-#endif
+// #ifdef DEBUG
+//   std::cout << "[C++] tree voronoi samples:" << vsize << " and alpha : " << alpha << "\n";
+// #endif
+				if (alpha < 0) {
+					for (int i=0; i<vsize; ++i) {
+						std::vector<float> rand_coord(coords->at(0).size());
+						for(int j=0; j<(int)rand_coord.size(); j++){
+							for (int k=0; k<ndim; ++k) {
+								std::uniform_real_distribution<float> uni_float(bbox[k][0], bbox[k][1]);
+								rand_coord.at(k) = uni_float(my_rand);
+							}
+						}
+						this->nuclei_coords.push_back(rand_coord);
+						this->samples_by_leaf.push_back({});
+					}
+				}
+				else {
+					// generate as many choices as voronoi size
+					for (int i=0; i<vsize; ++i) {
+						int sampleid = samples_choice(my_rand);
+						this->nuclei_coords.push_back(coords->at(sampleid));
+						this->samples_by_leaf.push_back({});
+					}
+
 				}
 				this->kdt = new sptlz::KDTree<float>(&(this->nuclei_coords));
 
 				int aux;
 				for(size_t i=0; i< coords->size(); i++){
-					aux = search_leaf(coords->at(i)); // we seach one nearest nuclei
+					aux = search_leaf(coords->at(i)); // we search one nearest nuclei
 					// assign samples to leafs and inverse too
 					this->samples_by_leaf.at(aux).push_back(i);
 					this->leaf_for_sample.push_back(aux);
 					this->leaf_params.push_back({});
 				}
-				// build voronoi node using random nuclei and all sample locations
+				// build voronoi node using nuclei and all sample locations
 				for (int i=0; i<vsize; ++i) {
 					VoronoiNode* cur_node = new VoronoiNode(this->nuclei_coords, coords);
 					this->leaves.push_back(cur_node);
@@ -124,7 +138,7 @@ namespace sptlz{
 				values = _values;
 				std::uniform_int_distribution<int> uni_int;
 				
-				std::poisson_distribution<int> pdistribution(coords.size()*0.5*alpha); // Poisson distribution with a mean of half the sample size
+				std::poisson_distribution<int> pdistribution(coords.size()*0.5*std::abs(alpha)); // Poisson distribution with a mean of half the sample size
 
 				for(int i=0; i<forest_size; i++){
 					int vsize = std::max(1,pdistribution(my_rand));

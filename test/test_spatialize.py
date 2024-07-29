@@ -307,18 +307,37 @@ def test_voronoi_idw(op='estimate'):
 
     if op == 'estimate':
         model, values = sp.estimation_voronoi_idw(np.float32(samples[['x', 'y']].values),
-                                                  np.float32(samples[['cu']].values[:, 0]), 500, 1.01, 2.0, 206936,
+                                                  np.float32(samples[['cu']].values[:, 0]), 50, 1.0, 2.0, 206936,
                                                   np.float32(locations[['X', 'Y']].values), pperc)
         df = pd.DataFrame(locations, columns=['X', 'Y', 'Z'])
         df['py_cu'] = np.nanmean(values, axis=1)
         df.to_csv('./test/testdata/output/pyvoronoi_idw.csv', index=False)
-
+    elif op == 'loo':
+        model, values = sp.loo_voronoi_idw(np.float32(samples[['x', 'y']].values), np.float32(samples[['cu']].values[:, 0]),
+                                       500, -1.0, 2.0, 206936, np.float32(locations[['X', 'Y']].values), pperc)
+        df = pd.DataFrame(samples, columns=['X', 'Y', 'cu'])
+        df['loo_py_cu'] = np.nanmean(values, axis=1)
+        df.to_csv('./test/testdata/output/loo_pyvoronoi_idw_2d.csv', index=False)
+    elif op == 'kfold':
+        model, values = sp.kfold_voronoi_idw(np.float32(samples[['x', 'y']].values),
+                                         np.float32(samples[['cu']].values[:, 0]), 500, 1.0, 2.0, 206936, k, 84987,
+                                         np.float32(locations[['X', 'Y']].values), pperc)
+        df = pd.DataFrame(samples, columns=['X', 'Y', 'cu'])
+        df['kfold_py_cu'] = np.nanmean(values, axis=1)
+        df.to_csv('./test/testdata/output/kfold_pyvoronoi_idw_2d.csv', index=False)
 
 if __name__ == '__main__':
+    # t1 = time.time()
+    # test_voronoi_idw(op='estimate')
+    # print('test voronoi_idw: ', time.time() - t1, '[s]', flush=True)
+
+    # t1 = time.time()
+    # test_voronoi_idw(op='loo')
+    # print('test loo_voronoi_idw: ', time.time() - t1, '[s]', flush=True)
+
     t1 = time.time()
-    test_voronoi_idw(op='estimate')
-    print('test voronoi_idw: ', time.time() - t1, '[s]', flush=True)
-    t1 = time.time()
+    test_voronoi_idw(op='kfold')
+    print('test kfold_voronoi_idw: ', time.time() - t1, '[s]', flush=True)
 
     # t1 = time.time()
     # test_nn_idw(op='estimate')
