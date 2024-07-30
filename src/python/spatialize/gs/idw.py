@@ -8,7 +8,7 @@ import spatialize.gs
 from spatialize import SpatializeError, logging
 from spatialize._math_util import flatten_grid_data
 from spatialize.logging import default_singleton_callback, singleton_null_callback, log_message
-from spatialize.gs import LibSpatializeFacade
+from spatialize.gs import lib_spatialize_facade
 from spatialize._util import GridSearchResult
 
 
@@ -40,10 +40,10 @@ def idw_hparams_search(points, values, xi,
         method = "loo"
 
     # get the cross validation function
-    cross_validate = LibSpatializeFacade.get_operator(points,
-                                                      spatialize.gs.PLAINIDW,
-                                                      method,
-                                                      LibSpatializeFacade.BackendOptions.IN_MEMORY)
+    cross_validate = lib_spatialize_facade.get_operator(points,
+                                                        spatialize.gs.PLAINIDW,
+                                                        method,
+                                                        lib_spatialize_facade.backend_options.IN_MEMORY)
 
     grid = {"radius": radius,
             "exponent": exponent}
@@ -113,9 +113,9 @@ def idw_nongriddata(points, values, xi, radius=np.inf, exponent=1.0,
         rad, exp = best_params_found["radius"], best_params_found["exponent"]
 
     # get the estimator function
-    estimate = LibSpatializeFacade.get_operator(points,
-                                                spatialize.gs.PLAINIDW,
-                                                "estimate", LibSpatializeFacade.BackendOptions.IN_MEMORY)
+    estimate = lib_spatialize_facade.get_operator(points,
+                                                  spatialize.gs.PLAINIDW,
+                                                "estimate", lib_spatialize_facade.backend_options.IN_MEMORY)
 
     # get the argument list
     l_args = [np.float32(points), np.float32(values),

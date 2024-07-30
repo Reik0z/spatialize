@@ -7,9 +7,9 @@ from sklearn.model_selection import ParameterGrid
 from spatialize import SpatializeError, logging
 import spatialize.gs.esi.aggfunction as af
 import spatialize.gs.esi.precfunction as pf
-from spatialize._util import signature_overload, in_notebook, GridSearchResult
+from spatialize._util import signature_overload, GridSearchResult
 from spatialize._math_util import flatten_grid_data
-from spatialize.gs import LibSpatializeFacade
+from spatialize.gs import lib_spatialize_facade, partitioning_process, local_interpolator as li
 from spatialize.logging import log_message, default_singleton_callback, singleton_null_callback
 
 
@@ -28,24 +28,25 @@ class ESIGridSearchResult(GridSearchResult):
 
 
 # ============================================= PUBLIC API ==========================================================
-@signature_overload(pivot_arg=("local_interpolator", "idw", "local interpolator"),
+@signature_overload(pivot_arg=("local_interpolator", li.IDW, "local interpolator"),
                     common_args={"k": 10,
                                  "griddata": False,
+                                 "p_process": partitioning_process.MONDRIAN,  # partitioning process
                                  "n_partitions": [100],
                                  "alpha": list(np.flip(np.arange(0.70, 0.90, 0.01))),
                                  "agg_function": {"mean": af.mean, "median": af.median},
                                  "seed": np.random.randint(1000, 10000),
                                  "folding_seed": np.random.randint(1000, 10000),
                                  "callback": default_singleton_callback,
-                                 "backend": None,  # it can be: None or one the LibSpatializeFacade.BackendOptions
+                                 "backend": None,  # it can be: None or one the lib_spatialize_facade.backend_options
                                  "cache_path": None,  # Needed if 'backend' is
-                                 # LibSpatializeFacade.BackendOptions.DISK_CACHED
+                                 # lib_spatialize_facade.backend_options.DISK_CACHED
                                  },
                     specific_args={
-                        "idw": {"exponent": list(np.arange(1.0, 15.0, 1.0))},
-                        "kriging": {"model": ["spherical", "exponential", "cubic", "gaussian"],
-                                    "nugget": [0.0, 0.5, 1.0],
-                                    "range": [10.0, 50.0, 100.0, 200.0]}
+                        li.IDW: {"exponent": list(np.arange(1.0, 15.0, 1.0))},
+                        li.KRIGING: {"model": ["spherical", "exponential", "cubic", "gaussian"],
+                                     "nugget": [0.0, 0.5, 1.0],
+                                     "range": [10.0, 50.0, 100.0, 200.0]}
                     })
 def esi_hparams_search(points, values, xi, **kwargs):
     log_message(logging.logger.debug(f"searching best params ..."))
@@ -56,15 +57,17 @@ def esi_hparams_search(points, values, xi, **kwargs):
         method = "loo"
 
     # get the cross validation function
-    cross_validate = LibSpatializeFacade.get_operator(points, kwargs["local_interpolator"], method, kwargs["backend"])
+    cross_validate = lib_spatialize_facade.get_operator(points, kwargs["local_interpolator"],
+                                                        method, kwargs["p_process"],
+                                                        kwargs["backend"])
 
     grid = {"n_partitions": kwargs["n_partitions"],
             "alpha": kwargs["alpha"]}
 
-    if kwargs["local_interpolator"] == "idw":
+    if kwargs["local_interpolator"] == li.IDW:
         grid["exponent"] = kwargs["exponent"]
 
-    if kwargs["local_interpolator"] == "kriging":
+    if kwargs["local_interpolator"] == li.KRIGING:
         grid["model"] = kwargs["model"]
         grid["nugget"] = kwargs["nugget"]
         grid["range"] = kwargs["range"]
@@ -132,20 +135,21 @@ def esi_nongriddata(points, values, xi, **kwargs):
 
 
 # =========================================== END of PUBLIC API ======================================================
-@signature_overload(pivot_arg=("local_interpolator", "idw", "local interpolator"),
+@signature_overload(pivot_arg=("local_interpolator", li.IDW, "local interpolator"),
                     common_args={"n_partitions": 500,
+                                 "p_process": partitioning_process.MONDRIAN,
                                  "alpha": 0.8,
                                  "agg_function": af.mean,
                                  "prec_function": pf.mse_precision,
                                  "seed": np.random.randint(1000, 10000),
                                  "callback": default_singleton_callback,
-                                 "backend": None,  # it can be: None or one the LibSpatializeFacade.BackendOptions
+                                 "backend": None,  # it can be: None or one the lib_spatialize_facade.backend_options
                                  "cache_path": None,  # Needed if 'backend' is
-                                 # LibSpatializeFacade.BackendOptions.DISK_CACHED
+                                 # lib_spatialize_facade.backend_options.DISK_CACHED
                                  "best_params_found": None
                                  },
                     specific_args={
-                        "idw": {"exponent": 2.0},
+                        li.IDW: {"exponent": 2.0},
                         "kriging": {"model": 1, "nugget": 0.1, "range": 5000.0}
                     })
 def _call_libspatialize(points, values, xi, **kwargs):
@@ -165,7 +169,9 @@ def _call_libspatialize(points, values, xi, **kwargs):
                 pass
 
     # get the estimator function
-    estimate = LibSpatializeFacade.get_operator(points, kwargs["local_interpolator"], "estimate", kwargs["backend"])
+    estimate = lib_spatialize_facade.get_operator(points, kwargs["local_interpolator"],
+                                                  "estimate", kwargs["p_process"],
+                                                  kwargs["backend"])
 
     # get the argument list
     l_args = build_arg_list(points, values, xi, kwargs)
@@ -190,17 +196,17 @@ def build_arg_list(points, values, xi, nonpos_args):
               nonpos_args["n_partitions"], nonpos_args["alpha"], np.float32(xi), nonpos_args["callback"]]
 
     # add specific args
-    if nonpos_args["local_interpolator"] == "idw":
+    if nonpos_args["local_interpolator"] == li.IDW:
         l_args.insert(-2, nonpos_args["exponent"])
         l_args.insert(-2, nonpos_args["seed"])
 
-    if nonpos_args["local_interpolator"] == "kriging":
-        l_args.insert(-2, LibSpatializeFacade.get_kriging_model_number(nonpos_args["model"]))
+    if nonpos_args["local_interpolator"] == li.KRIGING:
+        l_args.insert(-2, lib_spatialize_facade.get_kriging_model_number(nonpos_args["model"]))
         l_args.insert(-2, nonpos_args["nugget"])
         l_args.insert(-2, nonpos_args["range"])
         l_args.insert(-2, nonpos_args["seed"])
 
-    if nonpos_args["backend"] == LibSpatializeFacade.BackendOptions.DISK_CACHED:
+    if nonpos_args["backend"] == lib_spatialize_facade.backend_options.DISK_CACHED:
         cache_path = nonpos_args["cache_path"]
         if cache_path is None:
             cache_path = tempfile.TemporaryDirectory().name + ".db"

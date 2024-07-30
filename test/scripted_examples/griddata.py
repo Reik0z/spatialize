@@ -9,7 +9,7 @@ import holoviews as hv
 import spatialize.gs.esi.aggfunction as af
 import spatialize.gs.esi.precfunction as pf
 from spatialize import logging
-from spatialize.gs import LibSpatializeFacade
+from spatialize.gs import lib_spatialize_facade
 from spatialize.gs.esi import esi_griddata
 from scipy.interpolate import griddata
 
@@ -44,7 +44,7 @@ grid_z3, grid_z3p = esi_griddata(points, values, (grid_x, grid_y),
                                  exponent=1.0,
                                  n_partitions=500, alpha=0.95,
                                  agg_function=af.median,
-                                 # backend=LibSpatializeFacade.BackendOptions.DISK_CACHED,
+                                 # backend=lib_spatialize_facade.backend_option.DISK_CACHED,
                                  # cache_path="/Users/alvaro/Projects/GitHub/spatialize/test/testdata/output/griddata.db"
                                  )
 ds3 = xr.DataArray(grid_z3.T)
