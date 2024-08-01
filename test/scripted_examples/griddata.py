@@ -41,6 +41,8 @@ w, h = 500, 600
 
 grid_z3, grid_z3p = esi_griddata(points, values, (grid_x, grid_y),
                                  local_interpolator="idw",
+                                 p_process="voronoi",
+                                 data_cond=False,
                                  exponent=1.0,
                                  n_partitions=500, alpha=0.95,
                                  agg_function=af.median,

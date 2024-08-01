@@ -14,16 +14,19 @@ from spatialize.logging import log_message, default_singleton_callback, singleto
 
 
 class ESIGridSearchResult(GridSearchResult):
-    def __init__(self, search_result_data, agg_function_map):
+    def __init__(self, search_result_data, agg_function_map, p_process):
         super().__init__(search_result_data)
         self.agg_func_map = agg_function_map
+        self.p_process = p_process
 
     def best_result(self, **kwargs):
         b_param = self.best_params.sort_values(by='cv_error', ascending=True)
         row = pd.DataFrame(b_param.iloc[0]).to_dict(index=True)
         index = list(row.keys())[0]
         result = row[index]
-        result.update({"result_data_index": index, "agg_function": self.agg_func_map[result["agg_func_name"]]})
+        result.update({"result_data_index": index,
+                       "agg_function": self.agg_func_map[result["agg_func_name"]],
+                       "p_process": self.p_process})
         return result
 
 
@@ -32,6 +35,8 @@ class ESIGridSearchResult(GridSearchResult):
                     common_args={"k": 10,
                                  "griddata": False,
                                  "p_process": partitioning_process.MONDRIAN,  # partitioning process
+                                 "data_cond": [True, False],  # whether to condition the partitioning process on samples
+                                                              # -- valid only when ‘p_process’ is ‘voronoi’.
                                  "n_partitions": [100],
                                  "alpha": list(np.flip(np.arange(0.70, 0.90, 0.01))),
                                  "agg_function": {"mean": af.mean, "median": af.median},
@@ -64,6 +69,9 @@ def esi_hparams_search(points, values, xi, **kwargs):
     grid = {"n_partitions": kwargs["n_partitions"],
             "alpha": kwargs["alpha"]}
 
+    if kwargs["p_process"] == partitioning_process.VORONOI:
+        grid["data_cond"] = kwargs["data_cond"]
+
     if kwargs["local_interpolator"] == li.IDW:
         grid["exponent"] = kwargs["exponent"]
 
@@ -89,6 +97,10 @@ def esi_hparams_search(points, values, xi, **kwargs):
         param_set["callback"] = singleton_null_callback
         param_set["backend"] = kwargs["backend"]
         param_set["cache_path"] = kwargs["cache_path"]
+        param_set["p_process"] = kwargs["p_process"]
+
+        if kwargs["p_process"] == partitioning_process.MONDRIAN:
+            param_set["data_cond"] = True
 
         l_args = build_arg_list(points, values, p_xi, param_set)
         if method == "kfold":
@@ -121,7 +133,7 @@ def esi_hparams_search(points, values, xi, **kwargs):
         else:
             result_data = pd.DataFrame(d, index=[k[1]])
 
-    return ESIGridSearchResult(result_data, kwargs["agg_function"])
+    return ESIGridSearchResult(result_data, kwargs["agg_function"], kwargs["p_process"])
 
 
 def esi_griddata(points, values, xi, **kwargs):
@@ -137,7 +149,9 @@ def esi_nongriddata(points, values, xi, **kwargs):
 # =========================================== END of PUBLIC API ======================================================
 @signature_overload(pivot_arg=("local_interpolator", li.IDW, "local interpolator"),
                     common_args={"n_partitions": 500,
-                                 "p_process": partitioning_process.MONDRIAN,
+                                 "p_process": partitioning_process.MONDRIAN,  # partitioning process
+                                 "data_cond": True,  # whether to condition the partitioning process on samples
+                                                     # -- valid only when ‘p_process’ is ‘voronoi’.
                                  "alpha": 0.8,
                                  "agg_function": af.mean,
                                  "prec_function": pf.mse_precision,
@@ -145,7 +159,7 @@ def esi_nongriddata(points, values, xi, **kwargs):
                                  "callback": default_singleton_callback,
                                  "backend": None,  # it can be: None or one the lib_spatialize_facade.backend_options
                                  "cache_path": None,  # Needed if 'backend' is
-                                 # lib_spatialize_facade.backend_options.DISK_CACHED
+                                                      # lib_spatialize_facade.backend_options.DISK_CACHED
                                  "best_params_found": None
                                  },
                     specific_args={
@@ -191,9 +205,14 @@ def _call_libspatialize(points, values, xi, **kwargs):
 
 
 def build_arg_list(points, values, xi, nonpos_args):
+    alpha = nonpos_args["alpha"]
+    if nonpos_args["p_process"] == partitioning_process.VORONOI and not nonpos_args["data_cond"]:
+        # log_message(logging.logger.debug('voronoi partitioning process not conditioned on sample data'))
+        alpha *= -1
+
     # add initial common args
     l_args = [np.float32(points), np.float32(values),
-              nonpos_args["n_partitions"], nonpos_args["alpha"], np.float32(xi), nonpos_args["callback"]]
+              nonpos_args["n_partitions"], alpha, np.float32(xi), nonpos_args["callback"]]
 
     # add specific args
     if nonpos_args["local_interpolator"] == li.IDW:
