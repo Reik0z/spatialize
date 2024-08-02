@@ -31,11 +31,31 @@ class ESIGridSearchResult(GridSearchResult):
 
 
 class ESIResult:
-    def __init__(self, estimation, esi_samples, griddata, original_shape):
-        self.estimation = estimation
+    def __init__(self, estimation, esi_samples, griddata=False, original_shape=None):
+        self._estimation = estimation
         self.esi_samples = esi_samples
         self.griddata = griddata
         self.original_shape = original_shape
+
+    def estimation(self):
+        if self.griddata:
+            return self._estimation.reshape(self.original_shape)
+        else:
+            return self._estimation
+
+    def precision(self, prec_function=pf.mse_precision):
+        log_message(logging.logger.debug(f'applying "{prec_function}" precision function'))
+        prec = prec_function(self._estimation, self.esi_samples)
+
+        if self.griddata:
+            return prec.reshape(self.original_shape)
+        else:
+            return prec
+
+    def re_estimate(self, agg_function=af.mean):
+        self._estimation = agg_function(self.esi_samples)
+        return self.estimation()
+
 
 
 # ============================================= PUBLIC API ==========================================================
@@ -146,12 +166,13 @@ def esi_hparams_search(points, values, xi, **kwargs):
 
 def esi_griddata(points, values, xi, **kwargs):
     ng_xi, original_shape = flatten_grid_data(xi)
-    estimation, precision = _call_libspatialize(points, values, ng_xi, **kwargs)
-    return estimation.reshape(original_shape), precision.reshape(original_shape)
+    estimation, esi_samples = _call_libspatialize(points, values, ng_xi, **kwargs)
+    return ESIResult(estimation, esi_samples, griddata=True, original_shape=original_shape)
 
 
 def esi_nongriddata(points, values, xi, **kwargs):
-    return _call_libspatialize(points, values, xi, **kwargs)
+    estimation, esi_samples = _call_libspatialize(points, values, xi, **kwargs)
+    return ESIResult(estimation, esi_samples)
 
 
 # =========================================== END of PUBLIC API ======================================================
@@ -162,7 +183,6 @@ def esi_nongriddata(points, values, xi, **kwargs):
                                  # -- valid only when ‘p_process’ is ‘voronoi’.
                                  "alpha": 0.8,
                                  "agg_function": af.mean,
-                                 "prec_function": pf.mse_precision,
                                  "seed": np.random.randint(1000, 10000),
                                  "callback": default_singleton_callback,
                                  "backend": None,  # it can be: None or one the lib_spatialize_facade.backend_options
@@ -206,10 +226,7 @@ def _call_libspatialize(points, values, xi, **kwargs):
 
     estimation = kwargs["agg_function"](esi_samples)
 
-    log_message(logging.logger.debug(f'applying "{kwargs["prec_function"]}" precision function'))
-    precision = kwargs["prec_function"](estimation, esi_samples)
-
-    return estimation, precision
+    return estimation, esi_samples
 
 
 def build_arg_list(points, values, xi, nonpos_args):

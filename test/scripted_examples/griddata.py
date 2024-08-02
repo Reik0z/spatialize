@@ -39,16 +39,19 @@ ds2 = xr.DataArray(grid_z2.T)
 
 w, h = 500, 600
 
-grid_z3, grid_z3p = esi_griddata(points, values, (grid_x, grid_y),
-                                 local_interpolator="idw",
-                                 p_process="voronoi",
-                                 data_cond=False,
-                                 exponent=1.0,
-                                 n_partitions=500, alpha=0.95,
-                                 agg_function=af.median,
-                                 # backend=lib_spatialize_facade.backend_option.DISK_CACHED,
-                                 # cache_path="/Users/alvaro/Projects/GitHub/spatialize/test/testdata/output/griddata.db"
-                                 )
+result = esi_griddata(points, values, (grid_x, grid_y),
+                      local_interpolator="idw",
+                      p_process="mondrian",
+                      data_cond=False,
+                      exponent=1.0,
+                      n_partitions=500, alpha=0.95,
+                      agg_function=af.median,
+                      # backend=lib_spatialize_facade.backend_option.DISK_CACHED,
+                      # cache_path="/Users/alvaro/Projects/GitHub/spatialize/test/testdata/output/griddata.db"
+                      )
+
+grid_z3, grid_z3p = result.estimation(), result.precision()
+
 ds3 = xr.DataArray(grid_z3.T)
 ds3p = xr.DataArray(grid_z3p.T)
 

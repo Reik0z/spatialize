@@ -36,22 +36,25 @@ op_error = pf.OperationalErrorPrecision(np.abs(np.min(values) - np.max(values)))
 # operational error function for the observed mean law
 # op_error_precision=pf.OpErrorPrecision(np.nanmean(values))
 
-result = esi_hparams_search(points, values, xi,
-                            local_interpolator="idw", griddata=False, k=10,
-                            exponent=list(np.arange(1.0, 15.0, 1.0)),
-                            alpha=(0.5, 0.6, 0.8, 0.9, 0.95, 0.98))
+p_process = "mondrian"
+search_result = esi_hparams_search(points, values, xi,
+                                   local_interpolator="idw", griddata=False, k=10,
+                                   p_process=p_process,
+                                   exponent=list(np.arange(1.0, 15.0, 1.0)),
+                                   alpha=(0.5, 0.6, 0.8, 0.9, 0.95, 0.98))
 
-grid_z4, grid_z4p = esi_nongriddata(points, values, xi,
-                                    local_interpolator="idw",
-                                    n_partitions=500,
-                                    prec_function=op_error,
-                                    # prec_function=pf.mae_precision,
-                                    best_params_found=result.best_result())
+result = esi_nongriddata(points, values, xi,
+                         local_interpolator="idw",
+                         p_process=p_process,
+                         n_partitions=500,
+                         best_params_found=search_result.best_result())
+
+grid_z4, grid_z4p = result.estimation(), result.precision(op_error)
 ds4 = xr.DataArray(grid_z4.reshape(w, h))
 ds4p = xr.DataArray(grid_z4p.reshape(w, h) * 100)
 
-fig = ds4.hvplot.image(title="esi idw", width=w, height=h * 2, xlabel='X', ylabel='Y', cmap='bwr', clim=(0, 4.5))
-fig += ds4p.hvplot.image(title="esi idw UQ", width=w, height=h * 2, xlabel='X', ylabel='Y', cmap='Spectral')
+fig = ds4.hvplot.image(title=f"esi idw ({p_process})", width=w, height=h * 2, xlabel='X', ylabel='Y', cmap='bwr', clim=(0, 4.5))
+fig += ds4p.hvplot.image(title=f"esi idw ({p_process}) UQ", width=w, height=h * 2, xlabel='X', ylabel='Y', cmap='Spectral')
 
 hv.save(fig, 'nongridata_idw.png', dpi=144)
 

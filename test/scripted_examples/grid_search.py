@@ -65,9 +65,12 @@ plt.show()
 # use the result to run the algorithm
 w, h = 500, 600
 
-grid_z3, grid_z3p = esi_griddata(points, values, (grid_x, grid_y),
-                                 best_params_found=result.best_result()
-                                 )
+result = esi_griddata(points, values, (grid_x, grid_y),
+                      best_params_found=result.best_result()
+                      )
+
+grid_z3, grid_z3p = result.estimation(), result.precision()
+
 ds3 = xr.DataArray(grid_z3.T)
 ds3p = xr.DataArray(grid_z3p.T)
 
