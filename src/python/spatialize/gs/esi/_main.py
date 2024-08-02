@@ -30,13 +30,21 @@ class ESIGridSearchResult(GridSearchResult):
         return result
 
 
+class ESIResult:
+    def __init__(self, estimation, esi_samples, griddata, original_shape):
+        self.estimation = estimation
+        self.esi_samples = esi_samples
+        self.griddata = griddata
+        self.original_shape = original_shape
+
+
 # ============================================= PUBLIC API ==========================================================
 @signature_overload(pivot_arg=("local_interpolator", li.IDW, "local interpolator"),
                     common_args={"k": 10,
                                  "griddata": False,
                                  "p_process": partitioning_process.MONDRIAN,  # partitioning process
                                  "data_cond": [True, False],  # whether to condition the partitioning process on samples
-                                                              # -- valid only when ‘p_process’ is ‘voronoi’.
+                                 # -- valid only when ‘p_process’ is ‘voronoi’.
                                  "n_partitions": [100],
                                  "alpha": list(np.flip(np.arange(0.70, 0.90, 0.01))),
                                  "agg_function": {"mean": af.mean, "median": af.median},
@@ -151,7 +159,7 @@ def esi_nongriddata(points, values, xi, **kwargs):
                     common_args={"n_partitions": 500,
                                  "p_process": partitioning_process.MONDRIAN,  # partitioning process
                                  "data_cond": True,  # whether to condition the partitioning process on samples
-                                                     # -- valid only when ‘p_process’ is ‘voronoi’.
+                                 # -- valid only when ‘p_process’ is ‘voronoi’.
                                  "alpha": 0.8,
                                  "agg_function": af.mean,
                                  "prec_function": pf.mse_precision,
@@ -159,12 +167,12 @@ def esi_nongriddata(points, values, xi, **kwargs):
                                  "callback": default_singleton_callback,
                                  "backend": None,  # it can be: None or one the lib_spatialize_facade.backend_options
                                  "cache_path": None,  # Needed if 'backend' is
-                                                      # lib_spatialize_facade.backend_options.DISK_CACHED
+                                 # lib_spatialize_facade.backend_options.DISK_CACHED
                                  "best_params_found": None
                                  },
                     specific_args={
                         li.IDW: {"exponent": 2.0},
-                        "kriging": {"model": 1, "nugget": 0.1, "range": 5000.0}
+                        li.KRIGING: {"model": 1, "nugget": 0.1, "range": 5000.0}
                     })
 def _call_libspatialize(points, values, xi, **kwargs):
     log_message(logging.logger.debug('calling libspatialize'))
@@ -207,7 +215,6 @@ def _call_libspatialize(points, values, xi, **kwargs):
 def build_arg_list(points, values, xi, nonpos_args):
     alpha = nonpos_args["alpha"]
     if nonpos_args["p_process"] == partitioning_process.VORONOI and not nonpos_args["data_cond"]:
-        # log_message(logging.logger.debug('voronoi partitioning process not conditioned on sample data'))
         alpha *= -1
 
     # add initial common args

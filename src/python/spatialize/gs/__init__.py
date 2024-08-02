@@ -17,7 +17,8 @@ class partitioning_process:
     [MONDRIAN, VORONOI] = ["mondrian", "voronoi"]
 
 
-PLAINIDW = "plain_idw"
+PLAIN_INTERPOLATOR = "plain"
+PLAINIDW = PLAIN_INTERPOLATOR + local_interpolator.IDW
 [MONDRIANIDW, MONDRIANKRIGING] = [partitioning_process.MONDRIAN + local_interpolator.IDW,
                                   partitioning_process.MONDRIAN + local_interpolator.KRIGING]
 VORONOIIDW = partitioning_process.VORONOI + local_interpolator.IDW

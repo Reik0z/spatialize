@@ -41,8 +41,9 @@ def idw_hparams_search(points, values, xi,
 
     # get the cross validation function
     cross_validate = lib_spatialize_facade.get_operator(points,
-                                                        spatialize.gs.PLAINIDW,
+                                                        spatialize.gs.local_interpolator.IDW,
                                                         method,
+                                                        spatialize.gs.PLAIN_INTERPOLATOR,
                                                         lib_spatialize_facade.backend_options.IN_MEMORY)
 
     grid = {"radius": radius,
@@ -114,8 +115,10 @@ def idw_nongriddata(points, values, xi, radius=np.inf, exponent=1.0,
 
     # get the estimator function
     estimate = lib_spatialize_facade.get_operator(points,
-                                                  spatialize.gs.PLAINIDW,
-                                                "estimate", lib_spatialize_facade.backend_options.IN_MEMORY)
+                                                  spatialize.gs.local_interpolator.IDW,
+                                                  "estimate",
+                                                  spatialize.gs.PLAIN_INTERPOLATOR,
+                                                  lib_spatialize_facade.backend_options.IN_MEMORY)
 
     # get the argument list
     l_args = [np.float32(points), np.float32(values),
