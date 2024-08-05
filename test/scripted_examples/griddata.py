@@ -1,19 +1,11 @@
 import numpy as np
-import xarray as xr
-import pandas
-import hvplot.xarray  # noqa: adds hvplot methods to xarray objects
-import hvplot.pandas  # noqa
-
-import holoviews as hv
+from matplotlib import pyplot as plt
 
 import spatialize.gs.esi.aggfunction as af
-import spatialize.gs.esi.precfunction as pf
 from spatialize import logging
-from spatialize.gs import lib_spatialize_facade
 from spatialize.gs.esi import esi_griddata
 from scipy.interpolate import griddata
 
-hv.extension('matplotlib')
 logging.log.setLevel("DEBUG")
 
 
@@ -31,31 +23,38 @@ grid_z0 = griddata(points, values, (grid_x, grid_y), method='nearest')
 grid_z1 = griddata(points, values, (grid_x, grid_y), method='linear')
 grid_z2 = griddata(points, values, (grid_x, grid_y), method='cubic')
 
-ds_points = pandas.DataFrame({"X": points[:, 1] * 100, "Y": points[:, 0] * 200})
-ds = xr.DataArray(func(grid_x, grid_y).T)
-ds0 = xr.DataArray(grid_z0.T)
-ds1 = xr.DataArray(grid_z1.T)
-ds2 = xr.DataArray(grid_z2.T)
+grid_cmap, prec_cmap = 'coolwarm', 'bwr'
 
-w, h = 500, 600
+plt.imshow(func(grid_x, grid_y).T, extent=(0, 1, 0, 1), origin='lower', cmap=grid_cmap)
+plt.show()
 
 result = esi_griddata(points, values, (grid_x, grid_y),
                       local_interpolator="idw",
                       p_process="mondrian",
                       data_cond=False,
                       exponent=1.0,
-                      n_partitions=500, alpha=0.95,
-                      agg_function=af.median,
-                      # backend=lib_spatialize_facade.backend_option.DISK_CACHED,
-                      # cache_path="/Users/alvaro/Projects/GitHub/spatialize/test/testdata/output/griddata.db"
+                      n_partitions=500, alpha=0.985,
+                      agg_function=af.mean
                       )
 
-grid_z3, grid_z3p = result.estimation(), result.precision()
+esi_idw_est = result.estimation()
 
-ds3 = xr.DataArray(grid_z3.T)
-ds3p = xr.DataArray(grid_z3p.T)
+fig = plt.figure(dpi=150)
+gs = fig.add_gridspec(2, 2, wspace=0.1, hspace=0.47)
+(ax1, ax2) = gs.subplots()
+ax1, ax2, ax3, ax4 = ax1[0], ax1[1], ax2[0], ax2[1]
 
-fig = ds3.hvplot.image(title="esi idw", width=w, height=h, xlabel='X', ylabel='Y')
-fig += ds3p.hvplot.image(title="esi idw precision", width=w, height=h, xlabel='X', ylabel='Y', cmap='seismic')
+# plot original
+ax1.imshow(esi_idw_est.T, extent=(0, 1, 0, 1), origin='lower', cmap=grid_cmap)
+ax1.set_title("esi idw")
 
-hv.save(fig, 'figure.png', dpi=144)
+ax2.imshow(grid_z0.T, extent=(0, 1, 0, 1), origin='lower', cmap=grid_cmap)
+ax2.set_title("nearest")
+
+ax3.imshow(grid_z1.T, extent=(0, 1, 0, 1), origin='lower', cmap=grid_cmap)
+ax3.set_title("linear")
+
+ax4.imshow(grid_z2.T, extent=(0, 1, 0, 1), origin='lower', cmap=grid_cmap)
+ax4.set_title("cubic")
+
+plt.show()

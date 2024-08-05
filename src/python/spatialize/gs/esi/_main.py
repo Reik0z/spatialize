@@ -2,6 +2,9 @@ import tempfile
 
 import numpy as np
 import pandas as pd
+from matplotlib import pyplot as plt
+from matplotlib.pyplot import colorbar
+from mpl_toolkits.axes_grid1 import make_axes_locatable
 from sklearn.model_selection import ParameterGrid
 
 from spatialize import SpatializeError, logging
@@ -36,6 +39,7 @@ class ESIResult:
         self.esi_samples = esi_samples
         self.griddata = griddata
         self.original_shape = original_shape
+        self._precision = None
 
     def estimation(self):
         if self.griddata:
@@ -48,14 +52,59 @@ class ESIResult:
         prec = prec_function(self._estimation, self.esi_samples)
 
         if self.griddata:
-            return prec.reshape(self.original_shape)
+            self._precision = prec.reshape(self.original_shape)
         else:
-            return prec
+            self._precision = prec
+
+        return self._precision
 
     def re_estimate(self, agg_function=af.mean):
         self._estimation = agg_function(self.esi_samples)
         return self.estimation()
 
+    def plot_estimation(self, ax=None, w=None, h=None, **figargs):
+        if 'cmap' not in figargs:
+            figargs['cmap'] = 'coolwarm'
+        self._plot_data(self.estimation(), ax, w, h, **figargs)
+
+    def plot_precision(self, ax=None, w=None, h=None, **figargs):
+        if self._precision is None:
+            self._precision = self.precision()
+        if 'cmap' not in figargs:
+            figargs['cmap'] = 'bwr'
+        self._plot_data(self._precision, ax, w, h, **figargs)
+
+    def quick_plot(self, w=None, h=None, **figargs):
+        fig = plt.figure(dpi=150, **figargs)
+        gs = fig.add_gridspec(1, 2, wspace=0.45)
+        (ax1, ax2) = gs.subplots()
+
+        ax1.set_title('Estimation')
+        self.plot_estimation(ax1, w=w, h=h)
+        ax1.set_aspect('auto')
+
+        ax2.set_title('Precision')
+        self.plot_precision(ax2, w=w, h=h)
+        ax2.set_aspect('auto')
+
+        return fig  # just in case you want to embed it somewhere else
+
+    def _plot_data(self, data, ax=None, w=None, h=None, **figargs):
+        if self.griddata:
+            im = data.T
+        else:
+            if w is None or h is None:
+                raise SpatializeError(f"Wrong image size (w: {w}, h: {h})")
+            im = data.reshape(w, h)
+
+        plotter = plt
+        if ax is not None:
+            plotter = ax
+
+        img = plotter.imshow(im, extent=(0, 1, 0, 1), origin='lower', **figargs)
+        divider = make_axes_locatable(plotter)
+        cax = divider.append_axes("right", size="5%", pad=0.1)
+        colorbar(img, orientation='vertical', cax=cax)
 
 
 # ============================================= PUBLIC API ==========================================================

@@ -1,5 +1,4 @@
-import hvplot.xarray  # noqa: adds hvplot methods to xarray objects
-import holoviews as hv
+import matplotlib.pyplot as plt
 
 import numpy as np
 import pandas as pd
@@ -8,9 +7,7 @@ from spatialize import logging
 from spatialize.gs.esi import esi_hparams_search, esi_nongriddata
 import spatialize.gs.esi.aggfunction as af
 import spatialize.gs.esi.precfunction as pf
-import xarray as xr
 
-hv.extension('matplotlib')
 logging.log.setLevel("DEBUG")
 
 # the samples
@@ -31,50 +28,54 @@ values = samples[['cu']].values[:, 0]
 xi = locations[['X', 'Y']].values
 
 # operational error function for the observed dynamic range
-op_error = pf.OperationalErrorPrecision(np.abs(np.min(values) - np.max(values)))
+op_error = pf.OperationalErrorPrecision(np.abs(np.nanmin(values) - np.nanmax(values)))
+
 
 # operational error function for the observed mean law
 # op_error_precision=pf.OpErrorPrecision(np.nanmean(values))
 
-p_process = "mondrian"
-search_result = esi_hparams_search(points, values, xi,
-                                   local_interpolator="idw", griddata=False, k=10,
-                                   p_process=p_process,
-                                   exponent=list(np.arange(1.0, 15.0, 1.0)),
-                                   alpha=(0.5, 0.6, 0.8, 0.9, 0.95, 0.98))
+def esi_idw(p_process):
+    search_result = esi_hparams_search(points, values, xi,
+                                       local_interpolator="idw", griddata=False, k=10,
+                                       p_process=p_process,
+                                       exponent=list(np.arange(1.0, 15.0, 1.0)),
+                                       alpha=(0.5, 0.6, 0.8, 0.9, 0.95, 0.98))
 
-result = esi_nongriddata(points, values, xi,
-                         local_interpolator="idw",
-                         p_process=p_process,
-                         n_partitions=500,
-                         best_params_found=search_result.best_result())
+    search_result.plot_cv_error()
+    plt.show()
 
-grid_z4, grid_z4p = result.estimation(), result.precision(op_error)
-ds4 = xr.DataArray(grid_z4.reshape(w, h))
-ds4p = xr.DataArray(grid_z4p.reshape(w, h) * 100)
+    result = esi_nongriddata(points, values, xi,
+                             local_interpolator="idw",
+                             p_process=p_process,
+                             n_partitions=500,
+                             best_params_found=search_result.best_result())
 
-fig = ds4.hvplot.image(title=f"esi idw ({p_process})", width=w, height=h * 2, xlabel='X', ylabel='Y', cmap='bwr', clim=(0, 4.5))
-fig += ds4p.hvplot.image(title=f"esi idw ({p_process}) UQ", width=w, height=h * 2, xlabel='X', ylabel='Y', cmap='Spectral')
+    result.precision(op_error)
+    result.quick_plot(w=w, h=h)
+    plt.show()
 
-hv.save(fig, 'nongridata_idw.png', dpi=144)
 
-# b_params = esi_hparams_search(points, values, xi,
-#                               local_interpolator="kriging", griddata=False, k=10,
-#                               model=["spherical", "exponential", "cubic", "gaussian"],
-#                               nugget=[0.0, 0.5, 1.0],
-#                               range=[100.0, 500.0, 1000.0, 5000.0],
-#                               alpha=list(np.flip(np.arange(0.90, 0.95, 0.01))))
-# b_params
-#
-# grid_z4, grid_z4p = esi_nongriddata(points, values, xi,
-#                                     local_interpolator="kriging",
-#                                     model="cubic", nugget=0.0, range=1000.0,
-#                                     n_partitions=100, alpha=0.93,
-#                                     agg_function=af.median, prec_function=op_error_precision)
-# ds4 = xr.DataArray(grid_z4.reshape(w, h))
-# ds4p = xr.DataArray(grid_z4p.reshape(w, h) * 100)
-#
-# fig = ds4.hvplot.image(title="esi kriging", width=w, height=h * 2, xlabel='X', ylabel='Y', cmap='bwr', clim=(0, 4.5))
-# fig += ds4p.hvplot.image(title="esi kriging UQ", width=w, height=h * 2, xlabel='X', ylabel='Y', cmap='Spectral')
-#
-# hv.save(fig, 'nongridata_kriging.png', dpi=144)
+def esi_kriging():
+    search_result = esi_hparams_search(points, values, xi,
+                                       local_interpolator="kriging", griddata=False, k=10,
+                                       model=["spherical", "exponential", "cubic", "gaussian"],
+                                       nugget=[0.0, 0.5, 1.0],
+                                       range=[100.0, 500.0, 1000.0, 5000.0],
+                                       alpha=list(np.flip(np.arange(0.90, 0.95, 0.01))))
+
+    search_result.plot_cv_error()
+    plt.show()
+
+    result = esi_nongriddata(points, values, xi,
+                             local_interpolator="kriging",
+                             n_partitions=500,
+                             best_params_found=search_result.best_result())
+
+    result.precision(op_error)
+    result.quick_plot(w=w, h=h)
+    plt.show()
+
+
+if __name__ == '__main__':
+    # esi_kriging()
+    esi_idw("mondrian")
