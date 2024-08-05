@@ -9,7 +9,7 @@ from spatialize import SpatializeError, logging
 from spatialize._math_util import flatten_grid_data
 from spatialize.logging import default_singleton_callback, singleton_null_callback, log_message
 from spatialize.gs import lib_spatialize_facade
-from spatialize._util import GridSearchResult
+from spatialize._util import GridSearchResult, EstimationResult
 
 
 class IDWGridSearchResult(GridSearchResult):
@@ -23,6 +23,10 @@ class IDWGridSearchResult(GridSearchResult):
         result = row[index]
         result.update({"result_data_index": index})
         return result
+
+
+class IDWResult(EstimationResult):
+    pass
 
 
 def idw_hparams_search(points, values, xi,
@@ -97,13 +101,18 @@ def idw_hparams_search(points, values, xi,
 
 def idw_griddata(points, values, xi, **kwargs):
     ng_xi, original_shape = flatten_grid_data(xi)
-    estimation = idw_nongriddata(points, values, ng_xi, **kwargs)
-    return estimation.reshape(original_shape)
+    estimation = _call_libspatialize(points, values, ng_xi, **kwargs)
+    return IDWResult(estimation, True, original_shape)
 
 
-def idw_nongriddata(points, values, xi, radius=np.inf, exponent=1.0,
-                    callback=default_singleton_callback,
-                    best_params_found=None):
+def idw_nongriddata(points, values, xi, **kwargs):
+    estimation = _call_libspatialize(points, values, xi, **kwargs)
+    return IDWResult(estimation)
+
+
+def _call_libspatialize(points, values, xi, radius=np.inf, exponent=1.0,
+                        callback=default_singleton_callback,
+                        best_params_found=None):
     log_message(logging.logger.debug("running idw"))
 
     if best_params_found is None:

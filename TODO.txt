@@ -1,5 +1,5 @@
 ## CODE ##
-1 [√]] Add ESI-Voronoi
+1 [√] Add ESI-Voronoi
 2.[√] Add plain IDW (already implemented in C++)
 3.[√] Create/improve protocol for communicating C++/GPU libraries with python
 4.[] Implement progress bar in all methods using some queue manager (e.g.: PySiQ)
@@ -9,6 +9,7 @@
 8.[√] Improve grid-search return to show more info on the search findings
 9.[] Add support for categorical variables
 10.[] Implement grid search in parallel
-11.[] Improve results default plotting
+11.[√] Improve results default plotting
+12.[] Add 'save' and 'load' methods in result classes
 
 ## DOC ##

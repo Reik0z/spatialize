@@ -1,0 +1,8 @@
+pandas>=2.2.0
+numpy
+jupyter
+scikit-learn
+scipy
+rich
+tqdm
+setuptools

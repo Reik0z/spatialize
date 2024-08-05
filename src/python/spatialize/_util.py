@@ -1,4 +1,6 @@
 from matplotlib import pyplot as plt
+from matplotlib.pyplot import colorbar
+from mpl_toolkits.axes_grid1 import make_axes_locatable
 from rich.progress import track
 
 from spatialize import SpatializeError
@@ -110,4 +112,62 @@ class GridSearchResult:
                            legend=False)
 
     def best_result(self, **kwargs):
-        pass
+        raise NotImplementedError
+
+    def save(self, path):
+        raise NotImplementedError
+
+    def load(self, path):
+        raise NotImplementedError
+
+
+class EstimationResult:
+    def __init__(self, estimation, griddata=False, original_shape=None):
+        self._estimation = estimation
+        self.griddata = griddata
+        self.original_shape = original_shape
+
+    def estimation(self):
+        if self.griddata:
+            return self._estimation.reshape(self.original_shape)
+        else:
+            return self._estimation
+
+    def plot_estimation(self, ax=None, w=None, h=None, **figargs):
+        if 'cmap' not in figargs:
+            figargs['cmap'] = 'coolwarm'
+        self._plot_data(self.estimation(), ax, w, h, **figargs)
+
+    def _plot_data(self, data, ax=None, w=None, h=None, **figargs):
+        if self.griddata:
+            im = data.T
+        else:
+            if w is None or h is None:
+                raise SpatializeError(f"Wrong image size (w: {w}, h: {h})")
+            im = data.reshape(w, h)
+
+        plotter = plt
+        if ax is not None:
+            plotter = ax
+
+        img = plotter.imshow(im, extent=(0, 1, 0, 1), origin='lower', **figargs)
+        divider = make_axes_locatable(plotter)
+        cax = divider.append_axes("right", size="5%", pad=0.1)
+        colorbar(img, orientation='vertical', cax=cax)
+
+    def quick_plot(self, w=None, h=None, **figargs):
+        fig = plt.figure(dpi=150, **figargs)
+        gs = fig.add_gridspec(1, 1, wspace=0.45)
+        ax = gs.subplots()
+
+        ax.set_title('Estimation')
+        self.plot_estimation(ax, w=w, h=h)
+        ax.set_aspect('auto')
+
+        return fig
+
+    def save(self, path):
+        raise NotImplementedError
+
+    def load(self, path):
+        raise NotImplementedError

@@ -10,7 +10,7 @@ from sklearn.model_selection import ParameterGrid
 from spatialize import SpatializeError, logging
 import spatialize.gs.esi.aggfunction as af
 import spatialize.gs.esi.precfunction as pf
-from spatialize._util import signature_overload, GridSearchResult
+from spatialize._util import signature_overload, GridSearchResult, EstimationResult
 from spatialize._math_util import flatten_grid_data
 from spatialize.gs import lib_spatialize_facade, partitioning_process, local_interpolator as li
 from spatialize.logging import log_message, default_singleton_callback, singleton_null_callback
@@ -33,19 +33,11 @@ class ESIGridSearchResult(GridSearchResult):
         return result
 
 
-class ESIResult:
+class ESIResult(EstimationResult):
     def __init__(self, estimation, esi_samples, griddata=False, original_shape=None):
-        self._estimation = estimation
+        super().__init__(estimation, griddata, original_shape)
         self.esi_samples = esi_samples
-        self.griddata = griddata
-        self.original_shape = original_shape
         self._precision = None
-
-    def estimation(self):
-        if self.griddata:
-            return self._estimation.reshape(self.original_shape)
-        else:
-            return self._estimation
 
     def precision(self, prec_function=pf.mse_precision):
         log_message(logging.logger.debug(f'applying "{prec_function}" precision function'))
@@ -61,11 +53,6 @@ class ESIResult:
     def re_estimate(self, agg_function=af.mean):
         self._estimation = agg_function(self.esi_samples)
         return self.estimation()
-
-    def plot_estimation(self, ax=None, w=None, h=None, **figargs):
-        if 'cmap' not in figargs:
-            figargs['cmap'] = 'coolwarm'
-        self._plot_data(self.estimation(), ax, w, h, **figargs)
 
     def plot_precision(self, ax=None, w=None, h=None, **figargs):
         if self._precision is None:
@@ -88,23 +75,6 @@ class ESIResult:
         ax2.set_aspect('auto')
 
         return fig  # just in case you want to embed it somewhere else
-
-    def _plot_data(self, data, ax=None, w=None, h=None, **figargs):
-        if self.griddata:
-            im = data.T
-        else:
-            if w is None or h is None:
-                raise SpatializeError(f"Wrong image size (w: {w}, h: {h})")
-            im = data.reshape(w, h)
-
-        plotter = plt
-        if ax is not None:
-            plotter = ax
-
-        img = plotter.imshow(im, extent=(0, 1, 0, 1), origin='lower', **figargs)
-        divider = make_axes_locatable(plotter)
-        cax = divider.append_axes("right", size="5%", pad=0.1)
-        colorbar(img, orientation='vertical', cax=cax)
 
 
 # ============================================= PUBLIC API ==========================================================
