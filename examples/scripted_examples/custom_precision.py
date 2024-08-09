@@ -3,7 +3,7 @@ from matplotlib import pyplot as plt
 
 import spatialize.gs.esi.aggfunction as af
 from spatialize.gs.esi import esi_griddata
-from spatialize.gs.esi.precfunction import precision
+from spatialize.gs.esi.precfunction import loss
 
 
 def func(x, y):  # a kind of "cubic" function
@@ -20,7 +20,7 @@ values = func(points[:, 0], points[:, 1])
 def op_error_precision(estimation, esi_samples):
     dyn_range = np.abs(np.nanmin(esi_samples) - np.nanmax(esi_samples))
 
-    @precision
+    @loss
     def _op_error(x, y):
         return np.abs(x - y) / dyn_range
 
@@ -48,7 +48,7 @@ def plot_result(result, title):
     ax3.plot(points[:, 0], points[:, 1], 'y.', ms=0.5)
 
     # plot a custom precision
-    result.precision(op_error_precision)
+    result.loss(op_error_precision)
     result.plot_precision(ax=ax4, cmap=prec_cmap)
     ax4.set_title('op error')
     ax4.plot(points[:, 0], points[:, 1], 'y.', ms=0.5)
