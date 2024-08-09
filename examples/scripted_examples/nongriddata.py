@@ -50,7 +50,7 @@ def esi_idw(p_process):
                              n_partitions=500,
                              best_params_found=search_result.best_result())
 
-    result.precision(op_error)
+    result.loss(op_error)
     result.quick_plot(w=w, h=h)
     plt.show()
 
@@ -71,7 +71,7 @@ def esi_kriging():
                              n_partitions=500,
                              best_params_found=search_result.best_result())
 
-    result.precision(op_error)
+    result.loss(op_error)
     result.quick_plot(w=w, h=h)
     plt.show()
 

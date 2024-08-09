@@ -105,7 +105,8 @@ class ESIResult(EstimationResult):
                         li.IDW: {"exponent": list(np.arange(1.0, 15.0, 1.0))},
                         li.KRIGING: {"model": ["spherical", "exponential", "cubic", "gaussian"],
                                      "nugget": [0.0, 0.5, 1.0],
-                                     "range": [10.0, 50.0, 100.0, 200.0]}
+                                     "range": [10.0, 50.0, 100.0, 200.0],
+                                     "sill": [0.9, 1.0, 1.1]}
                     })
 def esi_hparams_search(points, values, xi, **kwargs):
     log_message(logging.logger.debug(f"searching best params ..."))
@@ -133,6 +134,7 @@ def esi_hparams_search(points, values, xi, **kwargs):
         grid["model"] = kwargs["model"]
         grid["nugget"] = kwargs["nugget"]
         grid["range"] = kwargs["range"]
+        grid["sill"] = kwargs["sill"]
 
     # get the actual parameter grid
     param_grid = ParameterGrid(grid)
@@ -218,7 +220,7 @@ def esi_nongriddata(points, values, xi, **kwargs):
                                  },
                     specific_args={
                         li.IDW: {"exponent": 2.0},
-                        li.KRIGING: {"model": 1, "nugget": 0.1, "range": 5000.0}
+                        li.KRIGING: {"model": 1, "nugget": 0.1, "range": 5000.0, "sill": 1.0}
                     })
 def _call_libspatialize(points, values, xi, **kwargs):
     log_message(logging.logger.debug('calling libspatialize'))
@@ -273,6 +275,7 @@ def build_arg_list(points, values, xi, nonpos_args):
         l_args.insert(-2, lib_spatialize_facade.get_kriging_model_number(nonpos_args["model"]))
         l_args.insert(-2, nonpos_args["nugget"])
         l_args.insert(-2, nonpos_args["range"])
+        l_args.insert(-2, nonpos_args["sill"])
         l_args.insert(-2, nonpos_args["seed"])
 
     if nonpos_args["backend"] == lib_spatialize_facade.backend_options.DISK_CACHED:
