@@ -36,12 +36,12 @@ class ESIGridSearchResult(GridSearchResult):
 class ESIResult(EstimationResult):
     def __init__(self, estimation, esi_samples, griddata=False, original_shape=None):
         super().__init__(estimation, griddata, original_shape)
-        self.esi_samples = esi_samples
+        self._esi_samples = esi_samples
         self._precision = None
 
     def precision(self, prec_function=pf.mse_precision):
         log_message(logging.logger.debug(f'applying "{prec_function}" precision function'))
-        prec = prec_function(self._estimation, self.esi_samples)
+        prec = prec_function(self._estimation, self._esi_samples)
 
         if self.griddata:
             self._precision = prec.reshape(self.original_shape)
@@ -50,8 +50,15 @@ class ESIResult(EstimationResult):
 
         return self._precision
 
+    def esi_samples(self):
+        if self.griddata:
+            N = self._esi_samples.shape[1]
+            return self._esi_samples.reshape(tuple(list(self.original_shape) + [N]))
+        else:
+            return self._esi_samples
+
     def re_estimate(self, agg_function=af.mean):
-        self._estimation = agg_function(self.esi_samples)
+        self._estimation = agg_function(self._esi_samples)
         return self.estimation()
 
     def plot_precision(self, ax=None, w=None, h=None, **figargs):
