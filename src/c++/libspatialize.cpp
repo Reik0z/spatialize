@@ -268,7 +268,8 @@ static sptlz::ESI *load_esi(PyObject *dict){
     int var_model = PyLong_AsLong(PyDict_GetItem(dict, Py_BuildValue("s", "variogram_model")));
     float range = PyFloat_AsDouble(PyDict_GetItem(dict, Py_BuildValue("s", "range")));
     float nugget = PyFloat_AsDouble(PyDict_GetItem(dict, Py_BuildValue("s", "nugget")));
-    sptlz::ESI_Kriging *esi = new sptlz::ESI_Kriging(mondrian_forest, coords, values, var_model, nugget, range);
+	float sill = PyFloat_AsDouble(PyDict_GetItem(dict, Py_BuildValue("s", "sill")));
+    sptlz::ESI_Kriging *esi = new sptlz::ESI_Kriging(mondrian_forest, coords, values, var_model, nugget, range, sill);
     return(esi);
   }else{
     return(NULL);
@@ -1301,13 +1302,13 @@ static PyObject *estimation_esi_kriging_2d(PyObject *self, PyObject *args){
   std::vector<std::vector<float>> c_smp, c_loc;
   std::vector<float> c_val;
   int forest_size, has_call, model, seed;
-  float alpha, nugget, range;
+  float alpha, nugget, range, sill;
   std::string fname;
   PyArrayObject *estimation;
 
 
   // parse arguments
-  if (!PyArg_ParseTuple(args, "O!O!ififfiO!O", &PyArray_Type, &samples, &PyArray_Type, &values, &forest_size, &alpha, & model, &nugget, &range, &seed, &PyArray_Type, &scattered, &func)) {
+  if (!PyArg_ParseTuple(args, "O!O!ififffiO!O", &PyArray_Type, &samples, &PyArray_Type, &values, &forest_size, &alpha, & model, &nugget, &range, &sill, &seed, &PyArray_Type, &scattered, &func)) {
     PyErr_SetString(PyExc_TypeError, "[1] Argument do not match");
     return (PyObject *) NULL;
   }
@@ -1389,7 +1390,7 @@ static PyObject *estimation_esi_kriging_2d(PyObject *self, PyObject *args){
   float lambda = sptlz::bbox_sum_interval(bbox);
   lambda = 1/(lambda-alpha*lambda);
 
-  sptlz::ESI_Kriging* esi = new sptlz::ESI_Kriging(c_smp, c_val, lambda, forest_size, bbox, model, nugget, range, seed);
+  sptlz::ESI_Kriging* esi = new sptlz::ESI_Kriging(c_smp, c_val, lambda, forest_size, bbox, model, nugget, range, sill, seed);
   auto r = esi->estimate(&c_loc, [func](std::string s){
     PyObject *tup = Py_BuildValue("(s)", s.c_str());
     PyObject_Call(func, tup, NULL);
@@ -1433,13 +1434,13 @@ static PyObject *loo_esi_kriging_2d(PyObject *self, PyObject *args){
   std::vector<std::vector<float>> c_smp, c_loc;
   std::vector<float> c_val;
   int forest_size, has_call, model, seed;
-  float alpha, nugget, range;
+  float alpha, nugget, range, sill;
   std::string fname;
   PyArrayObject *estimation;
 
 
   // parse arguments
-  if (!PyArg_ParseTuple(args, "O!O!ififfiO!O", &PyArray_Type, &samples, &PyArray_Type, &values, &forest_size, &alpha, & model, &nugget, &range, &seed, &PyArray_Type, &scattered, &func)) {
+  if (!PyArg_ParseTuple(args, "O!O!ififffiO!O", &PyArray_Type, &samples, &PyArray_Type, &values, &forest_size, &alpha, & model, &nugget, &range, &sill, &seed, &PyArray_Type, &scattered, &func)) {
     PyErr_SetString(PyExc_TypeError, "[1] Argument do not match");
     return (PyObject *) NULL;
   }
@@ -1534,7 +1535,7 @@ static PyObject *loo_esi_kriging_2d(PyObject *self, PyObject *args){
   std::cout << "[C++] creating ESI kriging instance" << "\n";
   // #endif
 
-  sptlz::ESI_Kriging* esi = new sptlz::ESI_Kriging(c_smp, c_val, lambda, forest_size, bbox, model, nugget, range, seed);
+  sptlz::ESI_Kriging* esi = new sptlz::ESI_Kriging(c_smp, c_val, lambda, forest_size, bbox, model, nugget, range, sill, seed);
 
   // #ifdef DEBUG
   std::cout << "[C++] calling ESI kriging leave-one-out" << "\n";
@@ -1582,13 +1583,13 @@ static PyObject *kfold_esi_kriging_2d(PyObject *self, PyObject *args){
   std::vector<std::vector<float>> c_smp, c_loc;
   std::vector<float> c_val;
   int forest_size, has_call, model, k, creation_seed, folding_seed;
-  float alpha, nugget, range;
+  float alpha, nugget, range, sill;
   std::string fname;
   PyArrayObject *estimation;
 
 
   // parse arguments
-  if (!PyArg_ParseTuple(args, "O!O!ififfiiiO!O", &PyArray_Type, &samples, &PyArray_Type, &values, &forest_size, &alpha, &model, &nugget, &range, &creation_seed, &k, &folding_seed, &PyArray_Type, &scattered, &func)) {
+  if (!PyArg_ParseTuple(args, "O!O!ififffiiiO!O", &PyArray_Type, &samples, &PyArray_Type, &values, &forest_size, &alpha, &model, &nugget, &range, &sill, &creation_seed, &k, &folding_seed, &PyArray_Type, &scattered, &func)) {
     PyErr_SetString(PyExc_TypeError, "[1] Argument do not match");
     return (PyObject *) NULL;
   }
@@ -1674,7 +1675,7 @@ static PyObject *kfold_esi_kriging_2d(PyObject *self, PyObject *args){
   float lambda = sptlz::bbox_sum_interval(bbox);
   lambda = 1/(lambda-alpha*lambda);
 
-  sptlz::ESI_Kriging* esi = new sptlz::ESI_Kriging(c_smp, c_val, lambda, forest_size, bbox, model, nugget, range, creation_seed);
+  sptlz::ESI_Kriging* esi = new sptlz::ESI_Kriging(c_smp, c_val, lambda, forest_size, bbox, model, nugget, range, sill, creation_seed);
   auto r = esi->k_fold(k, [func](std::string s){
     PyObject *tup = Py_BuildValue("(s)", s.c_str());
     PyObject_Call(func, tup, NULL);
@@ -1718,13 +1719,13 @@ static PyObject *estimation_esi_kriging_3d(PyObject *self, PyObject *args){
   std::vector<std::vector<float>> c_smp, c_loc;
   std::vector<float> c_val;
   int forest_size, has_call, model, seed;
-  float alpha, nugget, range;
+  float alpha, nugget, range, sill;
   std::string fname;
   PyArrayObject *estimation;
 
 
   // parse arguments
-  if (!PyArg_ParseTuple(args, "O!O!ififfiO!O", &PyArray_Type, &samples, &PyArray_Type, &values, &forest_size, &alpha, & model, &nugget, &range, &seed, &PyArray_Type, &scattered, &func)) {
+  if (!PyArg_ParseTuple(args, "O!O!ififffiO!O", &PyArray_Type, &samples, &PyArray_Type, &values, &forest_size, &alpha, & model, &nugget, &range, &sill, &seed, &PyArray_Type, &scattered, &func)) {
     PyErr_SetString(PyExc_TypeError, "[1] Argument do not match");
     return (PyObject *) NULL;
   }
@@ -1813,7 +1814,7 @@ static PyObject *estimation_esi_kriging_3d(PyObject *self, PyObject *args){
   float lambda = sptlz::bbox_sum_interval(bbox);
   lambda = 1/(lambda-alpha*lambda);
 
-  sptlz::ESI_Kriging* esi = new sptlz::ESI_Kriging(c_smp, c_val, lambda, forest_size, bbox, model, nugget, range, seed);
+  sptlz::ESI_Kriging* esi = new sptlz::ESI_Kriging(c_smp, c_val, lambda, forest_size, bbox, model, nugget, range, sill, seed);
   auto r = esi->estimate(&c_loc, [func](std::string s){
     PyObject *tup = Py_BuildValue("(s)", s.c_str());
     PyObject_Call(func, tup, NULL);
@@ -1857,12 +1858,12 @@ static PyObject *loo_esi_kriging_3d(PyObject *self, PyObject *args){
   std::vector<std::vector<float>> c_smp, c_loc;
   std::vector<float> c_val;
   int forest_size, has_call, model, seed;
-  float alpha, nugget, range;
+  float alpha, nugget, range, sill;
   std::string fname;
   PyArrayObject *estimation;
 
   // parse arguments
-  if (!PyArg_ParseTuple(args, "O!O!ififfiO!O", &PyArray_Type, &samples, &PyArray_Type, &values, &forest_size, &alpha, & model, &nugget, &range, &seed, &PyArray_Type, &scattered, &func)) {
+  if (!PyArg_ParseTuple(args, "O!O!ififffiO!O", &PyArray_Type, &samples, &PyArray_Type, &values, &forest_size, &alpha, & model, &nugget, &range, &sill, &seed, &PyArray_Type, &scattered, &func)) {
     PyErr_SetString(PyExc_TypeError, "[1] Argument do not match");
     return (PyObject *) NULL;
   }
@@ -1948,7 +1949,7 @@ static PyObject *loo_esi_kriging_3d(PyObject *self, PyObject *args){
   float lambda = sptlz::bbox_sum_interval(bbox);
   lambda = 1/(lambda-alpha*lambda);
 
-  sptlz::ESI_Kriging* esi = new sptlz::ESI_Kriging(c_smp, c_val, lambda, forest_size, bbox, model, nugget, range, seed);
+  sptlz::ESI_Kriging* esi = new sptlz::ESI_Kriging(c_smp, c_val, lambda, forest_size, bbox, model, nugget, range, sill, seed);
   auto r = esi->leave_one_out([func](std::string s){
     PyObject *tup = Py_BuildValue("(s)", s.c_str());
     PyObject_Call(func, tup, NULL);
@@ -1992,13 +1993,13 @@ static PyObject *kfold_esi_kriging_3d(PyObject *self, PyObject *args){
   std::vector<std::vector<float>> c_smp, c_loc;
   std::vector<float> c_val;
   int forest_size, has_call, model, k, creation_seed, folding_seed;
-  float alpha, nugget, range;
+  float alpha, nugget, range, sill;
   std::string fname;
   PyArrayObject *estimation;
 
 
   // parse arguments
-  if (!PyArg_ParseTuple(args, "O!O!ififfiiiO!O", &PyArray_Type, &samples, &PyArray_Type, &values, &forest_size, &alpha, & model, &nugget, &range, &creation_seed, &k, &folding_seed, &PyArray_Type, &scattered, &func)) {
+  if (!PyArg_ParseTuple(args, "O!O!ififffiiiO!O", &PyArray_Type, &samples, &PyArray_Type, &values, &forest_size, &alpha, & model, &nugget, &range, &sill, &creation_seed, &k, &folding_seed, &PyArray_Type, &scattered, &func)) {
     PyErr_SetString(PyExc_TypeError, "[1] Argument do not match");
     return (PyObject *) NULL;
   }
@@ -2084,7 +2085,7 @@ static PyObject *kfold_esi_kriging_3d(PyObject *self, PyObject *args){
   float lambda = sptlz::bbox_sum_interval(bbox);
   lambda = 1/(lambda-alpha*lambda);
 
-  sptlz::ESI_Kriging* esi = new sptlz::ESI_Kriging(c_smp, c_val, lambda, forest_size, bbox, model, nugget, range, creation_seed);
+  sptlz::ESI_Kriging* esi = new sptlz::ESI_Kriging(c_smp, c_val, lambda, forest_size, bbox, model, nugget, range, sill, creation_seed);
   auto r = esi->k_fold(k, [func](std::string s){
     PyObject *tup = Py_BuildValue("(s)", s.c_str());
     PyObject_Call(func, tup, NULL);

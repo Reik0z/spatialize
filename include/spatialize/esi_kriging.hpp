@@ -79,19 +79,19 @@ namespace sptlz{
   class ESI_Kriging: public ESI {
     protected:
       int variogram_model; // 1:Spherical 2:Exponetial 3:Cubic 4:Gaussian
-      float nugget, range;
+      float nugget, range, sill;
 
-      std::function<float(float)> variogram(int m, float n, float r){
+      std::function<float(float)> variogram(int m, float n, float r, float s){
         float c = (1.0-nugget);
 
         if(m==1){ // Spherical
-          return([n,c,r](float d){return(std::min(1.0, std::max(0.0, 1.0 - n - c*(1.5*d/r - 0.5*pow(d/r, 3.0)))));});
+          return([n,c,r,s](float d){return(s*std::min(1.0, std::max(0.0, 1.0 - n - c*(1.5*d/r - 0.5*pow(d/r, 3.0)))));});
         }else if(m==2){ // Exponential
-          return([n,c,r](float d){return(std::min(1.0, std::max(0.0, 1.0 - n - c*(1.0-exp(-3.0*d/r)))));});
+          return([n,c,r,s](float d){return(s*std::min(1.0, std::max(0.0, 1.0 - n - c*(1.0-exp(-3.0*d/r)))));});
         }else if(m==3){ // Cubic
-          return([n,c,r](float d){return(std::min(1.0, std::max(0.0, 1.0 - n - c*(7.0*pow(d/r, 2.0) - 35.0*pow(d/r, 3.0)/4.0 + 3.5*pow(d/r, 5.0) - 0.75*pow(d/r, 7.0)))));});
+          return([n,c,r,s](float d){return(s*std::min(1.0, std::max(0.0, 1.0 - n - c*(7.0*pow(d/r, 2.0) - 35.0*pow(d/r, 3.0)/4.0 + 3.5*pow(d/r, 5.0) - 0.75*pow(d/r, 7.0)))));});
         }else if(m==4){ // Gaussian
-          return([n,c,r](float d){return(std::min(1.0, std::max(0.0, 1.0 - n - c*(1-exp(-3.0*pow(d/r, 2))))));});
+          return([n,c,r,s](float d){return(s*std::min(1.0, std::max(0.0, 1.0 - n - c*(1-exp(-3.0*pow(d/r, 2))))));});
         }else{
           return([](float d){return(d);});
         }
@@ -119,7 +119,7 @@ namespace sptlz{
           return(result);
         }
 
-        auto gamma = variogram(this->variogram_model, this->nugget, this->range);
+        auto gamma = variogram(this->variogram_model, this->nugget, this->range, this->sill);
         auto sl_coords = slice(coords, samples_id);
         auto sl_locations = slice(locations, locations_id);
         auto left_cov = kriging_left_matrix(&sl_coords, gamma);
@@ -153,7 +153,7 @@ namespace sptlz{
         auto sl_values = slice(values, samples_id);
         sl_values.push_back(0.0); // to anulate the mu coeffcicient
 
-        auto left_cov = kriging_left_matrix(&sl_coords, variogram(variogram_model, nugget, range));
+        auto left_cov = kriging_left_matrix(&sl_coords, variogram(variogram_model, nugget, range, sill));
         for(int i=0; i<n; i++){
           auto aux = split_cov_matrix(&left_cov, n+1, i);
           auto right_cov = aux.second;
@@ -202,8 +202,8 @@ namespace sptlz{
               auto sl_values_train = slice(&sl_values, &(test_train.second));
               sl_values_train.push_back(0.0);
 
-              auto left_cov = kriging_left_matrix(&sl_coords_train, variogram(variogram_model, nugget, range));
-              auto right_cov = kriging_right_matrix(&sl_coords_train, &sl_coords_test, variogram(variogram_model, nugget, range));
+              auto left_cov = kriging_left_matrix(&sl_coords_train, variogram(variogram_model, nugget, range, sill));
+              auto right_cov = kriging_right_matrix(&sl_coords_train, &sl_coords_test, variogram(variogram_model, nugget, range, sill));
               Eigen::Map<Eigen::MatrixXf> A = Eigen::Map<Eigen::MatrixXf>(left_cov.data(), n+1, n+1);
               auto inv = A.completeOrthogonalDecomposition().pseudoInverse();
               Eigen::Map<Eigen::MatrixXf> v = Eigen::Map<Eigen::MatrixXf>(sl_values_train.data(), 1, n+1);
@@ -220,16 +220,18 @@ namespace sptlz{
       }
 
     public:
-      ESI_Kriging(std::vector<std::vector<float>> _coords, std::vector<float> _values, float lambda, int forest_size, std::vector<std::vector<float>> bbox, int _model, float _nugget, float _range, int seed=206936):ESI(_coords, _values, lambda, forest_size, bbox, seed){
+      ESI_Kriging(std::vector<std::vector<float>> _coords, std::vector<float> _values, float lambda, int forest_size, std::vector<std::vector<float>> bbox, int _model, float _nugget, float _range, float _sill, int seed=206936):ESI(_coords, _values, lambda, forest_size, bbox, seed){
         variogram_model = _model;
         nugget = _nugget;
         range = _range;
+        sill = _sill;
       }
 
-      ESI_Kriging(std::vector<sptlz::MondrianTree*> _mondrian_forest, std::vector<std::vector<float>> _coords, std::vector<float> _values, int _model, float _nugget, float _range):ESI(_mondrian_forest, _coords, _values){
+      ESI_Kriging(std::vector<sptlz::MondrianTree*> _mondrian_forest, std::vector<std::vector<float>> _coords, std::vector<float> _values, int _model, float _nugget, float _range, float _sill):ESI(_mondrian_forest, _coords, _values){
         variogram_model = _model;
         nugget = _nugget;
         range = _range;
+        sill = _sill;
       }
 
       ~ESI_Kriging() {}
@@ -245,6 +247,11 @@ namespace sptlz{
       float get_range(){
         return(this->range);
       }
+
+      float get_sill(){
+        return(this->sill);
+      }
+
 
   };
 }
