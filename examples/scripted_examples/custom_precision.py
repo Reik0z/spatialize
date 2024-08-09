@@ -48,7 +48,7 @@ def plot_result(result, title):
     ax3.plot(points[:, 0], points[:, 1], 'y.', ms=0.5)
 
     # plot a custom precision
-    result.loss(op_error_precision)
+    result.precision(op_error_precision)
     result.plot_precision(ax=ax4, cmap=prec_cmap)
     ax4.set_title('op error')
     ax4.plot(points[:, 0], points[:, 1], 'y.', ms=0.5)
