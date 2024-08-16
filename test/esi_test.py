@@ -24,7 +24,7 @@ def test_griddata_kriging():
                                      local_interpolator="idw",
                                      n_partitions=100, alpha=0.99,
                                      exponent=7.0,
-                                     agg_function=af.mean, prec_function=pf.mae_precision)
+                                     agg_function=af.mean, prec_function=pf.mae_loss)
 
 
 class ESIModule(unittest.TestCase):
@@ -95,14 +95,14 @@ class ESIModule(unittest.TestCase):
                             callback=self.progress,
                             exponent=7.0,
                             n_partitions=100, alpha=0.97,
-                            agg_function=af.mean, prec_function=pf.mae_precision)
+                            agg_function=af.mean, prec_function=pf.mae_loss)
 
         _, _ = esi_griddata(points, values, (grid_x, grid_y),
                             local_interpolator="kriging",
                             callback=self.progress,
                             model="cubic", nugget=0.1, range=5000.0,
                             n_partitions=100, alpha=0.97,
-                            agg_function=af.mean, prec_function=pf.mae_precision)
+                            agg_function=af.mean, prec_function=pf.mae_loss)
 
     def test_hparams_search(self):
         grid_x, grid_y = np.mgrid[0:1:100j, 0:1:200j]

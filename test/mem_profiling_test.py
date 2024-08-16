@@ -85,7 +85,7 @@ def idw(points, values, grid):
                         exponent=7.0,
                         n_partitions=500, alpha=0.985,
                         # n_partitions=100, alpha=0.8,
-                        agg_function=af.mean, prec_function=pf.mae_precision)
+                        agg_function=af.mean, prec_function=pf.mae_loss)
     # print(progress.call_count)
 
 
@@ -95,7 +95,7 @@ def kriging(points, values, grid):
                         # callback=progress,
                         model="cubic", nugget=0.1, range=5000.0,
                         n_partitions=500, alpha=0.97,
-                        agg_function=af.mean, prec_function=pf.mae_precision)
+                        agg_function=af.mean, prec_function=pf.mae_loss)
 
 
 def gsearch_kriging(points, values, grid):

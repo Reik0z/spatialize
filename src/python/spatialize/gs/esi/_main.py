@@ -39,7 +39,7 @@ class ESIResult(EstimationResult):
         self._esi_samples = esi_samples
         self._precision = None
 
-    def precision(self, prec_function=pf.mse_precision):
+    def precision(self, prec_function=pf.mse_loss):
         log_message(logging.logger.debug(f'applying "{prec_function}" precision function'))
         prec = prec_function(self._estimation, self._esi_samples)
 

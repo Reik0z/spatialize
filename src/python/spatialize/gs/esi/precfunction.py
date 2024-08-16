@@ -23,12 +23,12 @@ def loss(agg_function):
 
 
 @loss(mean)
-def mse_precision(x, y):
+def mse_loss(x, y):
     return (x - y) ** 2
 
 
 @loss(mean)
-def mae_precision(x, y):
+def mae_loss(x, y):
     return np.abs(x - y)
 
 
