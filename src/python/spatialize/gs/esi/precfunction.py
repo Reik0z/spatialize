@@ -3,28 +3,31 @@ import numpy as np
 from spatialize.gs.esi.aggfunction import mean
 
 
-def loss(function):
-    function_name = function.__name__
-    module_name = function.__module__
+def loss(agg_function):
+    def outer_function(function):
+        function_name = function.__name__
+        module_name = function.__module__
 
-    class inner_function:
-        def __call__(self, estimation, esi_samples):
-            return _apply_loss_function(estimation, esi_samples,
-                                        function,
-                                        mean)
+        class inner_function:
+            def __call__(self, estimation, esi_samples):
+                return _apply_loss_function(estimation, esi_samples,
+                                            function,
+                                            agg_function)
 
-        def __repr__(self):
-            return f"<decorated--{module_name}.{function_name}>"
+            def __repr__(self):
+                return f"<decorated--{module_name}.{function_name}>"
 
-    return inner_function()
+        return inner_function()
+
+    return outer_function
 
 
-@loss
+@loss(mean)
 def mse_precision(x, y):
     return (x - y) ** 2
 
 
-@loss
+@loss(mean)
 def mae_precision(x, y):
     return np.abs(x - y)
 
@@ -38,7 +41,7 @@ class OperationalErrorPrecision:
         if dyn_range is None:
             dyn_range = np.abs(np.min(estimation) - np.max(estimation))
 
-        @loss
+        @loss(mean)
         def _op_error(x, y):
             return np.abs(x - y) / dyn_range
 
