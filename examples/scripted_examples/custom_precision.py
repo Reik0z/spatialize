@@ -3,7 +3,7 @@ from matplotlib import pyplot as plt
 
 import spatialize.gs.esi.aggfunction as af
 from spatialize.gs.esi import esi_griddata
-from spatialize.gs.esi.precfunction import loss
+from spatialize.gs.esi.lossfunction import loss
 
 
 def func(x, y):  # a kind of "cubic" function

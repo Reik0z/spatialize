@@ -17,7 +17,7 @@ def test_griddata_kriging():
     values = func(points[:, 0], points[:, 1])
 
     import spatialize.gs.esi.aggfunction as af
-    import spatialize.gs.esi.precfunction as pf
+    import spatialize.gs.esi.lossfunction as pf
     from spatialize.gs.esi import esi_griddata
 
     grid_z3, grid_z3p = esi_griddata(points, values, (grid_x, grid_y),
@@ -87,7 +87,7 @@ class ESIModule(unittest.TestCase):
         values = self.func(points[:, 0], points[:, 1])
 
         import spatialize.gs.esi.aggfunction as af
-        import spatialize.gs.esi.precfunction as pf
+        import spatialize.gs.esi.lossfunction as pf
         from spatialize.gs.esi import esi_griddata
 
         _, _ = esi_griddata(points, values, (grid_x, grid_y),

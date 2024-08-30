@@ -31,8 +31,19 @@ def mae_loss(x, y):
     return np.abs(x - y)
 
 
-class OperationalErrorPrecision:
-    def __init__(self, dyn_range=None):
+@loss(identity)
+def mse_cube(x, y):
+    return mse_loss(x, y)
+
+
+@loss(identity)
+def mae_cube(x, y):
+    return mae_loss(x, y)
+
+
+class OperationalErrorLoss:
+    def __init__(self, dyn_range=None, use_cube=False):
+        self.use_cube = use_cube
         self.dyn_range = dyn_range
 
     def __call__(self, estimation, esi_samples):
@@ -41,15 +52,18 @@ class OperationalErrorPrecision:
             dyn_range = np.abs(np.min(estimation) - np.max(estimation))
 
         @loss(identity)
-        def _op_error(x, y):
+        def _op_error_cube(x, y):
             return np.abs(x - y) / dyn_range
 
+        @loss(mean)
+        def _op_error_aggregated(x, y):
+            return np.abs(x - y) / dyn_range
+
+        _op_error = _op_error_aggregated
+        if self.use_cube:
+            _op_error = _op_error_cube
+
         return _op_error(estimation, esi_samples)
-
-
-@loss(identity)
-def mse_bilateral(x, y):
-    return np.abs(x - y)
 
 
 def _apply_loss_function(estimation, esi_samples, loss_function, agg_function):
