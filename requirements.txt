@@ -6,4 +6,5 @@ scipy
 rich
 tqdm
 matplotlib
+opencv-python
 setuptools

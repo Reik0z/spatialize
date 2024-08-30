@@ -27,7 +27,7 @@ except ImportError:
     sys.path.append("./src/python")
 
 import spatialize.gs.esi.aggfunction as af
-import spatialize.gs.esi.precfunction as pf
+import spatialize.gs.esi.lossfunction as pf
 from spatialize.gs.esi import esi_griddata
 from spatialize.gs.esi import esi_hparams_search
 

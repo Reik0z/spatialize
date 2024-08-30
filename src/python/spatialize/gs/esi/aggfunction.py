@@ -51,7 +51,7 @@ def identity(values):
 
 
 # Bilateral filter
-def Bilateral_Filter(hsi):
+def bilateral_filter(values):
     class BilateralFilteringFusion:
         def __init__(self, cube, final_bands=1, c=0.1, c1=1. / 16., c2=0.05, m=10):
             self.cube = np.ma.array(cube, fill_value=0, mask=np.isnan(cube)).filled().astype(np.float32)
@@ -96,7 +96,7 @@ def Bilateral_Filter(hsi):
             lin_comb[lin_comb < 0.0] = 0.0
             return lin_comb
 
-    bff = BilateralFilteringFusion(cube=hsi)
+    bff = BilateralFilteringFusion(cube=values)
     fusioned = bff.eval()
     two_dims_fusioned = np.flip(fusioned.reshape(fusioned.shape[0], fusioned.shape[1]), 1)
 
