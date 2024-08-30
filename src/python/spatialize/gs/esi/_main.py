@@ -50,6 +50,12 @@ class ESIResult(EstimationResult):
 
         return self._precision
 
+    def precision_cube(self, loss_function=pf.mse_bilateral):
+        log_message(logging.logger.debug(f'applying "{loss_function}" loss function'))
+        prec = loss_function(self._estimation, self._esi_samples)
+
+        return prec.reshape(self.original_shape[0], self.original_shape[1], prec.shape[1])
+
     def esi_samples(self):
         if self.griddata:
             N = self._esi_samples.shape[1]

@@ -20,7 +20,7 @@ values = func(points[:, 0], points[:, 1])
 def op_error_precision(estimation, esi_samples):
     dyn_range = np.abs(np.nanmin(esi_samples) - np.nanmax(esi_samples))
 
-    @loss
+    @loss(af.mean)
     def _op_error(x, y):
         return np.abs(x - y) / dyn_range
 

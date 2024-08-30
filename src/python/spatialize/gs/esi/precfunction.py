@@ -1,6 +1,5 @@
 import numpy as np
-
-from spatialize.gs.esi.aggfunction import mean
+from spatialize.gs.esi.aggfunction import mean, identity
 
 
 def loss(agg_function):
@@ -41,11 +40,16 @@ class OperationalErrorPrecision:
         if dyn_range is None:
             dyn_range = np.abs(np.min(estimation) - np.max(estimation))
 
-        @loss(mean)
+        @loss(identity)
         def _op_error(x, y):
             return np.abs(x - y) / dyn_range
 
         return _op_error(estimation, esi_samples)
+
+
+@loss(identity)
+def mse_bilateral(x, y):
+    return np.abs(x - y)
 
 
 def _apply_loss_function(estimation, esi_samples, loss_function, agg_function):
