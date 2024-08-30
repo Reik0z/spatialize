@@ -2,7 +2,7 @@ import numpy as np
 from matplotlib import pyplot as plt
 
 import spatialize.gs.esi.aggfunction as af
-import spatialize.gs.esi.precfunction as pf
+import spatialize.gs.esi.lossfunction as lf
 from spatialize import logging
 from spatialize.gs.esi import esi_griddata
 
@@ -31,8 +31,8 @@ result = esi_griddata(points, values, (grid_x, grid_y),
                       )
 
 # operational error function for the observed dynamic range
-op_error = pf.OperationalErrorPrecision(np.abs(np.nanmin(result.esi_samples())
-                                               - np.nanmax(result.esi_samples())))
+op_error = lf.OperationalErrorLoss(np.abs(np.nanmin(result.esi_samples())
+                                               - np.nanmax(result.esi_samples())), use_cube=True)
 
 # aggregation function for esi_samples estimation
 dirichlet_weighted_average = af.WeightedAverage(normalize=True)
@@ -51,7 +51,7 @@ for i in range(100):
         weights_arr = np.vstack((weights_arr, dirichlet_weighted_average.weights))
 
     prec = result.precision_cube(op_error)
-    bill[i] = af.Bilateral_Filter(prec)
+    bill[i] = af.bilateral_filter(prec)
     min_range_sum.append(np.sum(np.clip(bill[i], 0, np.max(bill[i])*0.5)))
 
 min_range_sum = np.array(min_range_sum)
@@ -91,7 +91,7 @@ ax5.imshow(bill[best_prec].T, cmap=prec_cmap)
 ax5.set_title('Bill best')
 ax5.plot(points[:, 0], points[:, 1], 'y.', ms=0.5)
 
-ax6.imshow(np.flip(pf.mse_loss(est_best.reshape(s[0]*s[1]),
+ax6.imshow(np.flip(lf.mse_loss(est_best.reshape(s[0]*s[1]),
                                result.esi_samples().reshape(s[0]*s[1],
                                s[2])).reshape(s[0], s[1]), 1).T, cmap=prec_cmap)
 ax6.set_title('MSE best')

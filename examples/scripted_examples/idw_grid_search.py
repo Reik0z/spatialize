@@ -6,9 +6,7 @@ import matplotlib.pyplot as plt
 
 from spatialize.gs.idw import idw_hparams_search, idw_griddata
 from spatialize import logging
-import holoviews as hv
 import hvplot.xarray  # noqa: adds hvplot methods to xarray objects
-import xarray as xr
 
 logging.log.setLevel("DEBUG")
 

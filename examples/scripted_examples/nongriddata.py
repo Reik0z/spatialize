@@ -6,7 +6,7 @@ import pandas as pd
 from spatialize import logging
 from spatialize.gs.esi import esi_hparams_search, esi_nongriddata
 import spatialize.gs.esi.aggfunction as af
-import spatialize.gs.esi.lossfunction as pf
+import spatialize.gs.esi.lossfunction as lf
 
 logging.log.setLevel("DEBUG")
 
@@ -28,7 +28,7 @@ values = samples[['cu']].values[:, 0]
 xi = locations[['X', 'Y']].values
 
 # operational error function for the observed dynamic range
-op_error = pf.OperationalErrorLoss(np.abs(np.nanmin(values) - np.nanmax(values)))
+op_error = lf.OperationalErrorLoss(np.abs(np.nanmin(values) - np.nanmax(values)))
 
 
 # operational error function for the observed mean law
