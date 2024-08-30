@@ -43,6 +43,7 @@ def mae_cube(x, y):
 
 class OperationalErrorLoss:
     def __init__(self, dyn_range=None, use_cube=False):
+        self.use_cube = use_cube
         self.dyn_range = dyn_range
 
     def __call__(self, estimation, esi_samples):

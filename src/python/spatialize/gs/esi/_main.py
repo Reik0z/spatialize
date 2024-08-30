@@ -9,7 +9,7 @@ from sklearn.model_selection import ParameterGrid
 
 from spatialize import SpatializeError, logging
 import spatialize.gs.esi.aggfunction as af
-import spatialize.gs.esi.precfunction as pf
+import spatialize.gs.esi.lossfunction as pf
 from spatialize._util import signature_overload, GridSearchResult, EstimationResult
 from spatialize._math_util import flatten_grid_data
 from spatialize.gs import lib_spatialize_facade, partitioning_process, local_interpolator as li
@@ -50,7 +50,7 @@ class ESIResult(EstimationResult):
 
         return self._precision
 
-    def precision_cube(self, loss_function=pf.mse_bilateral):
+    def precision_cube(self, loss_function=pf.mse_cube):
         log_message(logging.logger.debug(f'applying "{loss_function}" loss function'))
         prec = loss_function(self._estimation, self._esi_samples)
 

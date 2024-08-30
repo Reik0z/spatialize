@@ -3,7 +3,7 @@ import numpy as np
 import spatialize.gs.esi.aggfunction as af
 from spatialize import logging
 from spatialize.gs.esi import esi_griddata
-from spatialize.gs.esi.precfunction import loss
+from spatialize.gs.esi.lossfunction import loss
 
 
 logging.log.setLevel("DEBUG")
