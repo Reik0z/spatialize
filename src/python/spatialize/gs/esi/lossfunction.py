@@ -51,13 +51,16 @@ class OperationalErrorLoss:
         if dyn_range is None:
             dyn_range = np.abs(np.min(estimation) - np.max(estimation))
 
+        def relative_mae(x, y):
+            return np.abs(x - y) / dyn_range
+
         @loss(identity)
         def _op_error_cube(x, y):
-            return np.abs(x - y) / dyn_range
+            return relative_mae(x, y)
 
         @loss(mean)
         def _op_error_aggregated(x, y):
-            return np.abs(x - y) / dyn_range
+            return relative_mae(x, y)
 
         _op_error = _op_error_aggregated
         if self.use_cube:
