@@ -1,4 +1,6 @@
 import numpy as np
+import pandas as pd
+
 from matplotlib import pyplot as plt
 from matplotlib.pyplot import colorbar
 from mpl_toolkits.axes_grid1 import make_axes_locatable
@@ -6,32 +8,40 @@ from mpl_toolkits.axes_grid1 import make_axes_locatable
 import spatialize.gs.esi.aggfunction as af
 import spatialize.gs.esi.lossfunction as lf
 from spatialize import logging
-from spatialize.gs.esi import esi_griddata
+from spatialize.gs.esi import esi_hparams_search, esi_nongriddata
 
 
-# logging.log.setLevel("DEBUG")
+logging.log.setLevel("DEBUG")
 
+samples = pd.read_csv('/Users/alejandro/Software/spatialize/test/testdata/data.csv')
+with open('/Users/alejandro/Software/spatialize/test/testdata/grid.dat', 'r') as data:
+    lines = data.readlines()
+    lines = [l.strip().split() for l in lines[5:]]
+    aux = np.float32(lines)
+locations = pd.DataFrame(aux, columns=['X', 'Y', 'Z'])
 
-def func(x, y):  # a kind of "cubic" function
-    return x * (1 - x) * np.cos(4 * np.pi * x) * np.sin(4 * np.pi * y ** 2) ** 2
+w, h = 300, 200
 
-
-grid_x, grid_y = np.mgrid[0:1:100j, 0:1:200j]
-
-rng = np.random.default_rng()
-points = rng.random((1000, 2))
-values = func(points[:, 0], points[:, 1])*1000
-print(np.ptp(values))
 grid_cmap, prec_cmap = 'coolwarm', 'bwr'
 
-result = esi_griddata(points, values, (grid_x, grid_y),
-                      local_interpolator="idw",
-                      p_process="mondrian",
-                      data_cond=False,
-                      exponent=1.0,
-                      n_partitions=500, alpha=0.985,
-                      agg_function=af.mean
-                      )
+points = samples[['x', 'y']].values
+values = samples[['cu']].values[:, 0]
+xi = locations[['X', 'Y']].values
+
+search_result = esi_hparams_search(points, values, xi,
+                                   local_interpolator="idw", griddata=False, k=10,
+                                   p_process="mondrian",
+                                   exponent=list(np.arange(1.0, 15.0, 1.0)),
+                                   alpha=(0.5, 0.6, 0.8, 0.9, 0.95, 0.98))
+#search_result.plot_cv_error()
+#plt.show()
+
+result = esi_nongriddata(points, values, xi,
+                         local_interpolator="idw",
+                         p_process="mondrian",
+                         n_partitions=500,
+                         best_params_found=search_result.best_result())
+
 
 # operational error function for the observed dynamic range
 op_error_cube = lf.OperationalErrorLoss(np.abs(np.nanmin(result.esi_samples())
@@ -48,7 +58,7 @@ bill = {}
 max_range_sum = []
 weights_arr = []
 
-for i in range(50):
+for i in range(100):
     result.re_estimate(dirichlet_weighted_average)
     if switch == 0:
         weights_arr = dirichlet_weighted_average.weights
@@ -57,21 +67,21 @@ for i in range(50):
         weights_arr = np.vstack((weights_arr, dirichlet_weighted_average.weights))
 
     prec = result.precision_cube(op_error_cube)
-    bill[i] = af.bilateral_filter(prec)
+    prec_rs = prec.reshape(w, h, prec.shape[1])
+    bill[i] = af.bilateral_filter(prec_rs)
     max_range_sum.append(np.sum(bill[i]))
         #np.clip(bill[i], np.max(bill[i]) * 0.50, np.max(bill[i]))))
 
 max_range_sum = np.array(max_range_sum)
 worst_prec = np.argmax(max_range_sum)
 best_prec = np.argmin(max_range_sum)
-print(np.max(max_range_sum), np.min(max_range_sum))
 
 dwa = af.WeightedAverage(normalize=True, weights=weights_arr[worst_prec])
-s = result.esi_samples().shape
-est_worst = np.flip(dwa(result.esi_samples().reshape(s[0] * s[1], s[2])).reshape(s[0], s[1]), 1)
+
+est_worst = dwa(result.esi_samples()).reshape(w, h)
 
 dwa = af.WeightedAverage(normalize=True, weights=weights_arr[best_prec])
-est_best = np.flip(dwa(result.esi_samples().reshape(s[0] * s[1], s[2])).reshape(s[0], s[1]), 1)
+est_best = dwa(result.esi_samples()).reshape(w, h)
 
 fig = plt.figure(dpi=150, figsize=(10, 5))
 gs = fig.add_gridspec(2, 4, wspace=0.1, hspace=0.47)
@@ -79,32 +89,30 @@ gs = fig.add_gridspec(2, 4, wspace=0.1, hspace=0.47)
 ax1, ax2, ax3, ax4, ax5, ax6, ax7, ax8 = ax1[0], ax1[1], ax1[2], ax1[3], ax2[0], ax2[1], ax2[2], ax2[3]
 
 # plot
-img1 = ax1.imshow(est_worst.T, cmap=grid_cmap)
+img1 = ax1.imshow(est_worst, cmap=grid_cmap, origin='lower')
 ax1.set_title("Est worst case")
 divider = make_axes_locatable(ax1)
 cax1 = divider.append_axes("right", size="5%", pad=0.1)
 colorbar(img1, orientation='vertical', cax=cax1)
 
 # plot estimation
-img2 = ax2.imshow(est_best.T, cmap=grid_cmap)
+img2 = ax2.imshow(est_best, cmap=grid_cmap, origin='lower')
 ax2.set_title("Est best case")
 divider = make_axes_locatable(ax2)
 cax2 = divider.append_axes("right", size="5%", pad=0.1)
 colorbar(img2, orientation='vertical', cax=cax2)
 
-mean_r = result.re_estimate(af.mean)
+mean_r = result.re_estimate(af.mean).reshape(w,h)
 
-img3 = ax3.imshow(np.flip(mean_r, 1).T, cmap=grid_cmap)
+img3 = ax3.imshow(mean_r, cmap=grid_cmap, origin='lower')
 ax3.set_title('Mean est')
 divider = make_axes_locatable(ax3)
 cax3 = divider.append_axes("right", size="5%", pad=0.1)
 colorbar(img3, orientation='vertical', cax=cax3)
 
-ss = est_worst.shape
-arr4 = np.flip(op_error(np.flip(est_worst.reshape(ss[0] * ss[1])),
-                        result.esi_samples().reshape(s[0] * s[1],
-                                                     s[2])).reshape(s[0], s[1]), axis=1).T
-img4 = ax4.imshow(arr4, cmap=prec_cmap)
+arr4 = op_error(est_worst.reshape(w*h), result.esi_samples()).reshape(w, h)
+
+img4 = ax4.imshow(arr4, cmap=prec_cmap, origin='lower')
 ax4.set_title('Op Error worst')
 divider = make_axes_locatable(ax4)
 cax4 = divider.append_axes("right", size="5%", pad=0.1)
@@ -112,32 +120,30 @@ plt.contourf(arr4, levels=np.linspace(0, 0.015, 20))
 colorbar(img4, orientation='vertical', cax=cax4)
 
 # plot the default mse precision
-img5 = ax5.imshow(bill[worst_prec].T, cmap=prec_cmap)
+img5 = ax5.imshow(np.flip(bill[worst_prec], axis=1), cmap=prec_cmap, origin='lower')
 ax5.set_title('Bill worst')
-ax5.plot(points[:, 0], points[:, 1], 'y.', ms=0.5)
+#ax5.plot(points[:, 0], points[:, 1], 'y.', ms=0.5)
 divider = make_axes_locatable(ax5)
 cax5 = divider.append_axes("right", size="5%", pad=0.1)
 colorbar(img5, orientation='vertical', cax=cax5)
 
 # plot a custom precision
-img6 = ax6.imshow(bill[best_prec].T, cmap=prec_cmap)
+img6 = ax6.imshow(np.flip(bill[best_prec], axis=1), cmap=prec_cmap, origin='lower')
 ax6.set_title('Bill best')
-ax6.plot(points[:, 0], points[:, 1], 'y.', ms=0.5)
+#ax6.plot(points[:, 0], points[:, 1], 'y.', ms=0.5)
 divider = make_axes_locatable(ax6)
 cax6 = divider.append_axes("right", size="5%", pad=0.1)
 colorbar(img6, orientation='vertical', cax=cax6)
 
-ss = est_best.shape
-img7 = ax7.imshow(np.flip(op_error(np.flip(est_best.reshape(ss[0] * ss[1])),
-                                   result.esi_samples().reshape(s[0] * s[1],
-                                   s[2])).reshape(s[0], s[1]), axis=1).T,
-                                   cmap=prec_cmap)
+arr7 = op_error(est_best.reshape(w*h), result.esi_samples()).reshape(w, h)
+
+img7 = ax7.imshow(arr7, cmap=prec_cmap, origin='lower')
 ax7.set_title('Op Error best')
 divider = make_axes_locatable(ax7)
 cax7 = divider.append_axes("right", size="5%", pad=0.1)
 colorbar(img7, orientation='vertical', cax=cax7)
 
-img8 = ax8.imshow(np.flip(result.precision(op_error), axis=1).T, cmap=prec_cmap)
+img8 = ax8.imshow(result.precision(op_error).reshape(w, h), cmap=prec_cmap, origin='lower')
 ax8.set_title('Op Error Mean est')
 divider = make_axes_locatable(ax8)
 cax8 = divider.append_axes("right", size="5%", pad=0.1)

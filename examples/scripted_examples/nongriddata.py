@@ -32,7 +32,7 @@ op_error = lf.OperationalErrorLoss(np.abs(np.nanmin(values) - np.nanmax(values))
 
 
 # operational error function for the observed mean law
-# op_error_precision=pf.OpErrorPrecision(np.nanmean(values))
+# op_error_precision=lf.OperationalErrorLoss(np.nanmean(values))
 
 def esi_idw(p_process):
     search_result = esi_hparams_search(points, values, xi,
@@ -77,5 +77,5 @@ def esi_kriging():
 
 
 if __name__ == '__main__':
-    esi_kriging()
-    # esi_idw("mondrian")
+    # esi_kriging()
+    esi_idw("mondrian")

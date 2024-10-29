@@ -25,9 +25,6 @@ grid_z2 = griddata(points, values, (grid_x, grid_y), method='cubic')
 
 grid_cmap, prec_cmap = 'coolwarm', 'bwr'
 
-plt.imshow(func(grid_x, grid_y).T, extent=(0, 1, 0, 1), origin='lower', cmap=grid_cmap)
-plt.show()
-
 result = esi_griddata(points, values, (grid_x, grid_y),
                       local_interpolator="idw",
                       p_process="mondrian",
@@ -39,22 +36,36 @@ result = esi_griddata(points, values, (grid_x, grid_y),
 
 esi_idw_est = result.estimation()
 
+result_2 = esi_griddata(points, values, (grid_x, grid_y),
+                        local_interpolator="kriging",
+                        model="spherical", nugget=0.0, range=10.0,
+                        n_partitions=500, alpha=0.9,
+                        agg_function=af.mean)
+
+esi_krig_est = result_2.estimation()
+
 fig = plt.figure(dpi=150)
-gs = fig.add_gridspec(2, 2, wspace=0.1, hspace=0.47)
+gs = fig.add_gridspec(2, 3, wspace=0.1, hspace=0.47)
 (ax1, ax2) = gs.subplots()
-ax1, ax2, ax3, ax4 = ax1[0], ax1[1], ax2[0], ax2[1]
+ax1, ax2, ax3, ax4, ax5, ax6 = ax1[0], ax1[1], ax1[2], ax2[0], ax2[1], ax2[2]
 
 # plot original
-ax1.imshow(esi_idw_est.T, extent=(0, 1, 0, 1), origin='lower', cmap=grid_cmap)
-ax1.set_title("esi idw")
+ax1.imshow(func(grid_x, grid_y).T, origin='lower', cmap=grid_cmap)
+ax1.set_title("original")
 
-ax2.imshow(grid_z0.T, extent=(0, 1, 0, 1), origin='lower', cmap=grid_cmap)
-ax2.set_title("nearest")
+ax2.imshow(esi_idw_est.T, origin='lower', cmap=grid_cmap)
+ax2.set_title("esi idw")
 
-ax3.imshow(grid_z1.T, extent=(0, 1, 0, 1), origin='lower', cmap=grid_cmap)
-ax3.set_title("linear")
+ax3.imshow(esi_krig_est.T, origin='lower', cmap=grid_cmap)
+ax3.set_title("esi kriging")
 
-ax4.imshow(grid_z2.T, extent=(0, 1, 0, 1), origin='lower', cmap=grid_cmap)
-ax4.set_title("cubic")
+ax4.imshow(grid_z0.T, origin='lower', cmap=grid_cmap)
+ax4.set_title("nearest")
+
+ax5.imshow(grid_z1.T, origin='lower', cmap=grid_cmap)
+ax5.set_title("linear")
+
+ax6.imshow(grid_z2.T, origin='lower', cmap=grid_cmap)
+ax6.set_title("cubic")
 
 plt.show()

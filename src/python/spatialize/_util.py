@@ -110,7 +110,6 @@ class GridSearchResult:
                            ylabel="Error",
                            color='skyblue',
                            legend=False)
-
     def best_result(self, **kwargs):
         raise NotImplementedError
 
@@ -150,7 +149,7 @@ class EstimationResult:
         if ax is not None:
             plotter = ax
 
-        img = plotter.imshow(im, extent=(0, 1, 0, 1), origin='lower', **figargs)
+        img = plotter.imshow(im, origin='lower', **figargs)
         divider = make_axes_locatable(plotter)
         cax = divider.append_axes("right", size="5%", pad=0.1)
         colorbar(img, orientation='vertical', cax=cax)
@@ -162,7 +161,7 @@ class EstimationResult:
 
         ax.set_title('Estimation')
         self.plot_estimation(ax, w=w, h=h)
-        ax.set_aspect('auto')
+        ax.set_aspect('equal')
 
         return fig
 

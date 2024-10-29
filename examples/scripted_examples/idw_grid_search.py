@@ -14,8 +14,11 @@ logging.log.setLevel("DEBUG")
 def func(x, y):  # a kind of "cubic" function
     return x * (1 - x) * np.cos(4 * np.pi * x) * np.sin(4 * np.pi * y ** 2) ** 2
 
+grid_cmap, prec_cmap = 'coolwarm', 'bwr'
 
 grid_x, grid_y = np.mgrid[0:1:100j, 0:1:200j]
+
+plt.imshow(func(grid_x, grid_y).T, origin='lower', cmap=grid_cmap)
 
 rng = np.random.default_rng()
 points = rng.random((1000, 2))

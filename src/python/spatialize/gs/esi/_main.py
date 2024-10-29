@@ -53,8 +53,10 @@ class ESIResult(EstimationResult):
     def precision_cube(self, loss_function=lf.mse_cube):
         log_message(logging.logger.debug(f'applying "{loss_function}" loss function'))
         prec = loss_function(self._estimation, self._esi_samples)
-
-        return prec.reshape(self.original_shape[0], self.original_shape[1], prec.shape[1])
+        if self.griddata:
+            return prec.reshape(self.original_shape[0], self.original_shape[1], prec.shape[1])
+        else:
+            return prec
 
     def esi_samples(self):
         if self.griddata:
@@ -184,6 +186,7 @@ def esi_hparams_search(points, values, xi, **kwargs):
 
     # create a dataframe with all results
     result_data = pd.DataFrame(columns=list(grid.keys()) + ["cv_error"])
+    c = 0
     for k, v in results.items():
         d = {"agg_func_name": k[0],
              "cv_error": v,
@@ -191,10 +194,10 @@ def esi_hparams_search(points, values, xi, **kwargs):
              }
         d.update(param_grid[k[1]])
         if not result_data.empty:
-            result_data = pd.concat([result_data, pd.DataFrame(d, index=[k[1]])])
+            result_data = pd.concat([result_data, pd.DataFrame(d, index=[c])])
         else:
-            result_data = pd.DataFrame(d, index=[k[1]])
-
+            result_data = pd.DataFrame(d, index=[c])
+        c += 1
     return ESIGridSearchResult(result_data, kwargs["agg_function"], kwargs["p_process"])
 
 

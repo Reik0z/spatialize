@@ -1,5 +1,7 @@
 import numpy as np
 from matplotlib import pyplot as plt
+from matplotlib.pyplot import colorbar
+from mpl_toolkits.axes_grid1 import make_axes_locatable
 
 import spatialize.gs.esi.aggfunction as af
 from spatialize.gs.esi import esi_griddata
@@ -35,8 +37,11 @@ def plot_result(result, title):
     ax1, ax2, ax3, ax4 = ax1[0], ax1[1], ax2[0], ax2[1]
 
     # plot original
-    ax1.imshow(func(grid_x, grid_y).T, extent=(0, 1, 0, 1), origin='lower', cmap=grid_cmap)
+    img1 = ax1.imshow(func(grid_x, grid_y).T, origin='lower', cmap=grid_cmap)
     ax1.set_title("original")
+    divider = make_axes_locatable(ax1)
+    cax1 = divider.append_axes("right", size="5%", pad=0.1)
+    colorbar(img1, orientation='vertical', cax=cax1)
 
     # plot estimation
     result.plot_estimation(ax=ax2, cmap=grid_cmap)
