@@ -59,9 +59,10 @@ def esi_kriging():
     search_result = esi_hparams_search(points, values, xi,
                                        local_interpolator="kriging", griddata=False, k=10,
                                        model=["spherical", "exponential", "cubic", "gaussian"],
-                                       nugget=[0.0, 0.5, 1.0],
-                                       range=[100.0, 500.0, 1000.0, 5000.0],
-                                       alpha=list(np.flip(np.arange(0.90, 0.95, 0.01))))
+                                       nugget=[0.5, 1.0],
+                                       range=[100.0, 500.0, 1000.0],
+                                       alpha=list(np.flip(np.arange(0.90, 0.95, 0.01))),
+                                       sill=[0.9, 1.0, 1.1])
 
     search_result.plot_cv_error()
     plt.show()
@@ -77,5 +78,5 @@ def esi_kriging():
 
 
 if __name__ == '__main__':
-    # esi_kriging()
+    #esi_kriging()
     esi_idw("mondrian")

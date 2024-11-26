@@ -31,10 +31,10 @@ def op_error_precision(estimation, esi_samples):
 
 def plot_result(result, title):
     grid_cmap, prec_cmap = 'coolwarm', 'bwr'
-    fig = plt.figure(dpi=150)
-    gs = fig.add_gridspec(2, 2, wspace=0.1, hspace=0.47)
-    (ax1, ax2) = gs.subplots()
-    ax1, ax2, ax3, ax4 = ax1[0], ax1[1], ax2[0], ax2[1]
+    fig = plt.figure(figsize=(10,3), dpi=150)
+    gs = fig.add_gridspec(1, 4, wspace=1.0)
+    (ax1, ax2, ax3, ax4) = gs.subplots()
+    #ax1, ax2, ax3, ax4 = ax1[0], ax1[1], ax2[0], ax2[1]
 
     # plot original
     img1 = ax1.imshow(func(grid_x, grid_y).T, origin='lower', cmap=grid_cmap)
@@ -83,4 +83,4 @@ def esi_kriging():
 
 if __name__ == '__main__':
     esi_idw()
-    # esi_kriging()
+    #esi_kriging()
