@@ -113,7 +113,7 @@ class ESIModule(unittest.TestCase):
 
         # from spatialize.gs.esi import esi_hparams_search
         # b_params = esi_hparams_search(points, values, (grid_x, grid_y),
-        #                               local_interpolator="kriging", griddata.py=True, k=10,
+        #                               local_interpolator="kriging", griddata=True, k=10,
         #                               alpha=(0.70, 0.65))
         # print(b_params)
 
@@ -122,12 +122,12 @@ class ESIModule(unittest.TestCase):
 
         # from spatialize.gs.esi import esi_hparams_search
         # b_params = esi_hparams_search(points, values, (grid_x, grid_y),
-        #                               local_interpolator="idw", griddata.py=True, k=10,
+        #                               local_interpolator="idw", griddata=True, k=10,
         #                               alpha=list(reversed((0.5, 0.6, 0.8, 0.9, 0.95))))
 
         # from spatialize.gs.esi import esi_hparams_search
         # b_params = esi_hparams_search(points, values, (grid_x, grid_y),
-        #                               local_interpolator="idw", griddata.py=True, k=10,
+        #                               local_interpolator="idw", griddata=True, k=10,
         #                               alpha=(0.985, 0.97, 0.95))
         # print(b_params)
 
