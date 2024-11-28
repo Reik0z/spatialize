@@ -125,14 +125,9 @@ def _call_libspatialize(points, values, xi, radius=np.inf, exponent=1.0,
     # get the estimator function
     estimate = lib_spatialize_facade.get_operator(points,
                                                   spatialize.gs.local_interpolator.IDW,
-<<<<<<< Updated upstream
                                                   "estimate",
                                                   spatialize.gs.PLAIN_INTERPOLATOR,
                                                   lib_spatialize_facade.backend_options.IN_MEMORY)
-=======
-                                                  spatialize.gs.PLAIN,
-                                                "estimate", lib_spatialize_facade.backend_options.IN_MEMORY)
->>>>>>> Stashed changes
 
     # get the argument list
     l_args = [np.float32(points), np.float32(values),

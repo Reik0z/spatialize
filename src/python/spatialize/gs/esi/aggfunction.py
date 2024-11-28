@@ -4,24 +4,24 @@ import scipy as sci
 from spatialize._math_util import BilateralFilteringFusion
 
 
-def mean(values):
-    return np.nanmean(values, axis=1)
+def mean(esi_samples):
+    return np.nanmean(esi_samples, axis=1)
 
 
-def median(values):
-    return np.nanmedian(values, axis=1)
+def median(esi_samples):
+    return np.nanmedian(esi_samples, axis=1)
 
 
-def MAP(values):
-    return sci.stats.mode(values, axis=1, keepdims=True, nan_policy="omit").mode
+def MAP(esi_samples):
+    return sci.stats.mode(esi_samples, axis=1, keepdims=True, nan_policy="omit").mode
 
 
 class Percentile:
     def __init__(self, q=75):
         self.q = q
 
-    def __call__(self, values):
-        return np.nanpercentile(values, self.q, axis=1)
+    def __call__(self, esi_samples):
+        return np.nanpercentile(esi_samples, self.q, axis=1)
 
     def __repr__(self):
         return f"percentile({self.q})"
@@ -33,28 +33,28 @@ class WeightedAverage:
         self.weights = weights
         self.force_resample = force_resample
 
-    def __call__(self, values):
-        s = values.shape[1]
+    def __call__(self, esi_samples):
+        s = esi_samples.shape[1]
         if self.weights is None or self.force_resample:
             rng = np.random.default_rng()
             self.weights = rng.dirichlet([1] * s)
-        m_values = np.ma.array(values, mask=np.isnan(values))
-        estimation = np.ma.getdata(np.ma.average(m_values, axis=1, weights=self.weights))
+        m_esi_samples = np.ma.array(esi_samples, mask=np.isnan(esi_samples))
+        estimation = np.ma.getdata(np.ma.average(m_esi_samples, axis=1, weights=self.weights))
         if self.normalize:
             zscore_estimation = (estimation - np.mean(estimation)) / np.std(estimation)
-            return zscore_estimation * np.nanstd(values) + np.nanmean(values)
+            return zscore_estimation * np.nanstd(esi_samples) + np.nanmean(esi_samples)
         else:
             return estimation
 
 
-def identity(values):
-    return values
+def identity(esi_samples):
+    return esi_samples
 
 
 # Bilateral filter
-def bilateral_filter(values):
+def bilateral_filter(esi_samples):
 
-    bff = BilateralFilteringFusion(cube=values)
+    bff = BilateralFilteringFusion(cube=esi_samples)
     fusion = bff.eval()
     two_dims_fusion = np.flip(fusion.reshape(fusion.shape[0], fusion.shape[1]), 1)
 
