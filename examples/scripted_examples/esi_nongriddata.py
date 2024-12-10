@@ -7,6 +7,9 @@ from spatialize import logging
 from spatialize.gs.esi import esi_hparams_search, esi_nongriddata
 import spatialize.gs.esi.aggfunction as af
 import spatialize.gs.esi.lossfunction as lf
+import matplotlib.pyplot as plt
+from matplotlib.pyplot import colorbar
+from mpl_toolkits.axes_grid1 import make_axes_locatable
 
 logging.log.setLevel("DEBUG")
 
@@ -26,6 +29,37 @@ w, h = 300, 200
 points = samples[['x', 'y']].values
 values = samples[['cu']].values[:, 0]
 xi = locations[['X', 'Y']].values
+
+print(points.shape, values.shape, xi.shape)
+
+# plotting original data along with a pretty good estimation with ESI-Kriging
+
+result_esi = esi_nongriddata(points, values, xi,
+                             local_interpolator="kriging",
+                             n_partitions=500,
+                             alpha=0.93,
+                             sill=1.0,
+                             range=1000.0,
+                             nugget=0.5,
+                             model='cubic'
+                             )
+
+fig = plt.figure(dpi=150)
+gs = fig.add_gridspec(1, 2, wspace=0.5)
+(ax2, ax1) = gs.subplots()
+
+result_esi.plot_estimation(ax1, w, h)
+ax1.set_aspect('auto')
+ax1.set_title('esi kriging')
+
+samples.plot.scatter(ax=ax2, figsize=(6, 4),
+                     x='x',
+                     y='y',
+                     c='cu',
+                     colormap='bwr', title='original data')
+ax2.set_aspect('auto')
+
+plt.show()
 
 # operational error function for the observed dynamic range
 op_error = lf.OperationalErrorLoss(np.abs(np.nanmin(values) - np.nanmax(values)))
@@ -76,7 +110,6 @@ def esi_kriging():
     result.quick_plot(w=w, h=h)
     plt.show()
 
-
-if __name__ == '__main__':
-    #esi_kriging()
-    esi_idw("mondrian")
+# if __name__ == '__main__':
+# esi_kriging()
+# esi_idw("mondrian")
