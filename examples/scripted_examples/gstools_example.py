@@ -2,7 +2,10 @@ import numpy as np
 import pandas as pd
 from matplotlib import pyplot as plt
 import gstools as gs
+from matplotlib.pyplot import colorbar
+from mpl_toolkits.axes_grid1 import make_axes_locatable
 
+# get the data
 samples = pd.read_csv('../../test/testdata/data.csv')
 with open('../../test/testdata/grid.dat', 'r') as data:
     lines = data.readlines()
@@ -20,50 +23,47 @@ values = samples[['cu']].values[:, 0]
 xi = locations[['X', 'Y']].values
 xi_x, xi_y = locations[['X']].values, locations[['Y']].values
 
-# bins = np.arange(200)
-# bin_center, gamma = gs.vario_estimate((x, y), values, bins)
-# models = {
-#     "Gaussian": gs.Gaussian,
-#     "Exponential": gs.Exponential,
-#     "Circular": gs.Circular,
-#     "Spherical": gs.Spherical,
-# }
-# scores = {}
-# fitted_models = {}
-#
-# # plot the estimated variogram
-# plt.scatter(bin_center, gamma, color="k", label="data")
-# ax = plt.gca()
-#
-# # fit all models to the estimated variogram
-# for model in models:
-#     fitted_models[model] = models[model](dim=2)
-#     para, pcov, r2 = fitted_models[model].fit_variogram(bin_center, gamma, return_r2=True)
-#     # fit_model.plot(x_max=40, ax=ax)
-#     scores[model] = r2
-#
-# ranking = sorted(scores.items(), key=lambda item: item[1], reverse=True)
-#
-# print("RANKING by Pseudo-r2 score")
-# for i, (model, score) in enumerate(ranking, 1):
-#     print(f"{i:>6}. {model:>15}: {score:.5}")
+# get the empirical variogram
+bins = np.arange(200)
+bin_center, gamma = gs.vario_estimate((x, y), values, bins)
 
-# krig = gs.krige.Ordinary(model=fitted_models[ranking[0][0]], cond_pos=points, cond_val=values)
+# models to test
+models = {
+    "Gaussian": gs.Gaussian,
+    "Exponential": gs.Exponential,
+    "Circular": gs.Circular,
+    "Spherical": gs.Spherical,
+    # "Matern": gs.Matern,
+    # "Stable": gs.Stable,
+    # "Rational": gs.Rational,
+    "SuperSpherical": gs.SuperSpherical,
+    "JBessel": gs.JBessel,
+}
+scores = {}
+fitted_models = {}
 
-angle = np.pi
-model = gs.Exponential(dim=2, len_scale=[10, 5], angles=angle)
-bins = range(0, 200, 2)
-angle = np.pi / 8
-bin_center, dir_vario, counts = gs.vario_estimate(
-    *((x, y), values, bins),
-    direction=gs.rotated_main_axes(dim=2, angles=angle),
-    angles_tol=np.pi / 2,
-    bandwidth=8,
-    return_counts=True,
-)
+# fit all models to the estimated variogram
+for model in models:
+    fitted_models[model] = models[model](dim=2)
+    para, pcov, r2 = fitted_models[model].fit_variogram(bin_center, gamma, return_r2=True)
+    scores[model] = r2
 
-model.fit_variogram(bin_center, dir_vario)
-krig = gs.krige.Ordinary(model=model, cond_pos=points, cond_val=values)
+# build the ranking according to r2
+ranking = sorted(scores.items(), key=lambda item: item[1], reverse=True)
+print("RANKING by Pseudo-r2 score")
+for i, (model, score) in enumerate(ranking, 1):
+    print(f"{i:>6}. {model:>15}: {score:.5}")
 
-krig((xi_x, xi_y))
-krig.plot(x_max=w, y_max=h)
+# run the ordinary kriging
+krig = gs.krige.Ordinary(model=fitted_models[ranking[0][0]], cond_pos=points, cond_val=values)
+estimate = krig((xi_x, xi_y))
+
+# plot results
+ax = plt.gca()
+im = estimate[0].reshape(w, h)
+im = np.flipud(im)
+img = ax.imshow(im, cmap='coolwarm')
+divider = make_axes_locatable(ax)
+cax = divider.append_axes("right", size="5%", pad=0.1)
+colorbar(img, orientation='vertical', cax=cax)
+plt.show()
