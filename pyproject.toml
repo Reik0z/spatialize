@@ -1,5 +1,18 @@
 [project]
-dynamic = ["dependencies"]
+name = "spatialize"
+dynamic = ["dependencies", "version"]
+authors = [{ name = "ALGES Lab", email = "contacto@alges.cl"}]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+description = "Spatialize: A Python wrapper for C++ ESI library"
+readme = {file = "README.txt", content-type = "text/markdown"}
+requires-python = ">=3.8"
+
+[project.urls]
+Repository = "https://github.com/alges/spatialize"
 
 [build-system]
 requires = [
@@ -11,23 +24,7 @@ requires = [
 ]
 build-backend = "setuptools.build_meta"
 
-[metadata]
-name = "spatialize"
-version = "0.1"
-url = "https://github.com/alges/spatialize"
-author = "ALGES Lab"
-author_email = "contacto@alges.cl"
-classifiers = [
-    "Programming Language :: Python :: 3",
-    "License :: OSI Approved :: MIT License",
-    "Operating System :: OS Independent",
-]
-description = "Spatialize: A Python wrapper for C++ ESI library"
-long_description = "file: README.txt"
-long_description_content_type = "text/plain"
-
 [tool.setuptools.dynamic]
 dependencies = { file = ["requirements.txt"] }
 
-[options]
-python_requires = ">=3.8"
+
