@@ -3,10 +3,19 @@ import numpy
 import os
 from setuptools import setup, find_packages
 from distutils.extension import Extension
+import pathlib
+import pkg_resources
 
 libsptlzsrc = os.path.join('src', 'c++', 'libspatialize.cpp')
 libsptltsrc = os.path.join('src', 'c++', 'libspatialite.cpp')
 macros = [('NPY_NO_DEPRECATED_API', 'NPY_1_7_API_VERSION')]
+
+with pathlib.Path('requirements.txt').open() as requirements_txt:
+    install_requires = [
+        str(requirement)
+        for requirement
+        in pkg_resources.parse_requirements(requirements_txt)
+    ]
 
 libspatialize_extensions = [
     Extension(name='libspatialize',
@@ -40,7 +49,5 @@ if __name__ == '__main__':
         packages=find_packages(os.path.join('src', 'python'), exclude=[".DS_Store", "__pycache__"]),
         include_package_data=True,
         scripts=[],
-        install_requires=[
-            'numpy >= 1.8.0',
-        ],
+        install_requires=install_requires,
     )
