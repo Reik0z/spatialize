@@ -6,7 +6,6 @@ import matplotlib.pyplot as plt
 
 from spatialize.gs.idw import idw_hparams_search, idw_griddata
 from spatialize import logging
-import hvplot.xarray  # noqa: adds hvplot methods to xarray objects
 
 logging.log.setLevel("DEBUG")
 
@@ -26,7 +25,7 @@ values = func(points[:, 0], points[:, 1])
 
 # running the grid search
 search_result = idw_hparams_search(points, values, (grid_x, grid_y),
-                                   griddata=True, k=10,
+                                   griddata=True, k=10, radius=(0.06, 0.07, 0.08, 0.09, 0.1),
                                    )
 
 print(search_result.search_result_data)
