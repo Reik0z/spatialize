@@ -20,7 +20,7 @@ values = func(points[:, 0], points[:, 1])
 
 result = idw_griddata(points, values, (grid_x, grid_y),
                       exponent=1.0,
-                      radius=10
+                      radius=0.06
                       )
 
 result.quick_plot()
