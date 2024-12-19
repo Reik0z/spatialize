@@ -27,6 +27,8 @@ values = func(points[:, 0], points[:, 1])
 # running the grid search
 search_result = idw_hparams_search(points, values, (grid_x, grid_y),
                                    griddata=True, k=10,
+                                   radius=(0.07, 0.1, 1, 10),
+                                   exponent=tuple(np.arange(0.01, 0.1, 0.02)),
                                    )
 
 print(search_result.search_result_data)

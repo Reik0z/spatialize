@@ -1,5 +1,3 @@
-import matplotlib.pyplot as plt
-
 import numpy as np
 import pandas as pd
 
@@ -30,34 +28,42 @@ points = samples[['x', 'y']].values
 values = samples[['cu']].values[:, 0]
 xi = locations[['X', 'Y']].values
 
-print(points.shape, values.shape, xi.shape)
+krig = pd.read_csv('../../test/testdata/kriging.csv')
+krig_im = krig[['est_cu_case_esipaper']].values[:, 0].reshape(300, 200)
 
 # plotting original data along with a pretty good estimation with ESI-Kriging
 
-result_esi = esi_nongriddata(points, values, xi,
-                             local_interpolator="kriging",
-                             n_partitions=500,
-                             alpha=0.93,
-                             sill=1.0,
-                             range=1000.0,
-                             nugget=0.5,
-                             model='cubic'
-                             )
+#result_esi = esi_nongriddata(points, values, xi,
+#                             local_interpolator="kriging",
+#                             n_partitions=500,
+#                             alpha=0.93,
+#                             sill=1.0,
+#                             range=1000.0,
+#                             nugget=0.5,
+#                             model='cubic'
+#                             )
 
-fig = plt.figure(dpi=150)
-gs = fig.add_gridspec(1, 2, wspace=0.5)
-(ax2, ax1) = gs.subplots()
+fig = plt.figure(dpi=150, figsize=(10,5))
+gs = fig.add_gridspec(1, 2, wspace=0.4)
+(ax1, ax2) = gs.subplots()
 
-result_esi.plot_estimation(ax1, w, h)
-ax1.set_aspect('auto')
-ax1.set_title('esi kriging')
+ax1.set_aspect('equal')
+ax1.set_title('original data')
+img1 = ax1.scatter(x=points[:,0], y=points[:,1], c=values, cmap='coolwarm')
+divider = make_axes_locatable(ax1)
+cax = divider.append_axes("right", size="5%", pad=0.1)
+colorbar(img1, orientation='vertical', cax=cax)
 
-samples.plot.scatter(ax=ax2, figsize=(6, 4),
-                     x='x',
-                     y='y',
-                     c='cu',
-                     colormap='bwr', title='original data')
-ax2.set_aspect('auto')
+ax2.set_aspect('equal')
+ax2.set_title('ordinary kriging')
+img2 = ax2.imshow(krig_im, origin='lower', cmap='coolwarm')
+divider = make_axes_locatable(ax2)
+cax = divider.append_axes("right", size="5%", pad=0.1)
+colorbar(img2, orientation='vertical', cax=cax)
+
+#ax3.set_aspect('equal')
+#ax3.set_title('esi kriging')
+#result_esi.plot_estimation(ax3, w, h)
 
 plt.show()
 
@@ -85,7 +91,7 @@ def esi_idw(p_process):
                              best_params_found=search_result.best_result())
 
     result.precision(op_error)
-    result.quick_plot(w=w, h=h)
+    result.quick_plot(w=w, h=h, figsize=(10,5))
     plt.show()
 
 
@@ -107,9 +113,9 @@ def esi_kriging():
                              best_params_found=search_result.best_result())
 
     result.precision(op_error)
-    result.quick_plot(w=w, h=h)
+    result.quick_plot(w=w, h=h, figsize=(10,5))
     plt.show()
 
-# if __name__ == '__main__':
-# esi_kriging()
-# esi_idw("mondrian")
+if __name__ == '__main__':
+     #esi_kriging()
+     esi_idw("mondrian")

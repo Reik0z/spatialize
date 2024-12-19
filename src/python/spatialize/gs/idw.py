@@ -32,8 +32,8 @@ class IDWResult(EstimationResult):
 def idw_hparams_search(points, values, xi,
                        k=10,
                        griddata=False,
-                       radius=(10, 100, 1000, 10000, 100000, np.inf),
-                       exponent=tuple(np.arange(0.1, 5.0, 0.1)),
+                       radius=(0.1, 0.2, 0.5, 0.1, 0.2),
+                       exponent=tuple(np.arange(0.8, 1.0, 0.1)),
                        folding_seed=np.random.randint(1000, 10000),
                        callback=default_singleton_callback
                        ):

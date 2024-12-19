@@ -83,11 +83,11 @@ class ESIResult(EstimationResult):
 
         ax1.set_title('Estimation')
         self.plot_estimation(ax1, w=w, h=h)
-        ax1.set_aspect('auto')
+        ax1.set_aspect('equal')
 
         ax2.set_title('Precision')
         self.plot_precision(ax2, w=w, h=h)
-        ax2.set_aspect('auto')
+        ax2.set_aspect('equal')
 
         return fig  # just in case you want to embed it somewhere else
 

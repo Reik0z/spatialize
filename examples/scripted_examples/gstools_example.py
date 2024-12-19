@@ -11,7 +11,7 @@ with open('../../test/testdata/grid.dat', 'r') as data:
     lines = data.readlines()
     lines = [l.strip().split() for l in lines[5:]]
     aux = np.float32(lines)
-locations = pd.DataFrame(aux, columns=['X', 'Y', 'Z'])
+locations = pd.DataFrame(aux, columns=['X', 'Y', 'Z']).sort_values(["Z", "Y", "X"])
 
 w, h = 300, 200
 
@@ -23,7 +23,10 @@ values = samples[['cu']].values[:, 0]
 xi = locations[['X', 'Y']].values
 xi_x, xi_y = locations[['X']].values, locations[['Y']].values
 
-# get the empirical variogram
+krig = pd.read_csv('../../test/testdata/kriging.csv')
+krig_im = krig[['est_cu_case_esipaper']].values[:, 0].reshape(300, 200)
+
+# get the experimental variogram
 bins = np.arange(200)
 bin_center, gamma = gs.vario_estimate((x, y), values, bins)
 
@@ -36,7 +39,7 @@ models = {
     # "Matern": gs.Matern,
     # "Stable": gs.Stable,
     # "Rational": gs.Rational,
-    "SuperSpherical": gs.SuperSpherical,
+#    "SuperSpherical": gs.SuperSpherical,
     "JBessel": gs.JBessel,
 }
 scores = {}
@@ -58,11 +61,28 @@ for i, (model, score) in enumerate(ranking, 1):
 krig = gs.krige.Ordinary(model=fitted_models[ranking[0][0]], cond_pos=points, cond_val=values)
 estimate = krig((xi_x, xi_y))
 
+print(estimate[0].shape)
+
 # plot results
-ax = plt.gca()
+fig = plt.figure(dpi=150, figsize=(10,5))
+gs = fig.add_gridspec(1, 2, wspace=0.4)
+(ax1, ax2) = gs.subplots()
+
+ax1.set_aspect('equal')
+ax1.set_title('ordinary kriging')
+img1 = ax1.imshow(krig_im, origin='lower', cmap='coolwarm')
+divider = make_axes_locatable(ax1)
+cax = divider.append_axes("right", size="5%", pad=0.1)
+colorbar(img1, orientation='vertical', cax=cax)
+
+ax2.set_aspect('equal')
+ax2.set_title('gstools automated o. kriging')
 im = estimate[0].reshape(w, h)
-img = ax.imshow(im, origin='lower', cmap='coolwarm')
-divider = make_axes_locatable(ax)
+#im = np.flipud(im)
+img = ax2.imshow(im, origin='lower', cmap='coolwarm')
+divider = make_axes_locatable(ax2)
+
 cax = divider.append_axes("right", size="5%", pad=0.1)
 colorbar(img, orientation='vertical', cax=cax)
+
 plt.show()

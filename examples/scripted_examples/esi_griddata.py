@@ -44,7 +44,7 @@ result_2 = esi_griddata(points, values, (grid_x, grid_y),
 
 esi_krig_est = result_2.estimation()
 
-fig = plt.figure(dpi=150)
+fig = plt.figure(dpi=150, figsize=(10, 10))
 gs = fig.add_gridspec(2, 3, wspace=0.1, hspace=0.47)
 (ax1, ax2) = gs.subplots()
 ax1, ax2, ax3, ax4, ax5, ax6 = ax1[0], ax1[1], ax1[2], ax2[0], ax2[1], ax2[2]
