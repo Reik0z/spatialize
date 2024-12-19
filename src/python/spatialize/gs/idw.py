@@ -47,8 +47,7 @@ def idw_hparams_search(points, values, xi,
     cross_validate = lib_spatialize_facade.get_operator(points,
                                                         spatialize.gs.local_interpolator.IDW,
                                                         method,
-                                                        spatialize.gs.PLAIN_INTERPOLATOR,
-                                                        lib_spatialize_facade.backend_options.IN_MEMORY)
+                                                        spatialize.gs.PLAIN_INTERPOLATOR)
 
     grid = {"radius": radius,
             "exponent": exponent}
@@ -126,8 +125,7 @@ def _call_libspatialize(points, values, xi, radius=np.inf, exponent=1.0,
     estimate = lib_spatialize_facade.get_operator(points,
                                                   spatialize.gs.local_interpolator.IDW,
                                                   "estimate",
-                                                  spatialize.gs.PLAIN_INTERPOLATOR,
-                                                  lib_spatialize_facade.backend_options.IN_MEMORY)
+                                                  spatialize.gs.PLAIN_INTERPOLATOR)
 
     # get the argument list
     l_args = [np.float32(points), np.float32(values),

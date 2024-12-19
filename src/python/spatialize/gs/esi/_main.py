@@ -105,9 +105,6 @@ class ESIResult(EstimationResult):
                                  "seed": np.random.randint(1000, 10000),
                                  "folding_seed": np.random.randint(1000, 10000),
                                  "callback": default_singleton_callback,
-                                 "backend": None,  # it can be: None or one the lib_spatialize_facade.backend_options
-                                 "cache_path": None,  # Needed if 'backend' is
-                                 # lib_spatialize_facade.backend_options.DISK_CACHED
                                  },
                     specific_args={
                         li.IDW: {"exponent": list(np.arange(1.0, 15.0, 1.0))},
@@ -118,7 +115,6 @@ class ESIResult(EstimationResult):
                     })
 def esi_hparams_search(points, values, xi, **kwargs):
     log_message(logging.logger.debug(f"searching best params ..."))
-    log_message(logging.logger.debug(f'backend: {"auto" if kwargs["backend"] is None else kwargs["backend"]}'))
 
     method, k = "kfold", kwargs["k"]
     if k == points.shape[0] or k == -1:
@@ -126,8 +122,7 @@ def esi_hparams_search(points, values, xi, **kwargs):
 
     # get the cross validation function
     cross_validate = lib_spatialize_facade.get_operator(points, kwargs["local_interpolator"],
-                                                        method, kwargs["p_process"],
-                                                        kwargs["backend"])
+                                                        method, kwargs["p_process"])
 
     grid = {"n_partitions": kwargs["n_partitions"],
             "alpha": kwargs["alpha"]}
@@ -159,8 +154,6 @@ def esi_hparams_search(points, values, xi, **kwargs):
         param_set["local_interpolator"] = kwargs["local_interpolator"]
         param_set["seed"] = kwargs["seed"]
         param_set["callback"] = singleton_null_callback
-        param_set["backend"] = kwargs["backend"]
-        param_set["cache_path"] = kwargs["cache_path"]
         param_set["p_process"] = kwargs["p_process"]
 
         if kwargs["p_process"] == partitioning_process.MONDRIAN:
@@ -222,9 +215,6 @@ def esi_nongriddata(points, values, xi, **kwargs):
                                  "agg_function": af.mean,
                                  "seed": np.random.randint(1000, 10000),
                                  "callback": default_singleton_callback,
-                                 "backend": None,  # it can be: None or one the lib_spatialize_facade.backend_options
-                                 "cache_path": None,  # Needed if 'backend' is
-                                 # lib_spatialize_facade.backend_options.DISK_CACHED
                                  "best_params_found": None
                                  },
                     specific_args={
@@ -233,7 +223,6 @@ def esi_nongriddata(points, values, xi, **kwargs):
                     })
 def _call_libspatialize(points, values, xi, **kwargs):
     log_message(logging.logger.debug('calling libspatialize'))
-    log_message(logging.logger.debug(f'backend: {"auto" if kwargs["backend"] is None else kwargs["backend"]}'))
 
     if not kwargs["best_params_found"] is None:
         try:
@@ -249,8 +238,7 @@ def _call_libspatialize(points, values, xi, **kwargs):
 
     # get the estimator function
     estimate = lib_spatialize_facade.get_operator(points, kwargs["local_interpolator"],
-                                                  "estimate", kwargs["p_process"],
-                                                  kwargs["backend"])
+                                                  "estimate", kwargs["p_process"])
 
     # get the argument list
     l_args = build_arg_list(points, values, xi, kwargs)
@@ -286,12 +274,5 @@ def build_arg_list(points, values, xi, nonpos_args):
         l_args.insert(-2, nonpos_args["range"])
         l_args.insert(-2, nonpos_args["sill"])
         l_args.insert(-2, nonpos_args["seed"])
-
-    if nonpos_args["backend"] == lib_spatialize_facade.backend_options.DISK_CACHED:
-        cache_path = nonpos_args["cache_path"]
-        if cache_path is None:
-            cache_path = tempfile.TemporaryDirectory().name + ".db"
-            log_message(logging.logger.debug(f'cache path: {cache_path}'))
-            l_args.insert(0, cache_path)
 
     return l_args
