@@ -1,2 +1,3 @@
 graft include/spatialize
 graft include/Eigen
+recursive-include src/spatialize/resources *
