@@ -11,5 +11,6 @@
 10.[] Implement grid search in parallel
 11.[√] Improve results default plotting
 12.[] Add 'save' and 'load' methods in result classes
+13. [] Consider penalization of missings on grid search (e.g: IDW)
 
 ## DOC ##
