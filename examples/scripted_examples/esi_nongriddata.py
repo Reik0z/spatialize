@@ -2,6 +2,7 @@ import numpy as np
 import pandas as pd
 
 from spatialize import logging
+from spatialize.data import load_drill_holes_andes_2D
 from spatialize.gs.esi import esi_hparams_search, esi_nongriddata
 import spatialize.gs.esi.aggfunction as af
 import spatialize.gs.esi.lossfunction as lf
@@ -12,23 +13,14 @@ from mpl_toolkits.axes_grid1 import make_axes_locatable
 logging.log.setLevel("DEBUG")
 
 # the samples
-
-# NOTE: modify this to make it download the CSV from
-# the GitHub repo
-samples = pd.read_csv('../../test/testdata/data.csv')
-with open('../../test/testdata/grid.dat', 'r') as data:
-    lines = data.readlines()
-    lines = [l.strip().split() for l in lines[5:]]
-    aux = np.float32(lines)
-locations = pd.DataFrame(aux, columns=['X', 'Y', 'Z'])
+samples, locations, krig, _ = load_drill_holes_andes_2D()
 
 w, h = 300, 200
 
 points = samples[['x', 'y']].values
 values = samples[['cu']].values[:, 0]
-xi = locations[['X', 'Y']].values
+xi = locations[['x', 'y']].values
 
-krig = pd.read_csv('../../test/testdata/kriging.csv')
 krig_im = krig[['est_cu_case_esipaper']].values[:, 0].reshape(300, 200)
 
 # plotting original data along with a pretty good estimation with ESI-Kriging

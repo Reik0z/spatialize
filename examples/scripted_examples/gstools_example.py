@@ -1,17 +1,14 @@
 import numpy as np
-import pandas as pd
 from matplotlib import pyplot as plt
 import gstools as gs
 from matplotlib.pyplot import colorbar
 from mpl_toolkits.axes_grid1 import make_axes_locatable
+from spatialize.data import load_drill_holes_andes_2D
+
 
 # get the data
-samples = pd.read_csv('../../test/testdata/data.csv')
-with open('../../test/testdata/grid.dat', 'r') as data:
-    lines = data.readlines()
-    lines = [l.strip().split() for l in lines[5:]]
-    aux = np.float32(lines)
-locations = pd.DataFrame(aux, columns=['X', 'Y', 'Z']).sort_values(["Z", "Y", "X"])
+samples, locations, krig, _ = load_drill_holes_andes_2D()
+locations = locations.sort_values(["z", "y", "x"])
 
 w, h = 300, 200
 
@@ -20,10 +17,9 @@ x, y = samples[['x']].values, samples[['y']].values
 
 values = samples[['cu']].values[:, 0]
 
-xi = locations[['X', 'Y']].values
-xi_x, xi_y = locations[['X']].values, locations[['Y']].values
+xi = locations[['x', 'y']].values
+xi_x, xi_y = locations[['x']].values, locations[['y']].values
 
-krig = pd.read_csv('../../test/testdata/kriging.csv')
 krig_im = krig[['est_cu_case_esipaper']].values[:, 0].reshape(300, 200)
 
 # get the experimental variogram
