@@ -40,9 +40,9 @@ plt.show()
 # run the grid search
 search_result = esi_hparams_search(points, values, (grid_x, grid_y),
                                    local_interpolator="idw", griddata=True, k=10,
-                                   p_process="mondrian",
+                                   p_process="voronoi",
                                    n_partitions=(30, 50, 100),
-                                   exponent=list(np.arange(1.0, 5.0, 1.0)),
+                                   exponent=[0.001, 0.01, 0.1, 1, 2],
                                    alpha=(0.95, 0.97, 0.98, 0.985),
                                    agg_function={"mean": af.mean,
                                                  "median": af.median,
@@ -57,5 +57,5 @@ result = esi_griddata(points, values, (grid_x, grid_y),
                       best_params_found=search_result.best_result()
                       )
 
-result.quick_plot()
+result.quick_plot(figsize=(10, 5))
 plt.show()
