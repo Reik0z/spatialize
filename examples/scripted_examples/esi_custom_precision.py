@@ -83,4 +83,4 @@ def esi_kriging():
 
 if __name__ == '__main__':
     esi_idw()
-    #esi_kriging()
+    esi_kriging()

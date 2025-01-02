@@ -1,11 +1,10 @@
 import numpy as np
-import pandas as pd
 
 from spatialize import logging
 from spatialize.data import load_drill_holes_andes_2D
 from spatialize.gs.esi import esi_hparams_search, esi_nongriddata
-import spatialize.gs.esi.aggfunction as af
 import spatialize.gs.esi.lossfunction as lf
+
 import matplotlib.pyplot as plt
 from matplotlib.pyplot import colorbar
 from mpl_toolkits.axes_grid1 import make_axes_locatable
@@ -25,15 +24,15 @@ krig_im = krig[['est_cu_case_esipaper']].values[:, 0].reshape(300, 200)
 
 # plotting original data along with a pretty good estimation with ESI-Kriging
 
-#result_esi = esi_nongriddata(points, values, xi,
-#                             local_interpolator="kriging",
-#                             n_partitions=500,
-#                             alpha=0.93,
-#                             sill=1.0,
-#                             range=1000.0,
-#                             nugget=0.5,
-#                             model='cubic'
-#                             )
+result_esi = esi_nongriddata(points, values, xi,
+                             local_interpolator="kriging",
+                             n_partitions=500,
+                             alpha=0.93,
+                             sill=1.0,
+                             range=1000.0,
+                             nugget=0.5,
+                             model='cubic'
+                             )
 
 fig = plt.figure(dpi=150, figsize=(10,5))
 gs = fig.add_gridspec(1, 2, wspace=0.4)
@@ -53,15 +52,10 @@ divider = make_axes_locatable(ax2)
 cax = divider.append_axes("right", size="5%", pad=0.1)
 colorbar(img2, orientation='vertical', cax=cax)
 
-#ax3.set_aspect('equal')
-#ax3.set_title('esi kriging')
-#result_esi.plot_estimation(ax3, w, h)
-
 plt.show()
 
 # operational error function for the observed dynamic range
 op_error = lf.OperationalErrorLoss(np.abs(np.nanmin(values) - np.nanmax(values)))
-
 
 # operational error function for the observed mean law
 # op_error_precision=lf.OperationalErrorLoss(np.nanmean(values))
@@ -109,5 +103,5 @@ def esi_kriging():
     plt.show()
 
 if __name__ == '__main__':
-     #esi_kriging()
+     esi_kriging()
      esi_idw("mondrian")

@@ -32,10 +32,6 @@ models = {
     "Exponential": gs.Exponential,
     "Circular": gs.Circular,
     "Spherical": gs.Spherical,
-    # "Matern": gs.Matern,
-    # "Stable": gs.Stable,
-    # "Rational": gs.Rational,
-#    "SuperSpherical": gs.SuperSpherical,
     "JBessel": gs.JBessel,
 }
 scores = {}
