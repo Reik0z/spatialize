@@ -35,7 +35,7 @@ if __name__ == '__main__':
         keywords="ESI ensemble spatial interpolation",
         url="http://www.alges.cl/",
         long_description=open(os.path.join(os.path.dirname(os.path.realpath(
-            __file__)), "README.txt")).read(),
+            __file__)), "README.md")).read(),
         ext_modules=libspatialize_extensions,
         package_dir={'spatialize': os.path.join('src', 'python', 'spatialize')},
         packages=find_packages(os.path.join('src', 'python'), exclude=[".DS_Store", "__pycache__"]),
