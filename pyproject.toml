@@ -8,6 +8,7 @@ classifiers = [
     "Operating System :: OS Independent",
 ]
 description = "Spatialize: A Python wrapper for C++ ESI library"
+keywords = ['ESI ensemble spatial interpolation']
 readme = {file = "README.txt", content-type = "text/markdown"}
 requires-python = ">=3.8"
 
@@ -16,9 +17,9 @@ Repository = "https://github.com/alges/spatialize"
 
 [build-system]
 requires = [
-    "setuptools==59.2.0",
-    "wheel==0.37.0",
-    "Cython>=0.29.30,<3.0",
+    "setuptools",
+    "wheel",
+    "Cython",
     "numpy>= 1.8.0",
     "tqdm",
 ]
