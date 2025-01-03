@@ -37,7 +37,7 @@ result = esi_griddata(points, values, (grid_x, grid_y, grid_z),
                       p_process="mondrian",
                       data_cond=False,
                       exponent=1.0,
-                      n_partitions=500, alpha=0.985,
+                      n_partitions=100, alpha=0.7,
                       agg_function=af.mean
                       )
 
