@@ -1,7 +1,9 @@
 import numpy as np
 from matplotlib import pyplot as plt
-import gstools as gs
+from pykrige.ok import OrdinaryKriging
+from pykrige.rk import Krige
 from matplotlib.pyplot import colorbar
+from sklearn.model_selection import GridSearchCV
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 from spatialize.data import load_drill_holes_andes_2D
 
@@ -20,40 +22,28 @@ values = samples[['cu']].values[:, 0]
 xi = locations[['x', 'y']].values
 xi_x, xi_y = locations[['x']].values, locations[['y']].values
 
+# load previously calculated kriging results with ESI
 krig_im = krig[['est_cu_case_esipaper']].values[:, 0].reshape(300, 200)
 
-# get the experimental variogram
-bins = np.arange(200)
-bin_center, gamma = gs.vario_estimate((x, y), values, bins)
-
-# models to test
-models = {
-    "Gaussian": gs.Gaussian,
-    "Exponential": gs.Exponential,
-    "Circular": gs.Circular,
-    "Spherical": gs.Spherical,
-    "JBessel": gs.JBessel,
+# search parameters for the best variogram model
+param_dict = {
+    "variogram_model": ["linear", "gaussian", "spherical", "exponential"],
+    "variogram_parameters": [{'slope': 1.0, 'nugget': 1.0, 'range': 1.0, 'sill': 1.0, 'scale': 1.0},
+                             {'slope': 2.0, 'nugget': 1.0, 'range': 2.0, 'sill': 2.0, 'scale': 2.0},],
 }
-scores = {}
-fitted_models = {}
 
-# fit all models to the estimated variogram
-for model in models:
-    fitted_models[model] = models[model](dim=2)
-    para, pcov, r2 = fitted_models[model].fit_variogram(bin_center, gamma, return_r2=True)
-    scores[model] = r2
+estimator = GridSearchCV(Krige(), param_dict, verbose=True, return_train_score=True)
 
-# build the ranking according to r2
-ranking = sorted(scores.items(), key=lambda item: item[1], reverse=True)
-print("RANKING by Pseudo-r2 score")
-for i, (model, score) in enumerate(ranking, 1):
-    print(f"{i:>6}. {model:>15}: {score:.5}")
+# run the gridsearch
+estimator.fit(X=points, y=values)
+
+if hasattr(estimator, "best_score_"):
+    print("best_score R² = {:.3f}".format(estimator.best_score_))
+    print("best_params = ", estimator.best_params_)
 
 # run the ordinary kriging
-krig = gs.krige.Ordinary(model=fitted_models[ranking[0][0]], cond_pos=points, cond_val=values)
-estimate = krig((xi_x, xi_y))
-
-print(estimate[0].shape)
+krig = OrdinaryKriging(x, y, values, **estimator.best_params_)
+estimate, _ = krig.execute("points", xi_x, xi_y)
 
 # plot results
 fig = plt.figure(dpi=150, figsize=(10,5))
@@ -68,8 +58,8 @@ cax = divider.append_axes("right", size="5%", pad=0.1)
 colorbar(img1, orientation='vertical', cax=cax)
 
 ax2.set_aspect('equal')
-ax2.set_title('gstools automated o. kriging')
-im = estimate[0].reshape(w, h)
+ax2.set_title('pykgrige automated o. kriging')
+im = estimate.reshape(w, h)
 #im = np.flipud(im)
 img = ax2.imshow(im, origin='lower', cmap='coolwarm')
 divider = make_axes_locatable(ax2)
