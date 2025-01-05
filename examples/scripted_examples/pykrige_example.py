@@ -1,10 +1,11 @@
 from matplotlib import pyplot as plt
+from mpl_toolkits.axes_grid1 import make_axes_locatable
+from matplotlib.pyplot import colorbar
+
+from spatialize.data import load_drill_holes_andes_2D
 from pykrige.ok import OrdinaryKriging
 from pykrige.rk import Krige
-from matplotlib.pyplot import colorbar
 from sklearn.model_selection import GridSearchCV
-from mpl_toolkits.axes_grid1 import make_axes_locatable
-from spatialize.data import load_drill_holes_andes_2D
 
 
 # get the data
