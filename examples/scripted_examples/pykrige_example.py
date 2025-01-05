@@ -1,4 +1,3 @@
-import numpy as np
 from matplotlib import pyplot as plt
 from pykrige.ok import OrdinaryKriging
 from pykrige.rk import Krige
@@ -14,25 +13,24 @@ locations = locations.sort_values(["z", "y", "x"])
 
 w, h = 300, 200
 
-points = samples[['x', 'y']].values
+points = samples[['x', 'y']].values.astype('float32')
 x, y = samples[['x']].values, samples[['y']].values
 
-values = samples[['cu']].values[:, 0]
+values = samples[['cu']].values[:, 0].astype('float32')
 
 xi = locations[['x', 'y']].values
 xi_x, xi_y = locations[['x']].values, locations[['y']].values
 
-# load previously calculated kriging results with ESI
+# load previously calculated manual expert kriging results
 krig_im = krig[['est_cu_case_esipaper']].values[:, 0].reshape(300, 200)
 
 # search parameters for the best variogram model
 param_dict = {
-    "variogram_model": ["linear", "gaussian", "spherical", "exponential"],
-    "variogram_parameters": [{'slope': 1.0, 'nugget': 1.0, 'range': 1.0, 'sill': 1.0, 'scale': 1.0},
-                             {'slope': 2.0, 'nugget': 1.0, 'range': 2.0, 'sill': 2.0, 'scale': 2.0},],
+    "variogram_model": ["linear", "gaussian", "spherical", "exponential"]
 }
 
-estimator = GridSearchCV(Krige(), param_dict, verbose=True, return_train_score=True)
+estimator = GridSearchCV(Krige(), param_dict,
+                         verbose=True, return_train_score=True)
 
 # run the gridsearch
 estimator.fit(X=points, y=values)
@@ -60,7 +58,6 @@ colorbar(img1, orientation='vertical', cax=cax)
 ax2.set_aspect('equal')
 ax2.set_title('pykgrige automated o. kriging')
 im = estimate.reshape(w, h)
-#im = np.flipud(im)
 img = ax2.imshow(im, origin='lower', cmap='coolwarm')
 divider = make_axes_locatable(ax2)
 
