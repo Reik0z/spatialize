@@ -1,6 +1,7 @@
 # from distutils.core import setup, Extension
 import numpy
 import os
+import sys
 from setuptools import setup, find_packages
 from distutils.extension import Extension
 

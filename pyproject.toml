@@ -22,6 +22,8 @@ requires = [
     "Cython",
     "numpy>= 1.8.0",
     "tqdm",
+    "matplotlib",
+    "rich",
 ]
 build-backend = "setuptools.build_meta"
 
