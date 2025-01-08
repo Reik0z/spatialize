@@ -3,6 +3,9 @@ from spatialize.gs.esi.aggfunction import mean, identity
 
 
 def loss(agg_function):
+    """
+    Decorator to apply a loss function to the ESI samples.
+    """
     def outer_function(function):
         function_name = function.__name__
         module_name = function.__module__
@@ -23,25 +26,41 @@ def loss(agg_function):
 
 @loss(mean)
 def mse_loss(x, y):
+    """
+    Mean Squared Error loss function.
+    """
     return (x - y) ** 2
 
 
 @loss(mean)
 def mae_loss(x, y):
+    """
+    Mean Absolute Error loss function.
+    """
     return np.abs(x - y)
 
 
 @loss(identity)
 def mse_cube(x, y):
+    """
+    Mean Squared Error loss function.
+    """
     return mse_loss(x, y)
 
 
 @loss(identity)
 def mae_cube(x, y):
+    """
+    Mean Absolute Error loss function.
+    """
     return mae_loss(x, y)
 
 
 class OperationalErrorLoss:
+    """
+    This is a class for creating functions (callable instances) that belong to a family 
+    of functions indexed by a given ``dynamic range``. 
+    """
     def __init__(self, dyn_range=None, use_cube=False):
         self.use_cube = use_cube
         self.dyn_range = dyn_range

@@ -5,18 +5,30 @@ from spatialize._math_util import BilateralFilteringFusion
 
 
 def mean(samples):
+    """
+    Computes the mean of the samples.
+    """
     return np.nanmean(samples, axis=1)
 
 
 def median(samples):
+    """
+    Computes the median of the samples.
+    """
     return np.nanmedian(samples, axis=1)
 
 
 def MAP(samples):
+    """
+    Computes the mode of the samples.
+    """
     return sci.stats.mode(samples, axis=1, keepdims=True, nan_policy="omit").mode
 
 
 class Percentile:
+    """
+    Computes the percentile of the samples.
+    """
     def __init__(self, q=75):
         self.q = q
 
@@ -28,6 +40,9 @@ class Percentile:
 
 
 class WeightedAverage:
+    """
+    Computes the weighted average of the samples.
+    """
     def __init__(self, normalize=False, weights=None, force_resample=True):
         self.normalize = normalize
         self.weights = weights
@@ -48,12 +63,17 @@ class WeightedAverage:
 
 
 def identity(samples):
+    """
+    Returns the samples as they are
+    """
     return samples
 
 
 # Bilateral filter
 def bilateral_filter(samples):
-
+    """
+    Applies a bilateral filter to the samples.
+    """
     bff = BilateralFilteringFusion(cube=samples)
     fusion = bff.eval()
     two_dims_fusion = np.flip(fusion.reshape(fusion.shape[0], fusion.shape[1]), 1)
