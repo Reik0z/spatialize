@@ -37,7 +37,7 @@ pip install spatialize
 - [SciPy: Fundamental algorithms for scientific computing in Python](https://scipy.org/)
 
 ## License
-[MIT](LICENSE)
+[Apache-2.0](LICENSE)
 
 ## Acknowledge
 Please cite the following paper when publishing work relating to this library:
