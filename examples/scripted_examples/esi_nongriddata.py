@@ -34,7 +34,7 @@ result_esi = esi_nongriddata(points, values, xi,
                              model='cubic'
                              )
 
-fig = plt.figure(dpi=150, figsize=(10,5))
+fig = plt.figure(dpi=150, figsize=(10, 5))
 gs = fig.add_gridspec(1, 2, wspace=0.4)
 (ax1, ax2) = gs.subplots()
 
