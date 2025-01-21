@@ -34,6 +34,8 @@ result = esi_griddata(points, values, (grid_x, grid_y),
                       agg_function=af.mean
                       )
 
+print(result)
+
 esi_idw_est = result.estimation()
 
 result_2 = esi_griddata(points, values, (grid_x, grid_y),
@@ -41,6 +43,8 @@ result_2 = esi_griddata(points, values, (grid_x, grid_y),
                         model="spherical", nugget=0.0, range=10.0,
                         n_partitions=500, alpha=0.9,
                         agg_function=af.mean)
+
+print(result_2)
 
 esi_krig_est = result_2.estimation()
 

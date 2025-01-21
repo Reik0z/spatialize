@@ -1,3 +1,4 @@
+import numpy as np
 from matplotlib import pyplot as plt
 from matplotlib.pyplot import colorbar
 from mpl_toolkits.axes_grid1 import make_axes_locatable
@@ -118,6 +119,7 @@ class GridSearchResult:
                            ylabel="Error",
                            color='skyblue',
                            legend=False)
+
     def best_result(self, **kwargs):
         raise NotImplementedError
 
@@ -217,3 +219,12 @@ class EstimationResult:
 
     def load(self, path):
         raise NotImplementedError
+
+    def __repr__(self):
+        min, max = np.nanmin(self.estimation()), np.nanmax(self.estimation())
+        m, s, med = np.nanmean(self.estimation()), np.nanstd(self.estimation()), np.nanmedian(self.estimation())
+        msg = (f"estimation results: \n"
+               f"  minimum: {min:.3f}, maximum: {max:.3f}\n"
+               f"  mean: {m:.2f}, std dev: {s:.2f}, median: {med:.2f}\n"
+               f"to display the result, use the method ‘quick_plot()’.\n")
+        return msg

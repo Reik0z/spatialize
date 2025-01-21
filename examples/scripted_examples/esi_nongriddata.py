@@ -34,13 +34,13 @@ result_esi = esi_nongriddata(points, values, xi,
                              model='cubic'
                              )
 
-fig = plt.figure(dpi=150, figsize=(10,5))
+fig = plt.figure(dpi=150, figsize=(10, 5))
 gs = fig.add_gridspec(1, 2, wspace=0.4)
 (ax1, ax2) = gs.subplots()
 
 ax1.set_aspect('equal')
 ax1.set_title('original data')
-img1 = ax1.scatter(x=points[:,0], y=points[:,1], c=values, cmap='coolwarm')
+img1 = ax1.scatter(x=points[:, 0], y=points[:, 1], c=values, cmap='coolwarm')
 divider = make_axes_locatable(ax1)
 cax = divider.append_axes("right", size="5%", pad=0.1)
 colorbar(img1, orientation='vertical', cax=cax)
@@ -56,6 +56,7 @@ plt.show()
 
 # operational error function for the observed dynamic range
 op_error = lf.OperationalErrorLoss(np.abs(np.nanmin(values) - np.nanmax(values)))
+
 
 # operational error function for the observed mean law
 # op_error_precision=lf.OperationalErrorLoss(np.nanmean(values))
@@ -75,9 +76,9 @@ def esi_idw(p_process):
                              p_process=p_process,
                              n_partitions=500,
                              best_params_found=search_result.best_result())
-
+    print(result)
     result.precision(op_error)
-    result.quick_plot(w=w, h=h, figsize=(10,5))
+    result.quick_plot(w=w, h=h, figsize=(10, 5))
     plt.show()
 
 
@@ -97,11 +98,12 @@ def esi_kriging():
                              local_interpolator="kriging",
                              n_partitions=500,
                              best_params_found=search_result.best_result())
-
+    print(result)
     result.precision(op_error)
-    result.quick_plot(w=w, h=h, figsize=(10,5))
+    result.quick_plot(w=w, h=h, figsize=(10, 5))
     plt.show()
 
+
 if __name__ == '__main__':
-     esi_kriging()
-     esi_idw("mondrian")
+    esi_kriging()
+    esi_idw("mondrian")
