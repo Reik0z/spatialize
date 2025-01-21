@@ -23,6 +23,6 @@ result = idw_griddata(points, values, (grid_x, grid_y),
                       radius=0.07
                       )
 
-print(result.estimation().max())
+print(result)
 result.quick_plot()
 plt.show()

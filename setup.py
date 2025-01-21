@@ -1,13 +1,6 @@
-# from distutils.core import setup, Extension
 import numpy
 import os
-import sys
-from setuptools import setup, find_packages
-from distutils.extension import Extension
-
-sys.path.insert(0, ("./src/python"))
-
-from spatialize import __version__
+from setuptools import setup, find_packages, Extension
 import pathlib
 import pkg_resources
 
@@ -33,7 +26,7 @@ libspatialize_extensions = [
 if __name__ == '__main__':
     setup(
         name='spatialize',
-        version=__version__,
+        version='0.3',
         author='ALGES Laboratory',
         author_email='dev@alges.cl',
         description='Python wrapper for ESI',
