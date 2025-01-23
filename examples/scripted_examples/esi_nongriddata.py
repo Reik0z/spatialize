@@ -57,7 +57,8 @@ def esi_idw(p_process):
                                        local_interpolator="idw", griddata=False, k=10,
                                        p_process=p_process,
                                        exponent=list(np.arange(1.0, 15.0, 1.0)),
-                                       alpha=(0.5, 0.6, 0.8, 0.9, 0.95, 0.98))
+                                       alpha=(0.5, 0.6, 0.8, 0.9, 0.95, 0.98),
+                                       seed=1500)
 
     search_result.plot_cv_error()
     plt.show()
@@ -81,7 +82,8 @@ def esi_kriging():
                                        nugget=[0.5, 1.0],
                                        range=[100.0, 500.0, 1000.0],
                                        alpha=list(np.flip(np.arange(0.90, 0.95, 0.01))),
-                                       sill=[0.9, 1.0, 1.1])
+                                       sill=[0.9, 1.0, 1.1],
+                                       seed=1500)
 
     search_result.plot_cv_error()
     plt.show()

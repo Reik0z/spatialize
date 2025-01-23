@@ -12,8 +12,10 @@ from sklearn.model_selection import GridSearchCV
 samples, locations, krig, _ = load_drill_holes_andes_2D()
 locations = locations.sort_values(["z", "y", "x"])
 
+# estimation data and result shape
 w, h = 300, 200
 
+# input variables
 points = samples[['x', 'y']].values.astype('float32')
 x, y = samples[['x']].values, samples[['y']].values
 

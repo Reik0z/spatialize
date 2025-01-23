@@ -18,7 +18,7 @@ points = samples[['x', 'y', 'z']].values
 x, y, z = samples[['x']].values, samples[['y']].values, samples[['z']].values
 values = samples[['cu']].values[:, 0]
 
-#3d locations for estimatimation values
+#3d locations for estimation values
 xi = locations[['x', 'y', 'z']].values
 grid_x, grid_y, grid_z = locations[['x']].values, locations[['y']].values, locations[['z']].values
 
