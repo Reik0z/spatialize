@@ -11,9 +11,10 @@ logging.log.setLevel("DEBUG")
 def func(x, y):  # a kind of "cubic" function
     return x * (1 - x) * np.cos(4 * np.pi * x) * np.sin(4 * np.pi * y ** 2) ** 2
 
-
+# grid points definition
 grid_x, grid_y = np.mgrid[0:1:100j, 0:1:200j]
 
+# random sample of 1000 data points from "cubic" function
 rng = np.random.default_rng()
 points = rng.random((1000, 2))
 values = func(points[:, 0], points[:, 1])
@@ -21,6 +22,7 @@ values = func(points[:, 0], points[:, 1])
 
 grid_cmap, prec_cmap = 'coolwarm', 'bwr'
 
+# estimation with esi-idw and mondrian partition method
 result = esi_griddata(points, values, (grid_x, grid_y),
                       local_interpolator="idw",
                       p_process="mondrian",
@@ -32,6 +34,8 @@ result = esi_griddata(points, values, (grid_x, grid_y),
 
 esi_idw_mond = result.estimation()
 
+# estimation with esi-idw and voronoi partition method
+# with data conditioning
 result_2 = esi_griddata(points, values, (grid_x, grid_y),
                       local_interpolator="idw",
                       p_process="voronoi",
@@ -43,6 +47,8 @@ result_2 = esi_griddata(points, values, (grid_x, grid_y),
 
 esi_idw_vor_t = result_2.estimation()
 
+# estimation with esi-idw and voronoi partition method
+# withouth data conditioning
 result_3 = esi_griddata(points, values, (grid_x, grid_y),
                       local_interpolator="idw",
                       p_process="voronoi",
@@ -54,6 +60,7 @@ result_3 = esi_griddata(points, values, (grid_x, grid_y),
 
 esi_idw_vor_f = result_3.estimation()
 
+# plotting original "cubic" function along with the three estimations with esi
 fig = plt.figure(figsize=(10,5), dpi=150)
 gs = fig.add_gridspec(1, 4, wspace=0.5, hspace=0.47)
 (ax1, ax2, ax3, ax4) = gs.subplots()

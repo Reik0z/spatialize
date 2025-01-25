@@ -100,6 +100,6 @@ def esi_kriging():
 # this code allows to run both defined functions and to execute both partition processes
 # for the esi_idw case ('voronoi' and 'mondrian')
 if __name__ == '__main__':
-    esi_kriging()
+    #esi_kriging()
     esi_idw("mondrian")
-    esi_idw("voronoi")
+    #esi_idw("voronoi")

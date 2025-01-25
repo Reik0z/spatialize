@@ -3,22 +3,27 @@ from matplotlib import pyplot as plt
 from matplotlib.pyplot import colorbar
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 
+from spatialize import logging
 import spatialize.gs.esi.aggfunction as af
 from spatialize.gs.esi import esi_griddata
 from spatialize.gs.esi.lossfunction import loss
 
 
+logging.log.setLevel("DEBUG")
+
+
 def func(x, y):  # a kind of "cubic" function
     return x * (1 - x) * np.cos(4 * np.pi * x) * np.sin(4 * np.pi * y ** 2) ** 2
 
-
+# grid definition
 grid_x, grid_y = np.mgrid[0:1:100j, 0:1:200j]
 
+# data points and values creation for estimation functions
 rng = np.random.default_rng()
 points = rng.random((1000, 2))
 values = func(points[:, 0], points[:, 1])
 
-
+# custom precision function declaration
 def op_error_precision(estimation, esi_samples):
     dyn_range = np.abs(np.nanmin(esi_samples) - np.nanmax(esi_samples))
 
@@ -28,7 +33,8 @@ def op_error_precision(estimation, esi_samples):
 
     return _op_error(estimation, esi_samples)
 
-
+# plot function that includes original function, estimation,
+# mse precision and custom loss function - op_error_precision
 def plot_result(result, title):
     grid_cmap, prec_cmap = 'coolwarm', 'bwr'
     fig = plt.figure(figsize=(10,3), dpi=150)
@@ -52,6 +58,7 @@ def plot_result(result, title):
     ax3.plot(points[:, 0], points[:, 1], 'y.', ms=0.5)
 
     # plot a custom precision
+    # here the custom precision (loss function) is passed
     result.precision(op_error_precision)
     result.plot_precision(ax=ax4, cmap=prec_cmap)
     ax4.set_title('op error')
@@ -60,6 +67,9 @@ def plot_result(result, title):
     plt.show()
 
 
+# estimation functions encapsulation
+# to be able to use only one of them at each runtime
+# if needed
 def esi_idw():
     result = esi_griddata(points, values, (grid_x, grid_y),
                           local_interpolator="idw",
