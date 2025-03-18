@@ -158,6 +158,9 @@ namespace sptlz{
                "delete called on non-final that has virtual functions but non-virtual destructor"
             */
 		    virtual ~VORONOI(){
+		    	for(int i=0; i<this->voronoi_forest.size(); i++){
+		    		delete(this->voronoi_forest.at(i));
+		    	}
 				std::vector<sptlz::VoronoiTree*>().swap(voronoi_forest);
 		    }
 

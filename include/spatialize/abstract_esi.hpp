@@ -235,18 +235,18 @@ namespace sptlz{
 					this->samples_by_leaf.at(aux).push_back(i);
 					this->leaf_for_sample.push_back(aux);
 				}
-  		}
+  			}
 
-            MondrianTree(){}
+         MondrianTree(){}
 
 			~MondrianTree(){
 				if(this->root != NULL){
 					delete(this->root);
 				}
 				std::vector<MondrianNode*>().swap(this->leaves);
-			    std::vector<int>().swap(this->leaf_for_sample);
-			    std::vector<std::vector<int>>().swap(this->samples_by_leaf);
-			    std::vector<std::vector<float>>().swap(this->leaf_params);
+		   	std::vector<int>().swap(this->leaf_for_sample);
+			   std::vector<std::vector<int>>().swap(this->samples_by_leaf);
+			   std::vector<std::vector<float>>().swap(this->leaf_params);
 			}
 
   		int search_leaf(std::vector<float> point){
@@ -309,6 +309,9 @@ namespace sptlz{
                "delete called on non-final that has virtual functions but non-virtual destructor"
             */
 		    virtual ~ESI(){
+		    	for(int i=0; i<this->mondrian_forest.size(); i++){
+		    		delete(this->mondrian_forest.at(i));
+		    	}
 				std::vector<sptlz::MondrianTree*>().swap(mondrian_forest);
 		    }
 
