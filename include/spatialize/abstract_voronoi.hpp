@@ -94,7 +94,7 @@ namespace sptlz{
 			VoronoiTree(){}
 
 			~VoronoiTree(){
-				for(int i=0, i<this->leaves.size(); i++){
+				for(int i=0; i<this->leaves.size(); i++){
 					delete(this->leaves.at(i));
 				}
 				std::vector<VoronoiNode*>().swap(this->leaves);
