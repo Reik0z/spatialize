@@ -29,7 +29,7 @@ plt.imshow(func(grid_x, grid_y).T, origin='lower', cmap=grid_cmap)
 plt.title('original and data points')
 plt.show()
 
-# estimation with ScyPy library function to be compared with esi
+# estimation with SciPy library function to be compared with esi
 grid_z0 = griddata(points, values, (grid_x, grid_y), method='nearest')
 grid_z1 = griddata(points, values, (grid_x, grid_y), method='linear')
 grid_z2 = griddata(points, values, (grid_x, grid_y), method='cubic')
