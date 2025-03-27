@@ -3,7 +3,7 @@
 #include "spatialize/adaptive_esi_idw.hpp"
 
 ========================================================================================================================
-static PyObject *estimation_esi_idw_anisotropic_2d(PyObject *self, PyObject *args){
+static PyObject *estimation_adaptive_esi_idw_2d(PyObject *self, PyObject *args){
   PyObject *func, *aux_str, *model_list;
   PyArrayObject *samples, *values, *scattered;
   float *aux;
@@ -110,7 +110,7 @@ static PyObject *estimation_esi_idw_anisotropic_2d(PyObject *self, PyObject *arg
   return(Py_BuildValue("O,O", model_list, (PyObject *)estimation));
 }
 
-static PyObject *loo_esi_idw_anisotropic_2d(PyObject *self, PyObject *args){
+static PyObject *loo_adaptive_esi_idw_2d(PyObject *self, PyObject *args){
   PyObject *func, *aux_str, *model_list;
   PyArrayObject *samples, *values, *scattered;
   float *aux;
@@ -217,7 +217,7 @@ static PyObject *loo_esi_idw_anisotropic_2d(PyObject *self, PyObject *args){
   return(Py_BuildValue("O,O", model_list, (PyObject *)estimation));
 }
 
-static PyObject *kfold_esi_idw_anisotropic_2d(PyObject *self, PyObject *args){
+static PyObject *kfold_adaptive_esi_idw_2d(PyObject *self, PyObject *args){
   PyObject *func, *aux_str, *model_list;
   PyArrayObject *samples, *values, *scattered;
   float *aux;
@@ -324,7 +324,7 @@ static PyObject *kfold_esi_idw_anisotropic_2d(PyObject *self, PyObject *args){
   return(Py_BuildValue("O,O", model_list, (PyObject *)estimation));
 }
 
-static PyObject *estimation_esi_idw_anisotropic_3d(PyObject *self, PyObject *args){
+static PyObject *estimation_adaptive_esi_idw_3d(PyObject *self, PyObject *args){
   PyObject *func, *aux_str, *model_list;
   PyArrayObject *samples, *values, *scattered;
   float *aux;
@@ -431,7 +431,7 @@ static PyObject *estimation_esi_idw_anisotropic_3d(PyObject *self, PyObject *arg
   return(Py_BuildValue("O,O", model_list, (PyObject *)estimation));
 }
 
-static PyObject *loo_esi_idw_anisotropic_3d(PyObject *self, PyObject *args){
+static PyObject *loo_adaptive_esi_idw_3d(PyObject *self, PyObject *args){
   PyObject *func, *aux_str, *model_list;
   PyArrayObject *samples, *values, *scattered;
   float *aux;
@@ -538,7 +538,7 @@ static PyObject *loo_esi_idw_anisotropic_3d(PyObject *self, PyObject *args){
   return(Py_BuildValue("O,O", model_list, (PyObject *)estimation));
 }
 
-static PyObject *kfold_esi_idw_anisotropic_3d(PyObject *self, PyObject *args){
+static PyObject *kfold_adaptive_esi_idw_3d(PyObject *self, PyObject *args){
   PyObject *func, *aux_str, *model_list;
   PyArrayObject *samples, *values, *scattered;
   float *aux;
@@ -646,9 +646,13 @@ static PyObject *kfold_esi_idw_anisotropic_3d(PyObject *self, PyObject *args){
 }
 
 ========================================================================================================================
-  { "estimation_esi_idw_anisotropic_3d", estimation_esi_idw_anisotropic_3d, METH_VARARGS, "Esi using IDW on 3 dimensions with anisotropy to estimate" },
-  { "loo_esi_idw_anisotropic_3d", loo_esi_idw_anisotropic_3d, METH_VARARGS, "Leave-one-out validation for Esi using IDW on 3 dimensions with anisotropy" },
-  { "kfold_esi_idw_anisotropic_3d", kfold_esi_idw_anisotropic_3d, METH_VARARGS, "K-fold validation for Esi using IDW on 3 dimensions with anisotropy" },
+  { "estimation_adaptive_esi_idw_2d", estimation_adaptive_esi_idw_2d, METH_VARARGS, "Adaptive Esi using IDW on 2 dimensions to estimate" },
+  { "loo_adaptive_esi_idw_2d", loo_adaptive_esi_idw_2d, METH_VARARGS, "Leave-one-out validation for Adaptive Esi using IDW on 2 dimensions" },
+  { "kfold_adaptive_esi_idw_2d", kfold_adaptive_esi_idw_2d, METH_VARARGS, "K-fold validation for Adaptive Esi using IDW on 2 dimensions" },
+
+  { "estimation_adaptive_esi_idw_3d", estimation_adaptive_esi_idw_3d, METH_VARARGS, "Adaptive Esi using IDW on 3 dimensions to estimate" },
+  { "loo_adaptive_esi_idw_3d", loo_adaptive_esi_idw_3d, METH_VARARGS, "Leave-one-out validation for Adaptive Esi using IDW on 3 dimensions" },
+  { "kfold_adaptive_esi_idw_3d", kfold_adaptive_esi_idw_3d, METH_VARARGS, "K-fold validation for Adaptive Esi using IDW on 3 dimensions" },
 */
 
 #ifndef _SPTLZ_ESI_IDW_ANIS_
