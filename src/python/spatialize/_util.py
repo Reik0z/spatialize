@@ -131,10 +131,11 @@ class GridSearchResult:
 
 
 class EstimationResult:
-    def __init__(self, estimation, griddata=False, original_shape=None):
+    def __init__(self, estimation, griddata=False, original_shape=None, xi=None):
         self._estimation = estimation
         self.griddata = griddata
         self.original_shape = original_shape
+        self._xi = xi
 
     def estimation(self):
         """
@@ -179,7 +180,11 @@ class EstimationResult:
             im = data.T
         else:
             if w is None or h is None:
-                raise SpatializeError(f"Wrong image size (w: {w}, h: {h})")
+                if self._xi is None:
+                    raise SpatializeError(f"Wrong image size (w: {w}, h: {h})")
+                else:
+                    h, w = len(np.unique(self._xi[:, 0]))-1, len(np.unique(self._xi[:, 1]))-1
+                    print(f"Image size not provided. Using shapes: {w} x {h}")
             im = data.reshape(w, h)
 
         plotter = plt
@@ -204,6 +209,9 @@ class EstimationResult:
         **figargs : (optional)
             Additional keyword arguments passed to the figure creation (e.g., DPI, figure size).
         """
+        if self._xi.shape[1] > 2:
+            raise SpatializeError("quick_plot() for 3D data is not supported")
+
         fig = plt.figure(dpi=150, **figargs)
         gs = fig.add_gridspec(1, 1, wspace=0.45)
         ax = gs.subplots()

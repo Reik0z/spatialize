@@ -56,8 +56,8 @@ class ESIResult(EstimationResult):
     based on some loss function.
 
     """
-    def __init__(self, estimation, esi_samples, griddata=False, original_shape=None):
-        super().__init__(estimation, griddata, original_shape)
+    def __init__(self, estimation, esi_samples, griddata=False, original_shape=None, xi=None):
+        super().__init__(estimation, griddata, original_shape, xi=xi)
         self._esi_samples = esi_samples
         self._precision = None
 
@@ -160,6 +160,9 @@ class ESIResult(EstimationResult):
         :param figargs: Additional figure arguments.
         :return: The figure.
         """
+        if self._xi.shape[1] > 2:
+            raise SpatializeError("quick_plot() for 3D data is not supported")
+
         fig = plt.figure(dpi=150, **figargs)
         gs = fig.add_gridspec(1, 2, wspace=0.45)
         (ax1, ax2) = gs.subplots()
@@ -234,7 +237,7 @@ def esi_hparams_search(points, values, xi, **kwargs):
     # get the actual parameter grid
     param_grid = ParameterGrid(grid)
 
-    p_xi = xi
+    p_xi = xi.copy()
     if kwargs["griddata"]:
         p_xi, _ = flatten_grid_data(xi)
 
@@ -376,7 +379,7 @@ def esi_nongriddata(points, values, xi, **kwargs):
         The result as :func:`ESIResult`.
     """
     estimation, esi_samples = _call_libspatialize(points, values, xi, **kwargs)
-    return ESIResult(estimation, esi_samples)
+    return ESIResult(estimation, esi_samples, xi=xi)
 
 
 # =========================================== END of PUBLIC API ======================================================
