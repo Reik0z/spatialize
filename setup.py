@@ -4,20 +4,8 @@ import sys
 from setuptools import setup, find_packages, Extension
 import pathlib
 
-try:
-    # pip >=20
-    from pip._internal.network.session import PipSession
-    from pip._internal.req import parse_requirements
-except ImportError:
-    try:
-        # 10.0.0 <= pip <= 19.3.1
-        from pip._internal.download import PipSession
-        from pip._internal.req import parse_requirements
-    except ImportError:
-        # pip <= 9.0.3
-        from pip.download import PipSession
-        from pip.req import parse_requirements
-
+with open(os.path.join(os.path.dirname(__file__), 'requirements.txt')) as reqh:
+    install_requires = reqh.readlines()
 
 sys.path.insert(0, ("./src/python"))
  
@@ -25,10 +13,6 @@ from spatialize import __version__
 
 libsptlzsrc = os.path.join('src', 'c++', 'libspatialize.cpp')
 macros = [('NPY_NO_DEPRECATED_API', 'NPY_1_7_API_VERSION')]
-
-requirements = parse_requirements(os.path.join(os.path.dirname(__file__), 'requirements.txt'), session=PipSession())
-install_requires = [str(r.requirement) for r in requirements]
-
 
 libspatialize_extensions = [
     Extension(name='libspatialize',
