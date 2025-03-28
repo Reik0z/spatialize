@@ -4,9 +4,10 @@ from spatialize import SpatializeError, logging
 from spatialize._util import in_notebook
 from spatialize.logging import log_message
 
+SEP = ""
 
 class local_interpolator:
-    [IDW, KRIGING] = ["idw", "kriging"]
+    [IDW, KRIGING, ADAPTIVE_IDW] = ["idw", "kriging", "adaptive" + SEP + "idw"]
 
 
 class partitioning_process:
@@ -14,14 +15,15 @@ class partitioning_process:
 
 
 PLAIN_INTERPOLATOR = "plain"
-PLAINIDW = PLAIN_INTERPOLATOR + local_interpolator.IDW
-[MONDRIANIDW, MONDRIANKRIGING] = [partitioning_process.MONDRIAN + local_interpolator.IDW,
-                                  partitioning_process.MONDRIAN + local_interpolator.KRIGING]
+PLAINIDW = PLAIN_INTERPOLATOR + SEP + local_interpolator.IDW
+[MONDRIANIDW, MONDRIANKRIGING, MONDRIANADAPTIVEIDW] = [partitioning_process.MONDRIAN + SEP + local_interpolator.IDW,
+                                                       partitioning_process.MONDRIAN + SEP + local_interpolator.KRIGING,
+                                                       partitioning_process.MONDRIAN + SEP + local_interpolator.ADAPTIVE_IDW
+                                                       ]
 VORONOIIDW = partitioning_process.VORONOI + local_interpolator.IDW
 
 
 class lib_spatialize_facade:
-
     function_hash_map = {
         2: {MONDRIANIDW: {"estimate": lsp.estimation_esi_idw,
                           "loo": lsp.loo_esi_idw,
@@ -29,6 +31,9 @@ class lib_spatialize_facade:
             MONDRIANKRIGING: {"estimate": lsp.estimation_esi_kriging_2d,
                               "loo": lsp.loo_esi_kriging_2d,
                               "kfold": lsp.kfold_esi_kriging_2d},
+            MONDRIANADAPTIVEIDW: {"estimate": lsp.estimation_adaptive_esi_idw_2d,},
+                                  # "loo": lsp.loo_adaptive_esi_idw_2d,
+                                  # "kfold": lsp.kfold_adaptive_esi_idw_2d},
             VORONOIIDW: {"estimate": lsp.estimation_voronoi_idw,
                          "loo": lsp.loo_voronoi_idw,
                          "kfold": lsp.kfold_voronoi_idw},
@@ -42,6 +47,9 @@ class lib_spatialize_facade:
             MONDRIANKRIGING: {"estimate": lsp.estimation_esi_kriging_3d,
                               "loo": lsp.loo_esi_kriging_3d,
                               "kfold": lsp.kfold_esi_kriging_3d},
+            # MONDRIANADAPTIVEIDW: {"estimate": lsp.estimation_adaptive_esi_idw_3d,
+            #                       "loo": lsp.loo_adaptive_esi_idw_3d,
+            #                       "kfold": lsp.kfold_adaptive_esi_idw_3d},
             PLAINIDW: {"estimate": lsp.estimation_nn_idw,
                        "loo": lsp.loo_nn_idw,
                        "kfold": lsp.kfold_nn_idw},

@@ -1,115 +1,5 @@
 /*
 ========================================================================================================================
-#include "spatialize/adaptive_esi_idw.hpp"
-
-========================================================================================================================
-static PyObject *estimation_adaptive_esi_idw_2d(PyObject *self, PyObject *args){
-  PyObject *func, *aux_str, *model_list;
-  PyArrayObject *samples, *values, *scattered;
-  float *aux;
-  std::vector<std::vector<float>> c_smp, c_loc;
-  std::vector<float> c_val;
-  int forest_size, has_call,seed;
-  float alpha;
-  std::string fname;
-  PyArrayObject *estimation;
-
-
-  // parse arguments
-  if (!PyArg_ParseTuple(args, "O!O!ifiO!O", &PyArray_Type, &samples, &PyArray_Type, &values, &forest_size, &alpha, &seed, &PyArray_Type, &scattered, &func)) {
-    PyErr_SetString(PyExc_TypeError, "[1] Argument do not match");
-    return (PyObject *) NULL;
-  }
-
-  has_call = PyObject_HasAttrString(func, "__call__");
-  if(has_call==NULL){
-    PyErr_SetString(PyExc_TypeError, "[2] Not callable object");
-    return((PyObject *) NULL);
-  }
-  aux_str = PyObject_GetAttrString(func, "__class__");
-  aux_str = PyObject_GetAttrString(aux_str, "__name__");
-  fname = PyUnicode_AsUTF8(aux_str);
-
-  // Argument validations
-  if (PyArray_NDIM(samples)!=2){
-    PyErr_SetString(PyExc_TypeError, "[3] samples must be a 2 dimensions array");
-    return (PyObject *) NULL;
-  }
-  if (PyArray_NDIM(values)!=1){
-    PyErr_SetString(PyExc_TypeError, "[4] values must be a 1 dimensions array");
-    return (PyObject *) NULL;
-  }
-  if (PyArray_NDIM(scattered)!=2){
-    PyErr_SetString(PyExc_TypeError, "[5] scattered must be a 2 dimensions array");
-    return (PyObject *) NULL;
-  }
-
-  npy_intp *smp_sh = PyArray_SHAPE(samples);
-  c_val = std::vector<float>(smp_sh[0]);
-  if (smp_sh[1]!=2){
-    PyErr_SetString(PyExc_TypeError, "[6] samples should have 2 elements per row (x & y)");
-    return (PyObject *) NULL;
-  }
-
-  npy_intp *sct_sh = PyArray_SHAPE(scattered);
-  if (sct_sh[1]!=2){
-    PyErr_SetString(PyExc_TypeError, "[7] scattered should have 2 elements per row (x & y)");
-    return (PyObject *) NULL;
-  }
-
-  // Check if C contiguous data (if not we should transpose)
-  aux = (float *)PyArray_DATA(samples);
-  if (PyArray_CHKFLAGS(samples, NPY_ARRAY_F_CONTIGUOUS)==1){
-    for(int i=0; i<smp_sh[0]; i++){
-      c_smp.push_back({aux[i], aux[smp_sh[0]+i]});
-    }
-  }else{
-    for(int i=0; i<smp_sh[0]; i++){
-      c_smp.push_back({aux[2*i], aux[2*i+1]});
-    }
-  }
-  aux = (float *)PyArray_DATA(values);
-  memcpy(&c_val[0], &aux[0], c_val.size()*sizeof(float));
-  aux = (float *)PyArray_DATA(scattered);
-  if (PyArray_CHKFLAGS(scattered, NPY_ARRAY_F_CONTIGUOUS)==1){
-    for(int i=0; i<sct_sh[0]; i++){
-      c_loc.push_back({aux[i], aux[sct_sh[0]+i]});
-    }
-  }else{
-    for(int i=0; i<sct_sh[0]; i++){
-      c_loc.push_back({aux[2*i], aux[2*i+1]});
-    }
-  }
-
-  // ##### THE METHOD ITSELF #####
-  auto bbox = sptlz::samples_coords_bbox(&c_loc);
-  auto bbox2 = sptlz::samples_coords_bbox(&c_smp);
-  for(int i=0;i<smp_sh[1];i++){
-    if(bbox2.at(i).at(0) < bbox.at(i).at(0)){bbox.at(i).at(0) = bbox2.at(i).at(0);}
-    if(bbox2.at(i).at(1) > bbox.at(i).at(1)){bbox.at(i).at(1) = bbox2.at(i).at(1);}
-  }
-  float lambda = sptlz::bbox_sum_interval(bbox);
-  lambda = 1/(lambda-alpha*lambda);
-
-  sptlz::ESI_IDW_ANIS* esi = new sptlz::ESI_IDW_ANIS(c_smp, c_val, lambda, forest_size, bbox, seed);
-  auto r = esi->estimate(&c_loc, [func](std::string s){
-    PyObject *tup = Py_BuildValue("(s)", s.c_str());
-    PyObject_Call(func, tup, NULL);
-    return(0);
-  });
-  auto output = sptlz::as_1d_array(&r);
-
-  // stuff to return data to python
-  const npy_intp dims[2] = {(int)r.size(), forest_size};
-  estimation = (PyArrayObject *) PyArray_SimpleNew(2, dims, NPY_FLOAT);
-  aux = (float *)PyArray_DATA(estimation);
-  memcpy(&aux[0], &output.data()[0], output.size()*sizeof(float));
-
-  model_list = esi_idw_anis_to_dict(esi);
-
-  return(Py_BuildValue("O,O", model_list, (PyObject *)estimation));
-}
-
 static PyObject *loo_adaptive_esi_idw_2d(PyObject *self, PyObject *args){
   PyObject *func, *aux_str, *model_list;
   PyArrayObject *samples, *values, *scattered;
@@ -198,7 +88,7 @@ static PyObject *loo_adaptive_esi_idw_2d(PyObject *self, PyObject *args){
   float lambda = sptlz::bbox_sum_interval(bbox);
   lambda = 1/(lambda-alpha*lambda);
 
-  sptlz::ESI_IDW_ANIS* esi = new sptlz::ESI_IDW_ANIS(c_smp, c_val, lambda, forest_size, bbox, seed);
+  sptlz::ADAPTIVE_ESI_IDW* esi = new sptlz::ADAPTIVE_ESI_IDW(c_smp, c_val, lambda, forest_size, bbox, seed);
   auto r = esi->leave_one_out([func](std::string s){
     PyObject *tup = Py_BuildValue("(s)", s.c_str());
     PyObject_Call(func, tup, NULL);
@@ -305,7 +195,7 @@ static PyObject *kfold_adaptive_esi_idw_2d(PyObject *self, PyObject *args){
   float lambda = sptlz::bbox_sum_interval(bbox);
   lambda = 1/(lambda-alpha*lambda);
 
-  sptlz::ESI_IDW_ANIS* esi = new sptlz::ESI_IDW_ANIS(c_smp, c_val, lambda, forest_size, bbox, creation_seed);
+  sptlz::ADAPTIVE_ESI_IDW* esi = new sptlz::ADAPTIVE_ESI_IDW(c_smp, c_val, lambda, forest_size, bbox, creation_seed);
   auto r = esi->k_fold(k, [func](std::string s){
     PyObject *tup = Py_BuildValue("(s)", s.c_str());
     PyObject_Call(func, tup, NULL);
@@ -412,7 +302,7 @@ static PyObject *estimation_adaptive_esi_idw_3d(PyObject *self, PyObject *args){
   float lambda = sptlz::bbox_sum_interval(bbox);
   lambda = 1/(lambda-alpha*lambda);
 
-  sptlz::ESI_IDW_ANIS* esi = new sptlz::ESI_IDW_ANIS(c_smp, c_val, lambda, forest_size, bbox, seed);
+  sptlz::ADAPTIVE_ESI_IDW* esi = new sptlz::ADAPTIVE_ESI_IDW(c_smp, c_val, lambda, forest_size, bbox, seed);
   auto r = esi->estimate(&c_loc, [func](std::string s){
     PyObject *tup = Py_BuildValue("(s)", s.c_str());
     PyObject_Call(func, tup, NULL);
@@ -519,7 +409,7 @@ static PyObject *loo_adaptive_esi_idw_3d(PyObject *self, PyObject *args){
   float lambda = sptlz::bbox_sum_interval(bbox);
   lambda = 1/(lambda-alpha*lambda);
 
-  sptlz::ESI_IDW_ANIS* esi = new sptlz::ESI_IDW_ANIS(c_smp, c_val, lambda, forest_size, bbox, seed);
+  sptlz::ADAPTIVE_ESI_IDW* esi = new sptlz::ADAPTIVE_ESI_IDW(c_smp, c_val, lambda, forest_size, bbox, seed);
   auto r = esi->leave_one_out([func](std::string s){
     PyObject *tup = Py_BuildValue("(s)", s.c_str());
     PyObject_Call(func, tup, NULL);
@@ -626,7 +516,7 @@ static PyObject *kfold_adaptive_esi_idw_3d(PyObject *self, PyObject *args){
   float lambda = sptlz::bbox_sum_interval(bbox);
   lambda = 1/(lambda-alpha*lambda);
 
-  sptlz::ESI_IDW_ANIS* esi = new sptlz::ESI_IDW_ANIS(c_smp, c_val, lambda, forest_size, bbox, creation_seed);
+  sptlz::ADAPTIVE_ESI_IDW* esi = new sptlz::ADAPTIVE_ESI_IDW(c_smp, c_val, lambda, forest_size, bbox, creation_seed);
   auto r = esi->k_fold(k, [func](std::string s){
     PyObject *tup = Py_BuildValue("(s)", s.c_str());
     PyObject_Call(func, tup, NULL);
@@ -655,8 +545,8 @@ static PyObject *kfold_adaptive_esi_idw_3d(PyObject *self, PyObject *args){
   { "kfold_adaptive_esi_idw_3d", kfold_adaptive_esi_idw_3d, METH_VARARGS, "K-fold validation for Adaptive Esi using IDW on 3 dimensions" },
 */
 
-#ifndef _SPTLZ_ESI_IDW_ANIS_
-#define _SPTLZ_ESI_IDW_ANIS_
+#ifndef _SPTLZ_ADTV_ESI_IDW_
+#define _SPTLZ_ADTV_ESI_IDW_
 
 #include <stdexcept>
 #include <cmath>
@@ -743,20 +633,23 @@ namespace sptlz{
       }
   };
 
-  class ESI_IDW_ANIS: public ESI {
+  class ADAPTIVE_ESI_IDW: public ESI {
     protected:
       std::vector<float> leaf_estimation(std::vector<std::vector<float>> *coords, std::vector<float> *values, std::vector<int> *samples_id, std::vector<std::vector<float>> *locations, std::vector<int> *locations_id, std::vector<float> *params){
         std::vector<float> result;
 
+        std::cout << "sample id size = "<< samples_id->size() << std::endl;
+        std::cout << "params size = "<< params->size() << std::endl;
+
         if(samples_id->size()==0){
-          for(auto l: *locations_id){
+          for([[maybe_unused]] auto l: *locations_id){
             result.push_back(NAN);
           }
           return(result);
         }
 
         if(samples_id->size()==1){
-          for(auto l: *locations_id){
+          for([[maybe_unused]] auto l: *locations_id){
             result.push_back(values->at(samples_id->at(0)));
           }
           return(result);
@@ -767,12 +660,13 @@ namespace sptlz{
         auto sl_locations = slice(locations, locations_id);
         std::vector<float> centroid;
         int i_params = 0;
+
         centroid.push_back(params->at(i_params++));
         centroid.push_back(params->at(i_params++));
+
         if(coords->at(0).size()==3){
           centroid.push_back(params->at(i_params++));
         }
-
         float exponent = params->at(i_params++);
         std::vector<float> rot_params = slice_from(params, i_params);
 
@@ -803,7 +697,7 @@ namespace sptlz{
         std::vector<float> result;
 
         if((samples_id->size()==0) || (samples_id->size()==1)){
-          for(auto l: *samples_id){
+          for([[maybe_unused]] auto l: *samples_id){
             result.push_back(NAN);
           }
           return(result);
@@ -854,7 +748,7 @@ namespace sptlz{
         float w, w_sum, w_v_sum;
 
         if((samples_id->size()==0) || (samples_id->size()==1)){
-          for(auto l: *samples_id){
+          for([[maybe_unused]] auto l: *samples_id){
             result.push_back(NAN);
           }
           return(result);
@@ -911,7 +805,7 @@ namespace sptlz{
             }
             mt->leaf_params.at(j) = get_params(&leaf_coords, &leaf_values);
           }
-          std::cout << "pp: " << i << "/" << mondrian_forest.size() << std::endl;
+          std::cout << "pp: " << i + 1 << "/" << mondrian_forest.size() << std::endl;
         }
       }
 
@@ -984,11 +878,11 @@ namespace sptlz{
       }
 
     public:
-      ESI_IDW_ANIS(std::vector<std::vector<float>> _coords, std::vector<float> _values, float lambda, int forest_size, std::vector<std::vector<float>> bbox, int seed=206936):ESI(_coords, _values, lambda, forest_size, bbox, seed){
+      ADAPTIVE_ESI_IDW(std::vector<std::vector<float>> _coords, std::vector<float> _values, float lambda, int forest_size, std::vector<std::vector<float>> bbox, int seed=206936):ESI(_coords, _values, lambda, forest_size, bbox, seed){
         post_process();
       }
 
-      ESI_IDW_ANIS(std::vector<sptlz::MondrianTree*> _mondrian_forest, std::vector<std::vector<float>> _coords, std::vector<float> _values):ESI(_mondrian_forest, _coords, _values){}
+      ADAPTIVE_ESI_IDW(std::vector<sptlz::MondrianTree*> _mondrian_forest, std::vector<std::vector<float>> _coords, std::vector<float> _values):ESI(_mondrian_forest, _coords, _values){}
   };
 }
 

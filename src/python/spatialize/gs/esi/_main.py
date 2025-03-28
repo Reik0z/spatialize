@@ -197,7 +197,8 @@ class ESIResult(EstimationResult):
                         li.KRIGING: {"model": ["spherical", "exponential", "cubic", "gaussian"],
                                      "nugget": [0.0, 0.5, 1.0],
                                      "range": [10.0, 50.0, 100.0, 200.0],
-                                     "sill": [0.9, 1.0, 1.1]}
+                                     "sill": [0.9, 1.0, 1.1]},
+                        li.ADAPTIVE_IDW: {}
                     })
 def esi_hparams_search(points, values, xi, **kwargs):
     """
@@ -396,7 +397,8 @@ def esi_nongriddata(points, values, xi, **kwargs):
                                  },
                     specific_args={
                         li.IDW: {"exponent": 2.0},
-                        li.KRIGING: {"model": 1, "nugget": 0.1, "range": 5000.0, "sill": 1.0}
+                        li.KRIGING: {"model": 1, "nugget": 0.1, "range": 5000.0, "sill": 1.0},
+                        li.ADAPTIVE_IDW: {}
                     })
 def _call_libspatialize(points, values, xi, **kwargs):
     """
@@ -468,6 +470,9 @@ def build_arg_list(points, values, xi, nonpos_args):
         l_args.insert(-2, nonpos_args["nugget"])
         l_args.insert(-2, nonpos_args["range"])
         l_args.insert(-2, nonpos_args["sill"])
+        l_args.insert(-2, nonpos_args["seed"])
+
+    if nonpos_args["local_interpolator"] == li.ADAPTIVE_IDW:
         l_args.insert(-2, nonpos_args["seed"])
 
     return l_args
