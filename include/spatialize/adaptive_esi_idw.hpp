@@ -647,13 +647,16 @@ namespace sptlz{
           }
           return(result);
         }
+        std::cout << "1" << std::endl;
 
         if(samples_id->size()==1){
           for([[maybe_unused]] auto l: *locations_id){
-            result.push_back(values->at(samples_id->at(0)));
+            result.push_back(params->at(0));
+            //result.push_back(values->at(samples_id->at(0)));
           }
           return(result);
         }
+        std::cout << "2" << std::endl;
 
         auto sl_coords = slice(coords, samples_id);
         auto sl_values = slice(values, samples_id);
@@ -667,11 +670,25 @@ namespace sptlz{
         if(coords->at(0).size()==3){
           centroid.push_back(params->at(i_params++));
         }
+        std::cout << "3" << std::endl;
+
         float exponent = params->at(i_params++);
         std::vector<float> rot_params = slice_from(params, i_params);
 
+        std::cout << "4" << std::endl;
+        std::cout << "|sl_coords|" << sl_coords.size() << std::endl;
+        std::cout << "|rot_params|" << rot_params.size() << std::endl;
+        std::cout << "rot_params";
+        pprint(rot_params);
+        std::cout << "|centroid|" << centroid.size() << std::endl;
+        std::cout << "centroid";
+        pprint(centroid);
+
         auto tr_coords = transform(&sl_coords, &rot_params, &centroid);
+        std::cout << "what";
         auto tr_locations = transform(&sl_locations, &rot_params, &centroid);
+
+        std::cout << "5" << std::endl;
 
         float w, w_sum, w_v_sum;
 
@@ -690,6 +707,8 @@ namespace sptlz{
           // return weighted values sum normalized (divided by weights sum)
           result.push_back(w_v_sum/w_sum);
         }
+        std::cout << "|result|: " << result.size();
+
         return(result);
       }
 
@@ -802,7 +821,13 @@ namespace sptlz{
             for(int k=0; k<mt->samples_by_leaf.at(j).size(); k++){
               leaf_coords.push_back(coords.at(mt->samples_by_leaf.at(j).at(k)));
               leaf_values.push_back(values.at(mt->samples_by_leaf.at(j).at(k)));
-            }
+            }/*
+            std::cout << "|iforest|: " << i << " |jleaf|: " << j << std::endl;
+            std::cout << "|coords|: " << leaf_coords.size() << std::endl;
+            std::cout << "|values|: " << leaf_values.size() << std::endl;
+            auto bla = get_params(&leaf_coords, &leaf_values);
+            std::cout << "|params|: " << bla.size() << std::endl;
+            mt->leaf_params.at(j) = bla;*/
             mt->leaf_params.at(j) = get_params(&leaf_coords, &leaf_values);
           }
           std::cout << "pp: " << i + 1 << "/" << mondrian_forest.size() << std::endl;
@@ -867,7 +892,12 @@ namespace sptlz{
         }
 
         if(min_coords.size()==0){ // don't know why sometimes it can't get a candidate
-          return(std::vector<float>());
+          if (coords->at(0).size()==2){
+            min_coords = {2.0, 0.0, 1.0};
+          }else if(coords->at(0).size()==3){
+            min_coords = {2.0, 0.0, 0.0, 0.0, 1.0, 1.0};
+          }
+          //return(std::vector<float>());
         }
         auto centroid = sptlz::get_centroid(coords);
         for(auto v: min_coords){
