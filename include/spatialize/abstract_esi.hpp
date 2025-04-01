@@ -8,7 +8,7 @@
 #include <functional>
 #include <stdexcept>
 #include "utils.hpp"
-#include "logging.hpp"
+#include "callback_logging.hpp"
 
 namespace sptlz{
 	std::string IND_STEP = "    ";
@@ -351,15 +351,9 @@ namespace sptlz{
 				std::vector<std::vector<float>> results(locations->size());
 				std::vector<std::vector<int>> locations_by_leaf;
 				int aux, n = mondrian_forest.size();
+                sptlz::CallbackLogger *logger = new sptlz::CallbackLogger(visitor);
 
-                // sptlz::CallbackLogger *logger = new sptlz::CallbackLogger(visitor);
-
-				// {"message": {"text": "<the log text>", "level": "<DEBUG|INFO|WARNING|ERROR|CRITICAL>"}}
-				// json.str("");
-				// json << "{\"message\": { \"text\":\"" << "[C++|ESI->estimate] computing estimates" << "\", \"level\":\"" << "DEBUG" <<"\"}}";
-				// visitor(json.str());
-
-                // logger->debug("[C++|ESI->estimate] computing estimates");
+                logger->debug("[C++|ESI->estimate] computing estimates");
 
 				// {"progress": {"init": <total expected count>, "step": <increment step>}}
 				json.str("");
@@ -403,7 +397,7 @@ namespace sptlz{
 				json << "{\"progress\": \"done\"}";
 				visitor(json.str());
 
-				// delete logger;
+				delete logger;
 				return(results);
 			}
 
