@@ -114,6 +114,7 @@ namespace sptlz{
 
 	class VORONOI {
 		protected:
+		    std::string class_name;
 			std::vector<sptlz::VoronoiTree*> voronoi_forest;
 			std::vector<std::vector<float>> coords;
 			std::vector<float> values;
@@ -136,6 +137,7 @@ namespace sptlz{
 
 		public:
 			VORONOI(std::vector<std::vector<float>> _coords, std::vector<float> _values, float alpha, int forest_size, std::vector<std::vector<float>> bbox, int seed=206936){
+			    class_name = __func__;
 				my_rand = std::mt19937(seed);
 				coords = _coords;
 				values = _values;
@@ -151,6 +153,7 @@ namespace sptlz{
 			}
 
 			VORONOI(std::vector<sptlz::VoronoiTree*> _voronoi_forest, std::vector<std::vector<float>> _coords, std::vector<float> _values){
+			    class_name = __func__;
 				this->voronoi_forest = _voronoi_forest;
 				this->coords = _coords;
 				this->values = _values;

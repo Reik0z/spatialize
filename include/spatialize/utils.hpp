@@ -292,6 +292,12 @@ namespace sptlz{
     }
     return(std::make_pair(result1, result2));
   }
+
+  template<typename T>
+  std::string get_class_name(T) {
+    return typeid(T).name();
+  }
+
 }
 
 #endif

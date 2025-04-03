@@ -11,6 +11,7 @@ namespace sptlz{
 
 	class NN{
 		protected:
+		    std::string class_name;
 			int n_samples, n_dims;
 			float radius;
 			std::vector<std::vector<float>> coords;
@@ -32,14 +33,16 @@ namespace sptlz{
 
 		public:
 			NN(std::vector<std::vector<float>> _coords, std::vector<float> _values, std::vector<float> _search_params){
+			    class_name = __func__;
 				this->n_samples = _coords.size();
 				this->n_dims = _coords.at(0).size();
 				this->coords = _coords;
 				this->values = _values;
-        this->search_params = _search_params; // TODO: for anisotropic searches, scale, rotate and set radius=1
-        this->radius = search_params.at(0);
 
-        this->kdt = new sptlz::KDTree<float>(&(this->coords));
+                this->search_params = _search_params; // TODO: for anisotropic searches, scale, rotate and set radius=1
+                this->radius = search_params.at(0);
+
+                this->kdt = new sptlz::KDTree<float>(&(this->coords));
 			}
 
 			~NN(){

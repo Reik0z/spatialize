@@ -267,11 +267,13 @@ namespace sptlz{
 
 	class ESI {
 		protected:
+		    std::string class_name;
 			std::vector<sptlz::MondrianTree*> mondrian_forest;
 			std::vector<std::vector<float>> coords;
 			std::vector<float> values;
 			std::mt19937 my_rand;
 			bool debug;
+
 
 			virtual std::vector<float> leaf_estimation(std::vector<std::vector<float>> *coords, std::vector<float> *values, std::vector<int> *samples_id, std::vector<std::vector<float>> *locations, std::vector<int> *locations_id, std::vector<float> *params){
 				throw std::runtime_error("must override");
@@ -289,6 +291,7 @@ namespace sptlz{
 
 		public:
 			ESI(std::vector<std::vector<float>> _coords, std::vector<float> _values, float lambda, int forest_size, std::vector<std::vector<float>> bbox, int seed=206936){
+			    class_name = __func__;
 				my_rand = std::mt19937(seed);
 				coords = _coords;
 				values = _values;
@@ -300,6 +303,7 @@ namespace sptlz{
 			}
 
 			ESI(std::vector<sptlz::MondrianTree*> _mondrian_forest, std::vector<std::vector<float>> _coords, std::vector<float> _values){
+			    class_name = __func__;
 				this->mondrian_forest = _mondrian_forest;
 				this->coords = _coords;
 				this->values = _values;
@@ -351,14 +355,12 @@ namespace sptlz{
 				std::vector<std::vector<float>> results(locations->size());
 				std::vector<std::vector<int>> locations_by_leaf;
 				int aux, n = mondrian_forest.size();
-                sptlz::CallbackLogger *logger = new sptlz::CallbackLogger(visitor);
+                sptlz::CallbackLogger *logger = new sptlz::CallbackLogger(visitor, this->class_name);
+                sptlz::CallbackProgressSender *progress = new sptlz::CallbackProgressSender(visitor);
 
-                logger->debug("[C++|ESI->estimate] computing estimates");
+                logger->debug("computing estimates");
 
-				// {"progress": {"init": <total expected count>, "step": <increment step>}}
-				json.str("");
-				json << "{\"progress\": { \"init\":" << n << ", \"step\":" << 1 <<"}}";
-				visitor(json.str());
+				progress->init(n, 1);
 
 				for(int i=0; i<n; i++){
 					// get tree
@@ -384,20 +386,17 @@ namespace sptlz{
 							}
 						}
 					}
-					// {"progress": {"token": <value>}}
-					json.str("");
-					json << "{\"progress\": {\"token\":" << 100.0*(i+1.0)/n << "}}";
+
 					if (PyErr_CheckSignals() != 0)  // to allow ctrl-c from user
                       exit(0);
-					visitor(json.str());
+
+					progress->inform(100.0*(i+1.0)/n);
 				}
 
-				// {"progress": "done"}
-				json.str("");
-				json << "{\"progress\": \"done\"}";
-				visitor(json.str());
+				progress->stop();
 
 				delete logger;
+				delete progress;
 				return(results);
 			}
 
