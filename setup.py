@@ -2,7 +2,6 @@ import numpy
 import os
 import sys
 from setuptools import setup, find_packages, Extension
-import pathlib
 
 with open(os.path.join(os.path.dirname(__file__), 'requirements.txt')) as reqh:
     install_requires = reqh.readlines()
@@ -26,7 +25,7 @@ libspatialize_extensions = [
 if __name__ == '__main__':
     setup(
         name='spatialize',
-        version=__version__,
+        version='1.0.1',
         author='ALGES Laboratory',
         author_email='dev@alges.cl',
         description='Python wrapper for ESI',
