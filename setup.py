@@ -1,14 +1,9 @@
 import numpy
 import os
-import sys
 from setuptools import setup, find_packages, Extension
 
 with open(os.path.join(os.path.dirname(__file__), 'requirements.txt')) as reqh:
     install_requires = reqh.readlines()
-
-sys.path.insert(0, ("./src/python"))
- 
-from spatialize import __version__
 
 libsptlzsrc = os.path.join('src', 'c++', 'libspatialize.cpp')
 macros = [('NPY_NO_DEPRECATED_API', 'NPY_1_7_API_VERSION')]
