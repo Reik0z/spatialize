@@ -638,8 +638,14 @@ namespace sptlz{
       std::vector<float> leaf_estimation(std::vector<std::vector<float>> *coords, std::vector<float> *values, std::vector<int> *samples_id, std::vector<std::vector<float>> *locations, std::vector<int> *locations_id, std::vector<float> *params){
         std::vector<float> result;
 
-        std::cout << "sample id size = "<< samples_id->size() << std::endl;
-        std::cout << "params size = "<< params->size() << std::endl;
+        // std::cout << "sample id size = "<< samples_id->size() << std::endl;
+        // std::cout << "params size = "<< params->size() << std::endl;
+
+        // std::cout << "0" << std::endl;
+        if(locations_id->size()==0){
+          return(result);
+        }
+        // std::cout << "1" << std::endl;
 
         if(samples_id->size()==0){
           for([[maybe_unused]] auto l: *locations_id){
@@ -647,7 +653,6 @@ namespace sptlz{
           }
           return(result);
         }
-        std::cout << "1" << std::endl;
 
         if(samples_id->size()==1){
           for([[maybe_unused]] auto l: *locations_id){
@@ -656,7 +661,7 @@ namespace sptlz{
           }
           return(result);
         }
-        std::cout << "2" << std::endl;
+        // std::cout << "2" << std::endl;
 
         auto sl_coords = slice(coords, samples_id);
         auto sl_values = slice(values, samples_id);
@@ -670,25 +675,17 @@ namespace sptlz{
         if(coords->at(0).size()==3){
           centroid.push_back(params->at(i_params++));
         }
-        std::cout << "3" << std::endl;
+        // std::cout << "3" << std::endl;
 
         float exponent = params->at(i_params++);
         std::vector<float> rot_params = slice_from(params, i_params);
-
-        std::cout << "4" << std::endl;
-        std::cout << "|sl_coords|" << sl_coords.size() << std::endl;
-        std::cout << "|rot_params|" << rot_params.size() << std::endl;
-        std::cout << "rot_params";
-        pprint(rot_params);
-        std::cout << "|centroid|" << centroid.size() << std::endl;
-        std::cout << "centroid";
-        pprint(centroid);
+        // std::cout << "4" << std::endl;
 
         auto tr_coords = transform(&sl_coords, &rot_params, &centroid);
-        std::cout << "what";
         auto tr_locations = transform(&sl_locations, &rot_params, &centroid);
 
-        std::cout << "5" << std::endl;
+ 
+        // std::cout << "5" << std::endl;
 
         float w, w_sum, w_v_sum;
 
@@ -707,7 +704,7 @@ namespace sptlz{
           // return weighted values sum normalized (divided by weights sum)
           result.push_back(w_v_sum/w_sum);
         }
-        std::cout << "|result|: " << result.size();
+        // std::cout << "|result|: " << result.size();
 
         return(result);
       }

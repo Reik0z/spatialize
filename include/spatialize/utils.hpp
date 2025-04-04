@@ -1,5 +1,5 @@
 #ifndef _SPTLZ_UTILS_
-#define _SPTLZ_UTILS_
+#define _SPTLZ_UTILS_ 
 
 #include <vector>
 #include <string>
@@ -69,7 +69,6 @@ namespace sptlz{
             break;
           }
         }
-// std::cout << "DOS " << std::endl;
         // if new position is in place and not all zero (no movement, same point) calculate and refresh best candidate
         if(!from_top && !all_zero){
           value = func->eval(new_pos);
@@ -82,7 +81,6 @@ namespace sptlz{
           }
         }
       }
-// std::cout << "TRES " << std::endl;
       // difference
       diff = minimum - best_candidate.at(n);
       if(diff>0){
@@ -100,7 +98,6 @@ namespace sptlz{
         // not better than current, so local minimum
         break;
       }
-// std::cout << "CUATRO " << std::endl;
     }
 
     return(cur);
@@ -109,6 +106,10 @@ namespace sptlz{
   template <class T>
   std::vector<T> as_1d_array(std::vector<std::vector<T>> *arr, std::vector<int> idxs){
     std::vector<T> result;
+
+    if (arr->size()==0){
+      return(result);
+    }
 
     for(auto &record : *arr){
       for(size_t i=0;i<idxs.size();i++){
@@ -121,7 +122,12 @@ namespace sptlz{
 
   template <class T>
   std::vector<T> as_1d_array(std::vector<std::vector<T>> *arr){
-    std::vector<int> idxs = {};
+    std::vector<int> idxs;
+
+    if (arr->size()==0){
+      std::vector<T> result;
+      return(result);
+    }
 
     for(size_t i=0;i<arr->at(0).size();i++){
       idxs.push_back(i);
@@ -144,6 +150,8 @@ namespace sptlz{
     for(size_t i=0; i<coords->size(); i++){
       if(i!=j){
         result.push_back(distance(&(coords->at(j)), &(coords->at(i))));
+      }else{
+        result.push_back(0.0);
       }
     }
     return(result);
@@ -172,7 +180,7 @@ namespace sptlz{
 
     if (d==2){
       float r1 = params[1]*cos(params[0]*3.141592/180.0), r2 = params[1]*sin(params[0]*3.141592/180.0), r3 = -sin(params[0]*3.141592/180.0), r4 = cos(params[0]*3.141592/180.0);
-      for(int i=0; i<2*n; i++){
+      for(int i=0; i<n; i++){
         tr_coords.push_back({
           r1*(coords[2*i]-centroid[0])+r2*(coords[2*i+1]-centroid[1]),
           r3*(coords[2*i]-centroid[0])+r4*(coords[2*i+1]-centroid[1])
@@ -183,7 +191,7 @@ namespace sptlz{
       float r1 = ca*cb, r2 = ca*sb*sc-sa*cc, r3 = ca*sb*cc+sa*sc, r4 = sa*cb, r5 = sa*sb*sc+ca*cc, r6 = sa*sb*cc-ca*sc, r7 = -sb, r8 = cb*sc, r9 = cb*cc;
       r4 *= params[3]; r5 *= params[3]; r6 *= params[3];
       r7 *= params[4]; r8 *= params[4]; r9 *= params[4];
-      for(int i=0; i<2*n; i++){
+      for(int i=0; i<n; i++){
         tr_coords.push_back({
           r1*(coords[3*i]-centroid[0])+r2*(coords[3*i+1]-centroid[1])+r3*(coords[3*i+2]-centroid[2]),
           r4*(coords[3*i]-centroid[0])+r5*(coords[3*i+1]-centroid[1])+r6*(coords[3*i+2]-centroid[2]),
@@ -196,6 +204,7 @@ namespace sptlz{
 
   std::vector<std::vector<float>> transform(std::vector<std::vector<float>> *coords, std::vector<float> *params, std::vector<float> *centroid){
     auto coords_1d = as_1d_array(coords);
+
     return(transform(coords_1d.data(), params->data(), centroid->data(), coords->size(), centroid->size()));
   }
 
