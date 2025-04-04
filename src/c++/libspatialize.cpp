@@ -949,17 +949,30 @@ static PyObject *estimation_esi_idw(PyObject *self, PyObject *args){
 #ifdef DEBUG
   std::cout << "[C++] building esi" << "\n";
 #endif
-  sptlz::ESI_IDW* esi = new sptlz::ESI_IDW(c_smp, c_val, lambda, forest_size, bbox, exp, seed);
+  sptlz::ESI_IDW* esi = new sptlz::ESI_IDW(c_smp,
+                                           c_val,
+                                           lambda,
+                                           forest_size,
+                                           bbox,
+                                           exp,
+                                           [func](std::string s){
+                                               PyObject *tup = Py_BuildValue("(s)", s.c_str());
+                                               PyObject_Call(func, tup, NULL);
+                                               return(0);
+                                           },
+                                           seed);
 
 #ifdef DEBUG
   std::cout << "[C++] calling esi" << "\n";
 #endif
+  /*
   r = esi->estimate(&c_loc, [func](std::string s){
     PyObject *tup = Py_BuildValue("(s)", s.c_str());
     PyObject_Call(func, tup, NULL);
     return(0);
   });
-
+  */
+  r = esi->estimate(&c_loc);
 #ifdef DEBUG
   std::cout << "[C++] formatting the output" << "\n";
 #endif

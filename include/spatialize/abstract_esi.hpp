@@ -268,6 +268,8 @@ namespace sptlz{
 	class ESI {
 		protected:
 		    std::string class_name;
+		    std::function<int(std::string)> callback_visitor;
+
 			std::vector<sptlz::MondrianTree*> mondrian_forest;
 			std::vector<std::vector<float>> coords;
 			std::vector<float> values;
@@ -290,6 +292,7 @@ namespace sptlz{
 			virtual void post_process(){}
 
 		public:
+		    // alvaro: to be deprecated soon
 			ESI(std::vector<std::vector<float>> _coords, std::vector<float> _values, float lambda, int forest_size, std::vector<std::vector<float>> bbox, int seed=206936){
 			    class_name = __func__;
 				my_rand = std::mt19937(seed);
@@ -304,6 +307,38 @@ namespace sptlz{
 
 			ESI(std::vector<sptlz::MondrianTree*> _mondrian_forest, std::vector<std::vector<float>> _coords, std::vector<float> _values){
 			    class_name = __func__;
+				this->mondrian_forest = _mondrian_forest;
+				this->coords = _coords;
+				this->values = _values;
+			}
+			// ---------------------------
+			ESI(std::vector<std::vector<float>> _coords,
+			    std::vector<float> _values,
+			    float lambda,
+			    int forest_size,
+			    std::vector<std::vector<float>> bbox,
+			    std::function<int(std::string)> visitor,
+			    int seed=206936){
+
+			    this->class_name = __func__;
+			    this->callback_visitor = visitor;
+				this->my_rand = std::mt19937(seed);
+				this->coords = _coords;
+				this->values = _values;
+				std::uniform_int_distribution<int> uni_int;
+
+				for(int i=0; i<forest_size; i++){
+					mondrian_forest.push_back(new sptlz::MondrianTree(&coords, lambda, bbox, uni_int(my_rand)));
+				}
+			}
+
+			ESI(std::vector<sptlz::MondrianTree*> _mondrian_forest,
+			    std::vector<std::vector<float>> _coords,
+			    std::vector<float> _values,
+			    std::function<int(std::string)> visitor){
+
+			    this->class_name = __func__;
+			    this->callback_visitor = visitor;
 				this->mondrian_forest = _mondrian_forest;
 				this->coords = _coords;
 				this->values = _values;
@@ -350,13 +385,13 @@ namespace sptlz{
 				return(results);
 			}
 
-			std::vector<std::vector<float>> estimate(std::vector<std::vector<float>> *locations, std::function<int(std::string)> visitor){
+			std::vector<std::vector<float>> estimate(std::vector<std::vector<float>> *locations /*, std::function<int(std::string)> visitor*/){
 				std::stringstream json;
 				std::vector<std::vector<float>> results(locations->size());
 				std::vector<std::vector<int>> locations_by_leaf;
 				int aux, n = mondrian_forest.size();
-                sptlz::CallbackLogger *logger = new sptlz::CallbackLogger(visitor, this->class_name);
-                sptlz::CallbackProgressSender *progress = new sptlz::CallbackProgressSender(visitor);
+                sptlz::CallbackLogger *logger = new sptlz::CallbackLogger(this->callback_visitor, this->class_name);
+                sptlz::CallbackProgressSender *progress = new sptlz::CallbackProgressSender(this->callback_visitor);
 
                 logger->debug("computing estimates");
 

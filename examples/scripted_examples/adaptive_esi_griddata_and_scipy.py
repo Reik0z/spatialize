@@ -40,13 +40,11 @@ result = esi_griddata(points, values, (grid_x, grid_y),
                       local_interpolator="adaptiveidw",
                       p_process="mondrian",
                       data_cond=False,
-                      n_partitions=30, alpha=0.6,
+                      n_partitions=50, alpha=0.7,
                       agg_function=af.mean
                       )
 
 print(result)
-
-exit(0)
 
 esi_idw_est = result.estimation()
 
