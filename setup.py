@@ -20,7 +20,7 @@ libspatialize_extensions = [
 if __name__ == '__main__':
     setup(
         name='spatialize',
-        version='1.0.1',
+        version='1.0.2',
         author='ALGES Laboratory',
         author_email='dev@alges.cl',
         description='Python wrapper for ESI',
