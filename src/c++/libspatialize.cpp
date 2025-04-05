@@ -1403,11 +1403,11 @@ static PyObject *estimation_esi_kriging_2d(PyObject *self, PyObject *args){
   lambda = 1/(lambda-alpha*lambda);
 
   sptlz::ESI_Kriging* esi = new sptlz::ESI_Kriging(c_smp, c_val, lambda, forest_size, bbox, model, nugget, range, sill, seed);
-  auto r = esi->estimate(&c_loc, [func](std::string s){
+  auto r = esi->estimate(&c_loc /*, [func](std::string s){
     PyObject *tup = Py_BuildValue("(s)", s.c_str());
     PyObject_Call(func, tup, NULL);
     return(0);
-  });
+  }*/);
   auto output = sptlz::as_1d_array(&r);
 
   // stuff to return data to python
@@ -1821,11 +1821,11 @@ static PyObject *estimation_esi_kriging_3d(PyObject *self, PyObject *args){
   lambda = 1/(lambda-alpha*lambda);
 
   sptlz::ESI_Kriging* esi = new sptlz::ESI_Kriging(c_smp, c_val, lambda, forest_size, bbox, model, nugget, range, sill, seed);
-  auto r = esi->estimate(&c_loc, [func](std::string s){
+  auto r = esi->estimate(&c_loc /*, [func](std::string s){
     PyObject *tup = Py_BuildValue("(s)", s.c_str());
     PyObject_Call(func, tup, NULL);
     return(0);
-  });
+  }*/);
   auto output = sptlz::as_1d_array(&r);
 
   // stuff to return data to python
@@ -2672,11 +2672,11 @@ static PyObject *estimation_adaptive_esi_idw_2d(PyObject *self, PyObject *args){
   lambda = 1/(lambda-alpha*lambda);
 
   sptlz::ADAPTIVE_ESI_IDW* esi = new sptlz::ADAPTIVE_ESI_IDW(c_smp, c_val, lambda, forest_size, bbox, seed);
-  auto r = esi->estimate(&c_loc, [func](std::string s){
+  auto r = esi->estimate(&c_loc /*, [func](std::string s){
     PyObject *tup = Py_BuildValue("(s)", s.c_str());
     PyObject_Call(func, tup, NULL);
     return(0);
-  });
+  }*/);
   auto output = sptlz::as_1d_array(&r);
 
   if (Py_REFCNT(aux) != 0) {
