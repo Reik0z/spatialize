@@ -1,4 +1,6 @@
 import tempfile
+from copy import deepcopy
+
 import numpy as np
 import pandas as pd
 from matplotlib import pyplot as plt
@@ -238,7 +240,11 @@ def esi_hparams_search(points, values, xi, **kwargs):
     # get the actual parameter grid
     param_grid = ParameterGrid(grid)
 
-    p_xi = xi.copy()
+    if isinstance(xi, tuple):
+        p_xi = deepcopy(xi)
+    else:
+        p_xi = xi.copy()
+
     if kwargs["griddata"]:
         p_xi, _ = flatten_grid_data(xi)
 

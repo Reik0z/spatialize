@@ -114,18 +114,6 @@ namespace sptlz{
       }
 
     public:
-      // alvaro: to be deprecated soon
-      VORONOI_IDW(std::vector<std::vector<float>> _coords, std::vector<float> _values, float lambda, int forest_size, std::vector<std::vector<float>> bbox, float _exponent, int seed=206936):VORONOI(_coords, _values, lambda, forest_size, bbox, seed){
-        class_name = __func__;
-        exponent = _exponent;
-      }
-
-      VORONOI_IDW(std::vector<sptlz::VoronoiTree*> _voronoi_forest, std::vector<std::vector<float>> _coords, std::vector<float> _values, float _exponent):VORONOI(_voronoi_forest, _coords, _values){
-        class_name = __func__;
-        exponent = _exponent;
-      }
-      // -----------------------------
-
       VORONOI_IDW(std::vector<std::vector<float>> _coords,
                   std::vector<float> _values,
                   float lambda,

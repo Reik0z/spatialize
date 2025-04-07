@@ -6,7 +6,7 @@ from spatialize import logging
 from spatialize.gs.esi import esi_griddata
 from scipy.interpolate import griddata
 
-logging.log.setLevel("DEBUG")
+logging.log.setLevel("INFO")
 
 
 def func(x, y):  # a kind of "cubic" function
@@ -16,6 +16,7 @@ def func(x, y):  # a kind of "cubic" function
 grid_x, grid_y = np.mgrid[0:1:100j, 0:1:200j]
 
 # random points to sample original function and to generate points and values
+np.random.seed(1322)
 rng = np.random.default_rng()
 points = rng.random((1000, 2))
 values = func(points[:, 0], points[:, 1])
@@ -40,7 +41,7 @@ result = esi_griddata(points, values, (grid_x, grid_y),
                       local_interpolator="adaptiveidw",
                       p_process="mondrian",
                       data_cond=False,
-                      n_partitions=50, alpha=0.7,
+                      n_partitions=30, alpha=0.7,
                       agg_function=af.mean
                       )
 
