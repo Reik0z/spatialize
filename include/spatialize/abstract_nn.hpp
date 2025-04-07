@@ -12,12 +12,13 @@ namespace sptlz{
 	class NN{
 		protected:
 		    std::string class_name;
+		    std::function<int(std::string)> callback_visitor;
 			int n_samples, n_dims;
 			float radius;
 			std::vector<std::vector<float>> coords;
 			std::vector<float> values;
 			std::vector<float> search_params;
-      sptlz::KDTree<float> *kdt;
+            sptlz::KDTree<float> *kdt;
 
       virtual float estimate_point(std::pair<std::vector<float>, std::vector<int>> *nbs, std::vector<float> *pt){
 				throw std::runtime_error("must override");
@@ -32,8 +33,27 @@ namespace sptlz{
       }
 
 		public:
+		    // alvaro: to be deprecated soon
 			NN(std::vector<std::vector<float>> _coords, std::vector<float> _values, std::vector<float> _search_params){
-			    class_name = __func__;
+			    this->class_name = __func__;
+				this->n_samples = _coords.size();
+				this->n_dims = _coords.at(0).size();
+				this->coords = _coords;
+				this->values = _values;
+
+                this->search_params = _search_params; // TODO: for anisotropic searches, scale, rotate and set radius=1
+                this->radius = search_params.at(0);
+
+                this->kdt = new sptlz::KDTree<float>(&(this->coords));
+			}
+            //---------
+
+			NN(std::vector<std::vector<float>> _coords,
+			               std::vector<float> _values,
+			               std::vector<float> _search_params,
+			               std::function<int(std::string)> visitor){
+			    this->class_name = __func__;
+			    this->callback_visitor = visitor;
 				this->n_samples = _coords.size();
 				this->n_dims = _coords.at(0).size();
 				this->coords = _coords;
@@ -45,11 +65,12 @@ namespace sptlz{
                 this->kdt = new sptlz::KDTree<float>(&(this->coords));
 			}
 
-			~NN(){
-        if(this->kdt != NULL){
-          delete(this->kdt);
-        }
-      }
+			~NN() {
+                if(this->kdt != NULL){
+                    delete(this->kdt);
+                }
+            }
+
 
 			std::vector<float> estimate(std::vector<std::vector<float>> *locations, std::function<int(std::string)> visitor){
 				std::stringstream json;

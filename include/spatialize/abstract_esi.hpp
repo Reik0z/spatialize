@@ -385,7 +385,7 @@ namespace sptlz{
 				return(results);
 			}
 
-			std::vector<std::vector<float>> estimate(std::vector<std::vector<float>> *locations /*, std::function<int(std::string)> visitor*/){
+			std::vector<std::vector<float>> estimate(std::vector<std::vector<float>> *locations){
 				std::stringstream json;
 				std::vector<std::vector<float>> results(locations->size());
 				std::vector<std::vector<int>> locations_by_leaf;
@@ -424,7 +424,6 @@ namespace sptlz{
 
 					if (PyErr_CheckSignals() != 0)  // to allow ctrl-c from user
                       exit(0);
-
 					progress->inform(100.0*(i+1.0)/n);
 				}
 
@@ -435,24 +434,16 @@ namespace sptlz{
 				return(results);
 			}
 
-			std::vector<std::vector<float>> leave_one_out(std::function<int(std::string)> visitor){
+			std::vector<std::vector<float>> leave_one_out(){
 				std::stringstream json;
 				std::vector<std::vector<float>> results(coords.size());
 				int n = mondrian_forest.size();
+				sptlz::CallbackLogger *logger = new sptlz::CallbackLogger(this->callback_visitor, this->class_name);
+                sptlz::CallbackProgressSender *progress = new sptlz::CallbackProgressSender(this->callback_visitor);
 
-                // #ifdef DEBUG
-                // std::cout << "[C++] inside leave-one-out" << "\n";
-                // #endif
+				logger->debug("computing leave-one-out");
 
-				// {"message": {"text": "<the log text>", "level": "<DEBUG|INFO|WARNING|ERROR|CRITICAL>"}}
-				json.str("");
-				json << "{\"message\": { \"text\":\"" << "[C++|ESI->leave_one_out] computing estimates" << "\", \"level\":\"" << "DEBUG" <<"\"}}";
-				visitor(json.str());
-
-				// {"progress": {"init": <total expected count>, "step": <increment step>}}
-				json.str("");
-				json << "{\"progress\": { \"init\":" << n << ", \"step\":" << 1 <<"}}";
-				visitor(json.str());
+				progress->init(n, 1);
 
 				for(int i=0; i<n; i++){
 					// get tree
@@ -467,22 +458,20 @@ namespace sptlz{
 							}
 						}
 					}
-					// {"progress": {"token": <value>}}
-					json.str("");
-					json << "{\"progress\": {\"token\":" << 100.0*(i+1.0)/n << "}}";
+
 					if (PyErr_CheckSignals() != 0)  // to allow ctrl-c from user
                       exit(0);
-					visitor(json.str());
+					progress->inform(100.0*(i+1.0)/n);
 				}
 
-				// {"progress": "done"}
-				json.str("");
-				json << "{\"progress\": \"done\"}";
-				visitor(json.str());
+				progress->stop();
+
+				delete logger;
+				delete progress;
 				return(results);
 			}
 
-			std::vector<std::vector<float>> k_fold(int k, std::function<int(std::string)> visitor, int seed=206936){
+			std::vector<std::vector<float>> k_fold(int k, int seed=206936){
 				std::stringstream json;
 				auto fold_rand = std::mt19937(seed);
 				std::uniform_real_distribution<float> uni_float;
@@ -490,15 +479,12 @@ namespace sptlz{
 				std::vector<std::vector<float>> results(coords.size());
 				int n = mondrian_forest.size();
 
-				// {"message": {"text": "<the log text>", "level": "<DEBUG|INFO|WARNING|ERROR|CRITICAL>"}}
-				json.str("");
-				json << "{\"message\": { \"text\":\"" << "[C++|ESI->k_fold] computing estimates" << "\", \"level\":\"" << "DEBUG" <<"\"}}";
-				visitor(json.str());
+				sptlz::CallbackLogger *logger = new sptlz::CallbackLogger(this->callback_visitor, this->class_name);
+                sptlz::CallbackProgressSender *progress = new sptlz::CallbackProgressSender(this->callback_visitor);
 
-				// {"progress": {"init": <total expected count>, "step": <increment step>}}
-				json.str("");
-				json << "{\"progress\": { \"init\":" << n << ", \"step\":" << 1 <<"}}";
-				visitor(json.str());
+				logger->debug("computing k-fold");
+
+				progress->init(n, 1);
 
 				for(int i=0; i<n; i++){
 					// get tree
@@ -512,18 +498,17 @@ namespace sptlz{
 							}
 						}
 					}
-					// {"progress": {"token": <value>}}
-					json.str("");
-					json << "{\"progress\": {\"token\":" << 100.0*(i+1.0)/n << "}}";
+
+
 					if (PyErr_CheckSignals() != 0)  // to allow ctrl-c from user
                       exit(0);
-					visitor(json.str());
+					progress->inform(100.0*(i+1.0)/n);
 				}
 
-				// {"progress": "done"}
-				json.str("");
-				json << "{\"progress\": \"done\"}";
-				visitor(json.str());
+				progress->stop();
+
+				delete logger;
+				delete progress;
 				return(results);
 			}
 	};

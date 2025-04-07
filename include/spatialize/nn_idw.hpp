@@ -61,7 +61,18 @@ namespace sptlz{
       }
 
 		public:
+		    // alvaro: to be deprecated soon
 			NN_IDW(std::vector<std::vector<float>> _coords, std::vector<float> _values, std::vector<float> _search_params, float exponent):NN(_coords, _values, _search_params){
+			    class_name = __func__;
+                this->exponent = exponent;
+			}
+			// --------
+			NN_IDW(std::vector<std::vector<float>> _coords,
+			       std::vector<float> _values,
+			       std::vector<float> _search_params,
+			       float exponent,
+			       std::function<int(std::string)> visitor):
+			NN(_coords, _values, _search_params, visitor){
 			    class_name = __func__;
                 this->exponent = exponent;
 			}

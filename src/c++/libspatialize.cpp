@@ -1120,12 +1120,18 @@ static PyObject *loo_esi_idw(PyObject *self, PyObject *args){
   float lambda = sptlz::bbox_sum_interval(bbox);
   lambda = 1/(lambda-alpha*lambda);
 
-  sptlz::ESI_IDW* esi = new sptlz::ESI_IDW(c_smp, c_val, lambda, forest_size, bbox, exp, seed);
-  auto r = esi->leave_one_out([func](std::string s){
-    PyObject *tup = Py_BuildValue("(s)", s.c_str());
-    PyObject_Call(func, tup, NULL);
-    return(0);
-  });
+  sptlz::ESI_IDW* esi = new sptlz::ESI_IDW(c_smp,
+                                           c_val, lambda,
+                                           forest_size,
+                                           bbox,
+                                           exp,
+                                           [func](std::string s){
+                                            PyObject *tup = Py_BuildValue("(s)", s.c_str());
+                                            PyObject_Call(func, tup, NULL);
+                                            return(0);
+                                           },
+                                           seed);
+  auto r = esi->leave_one_out();
   auto output = sptlz::as_1d_array(&r);
 
   if (Py_REFCNT(aux) != 0) {
@@ -1266,12 +1272,19 @@ static PyObject *kfold_esi_idw(PyObject *self, PyObject *args){
   float lambda = sptlz::bbox_sum_interval(bbox);
   lambda = 1/(lambda-alpha*lambda);
 
-  sptlz::ESI_IDW* esi = new sptlz::ESI_IDW(c_smp, c_val, lambda, forest_size, bbox, exp, creation_seed);
-  auto r = esi->k_fold(k, [func](std::string s){
-    PyObject *tup = Py_BuildValue("(s)", s.c_str());
-    PyObject_Call(func, tup, NULL);
-    return(0);
-  }, folding_seed);
+  sptlz::ESI_IDW* esi = new sptlz::ESI_IDW(c_smp,
+                                           c_val,
+                                           lambda,
+                                           forest_size,
+                                           bbox,
+                                           exp,
+                                           [func](std::string s){
+                                            PyObject *tup = Py_BuildValue("(s)", s.c_str());
+                                            PyObject_Call(func, tup, NULL);
+                                            return(0);
+                                           },
+                                           creation_seed);
+  auto r = esi->k_fold(k, folding_seed);
   auto output = sptlz::as_1d_array(&r);
 
   if (Py_REFCNT(aux) != 0) {
@@ -1545,16 +1558,26 @@ static PyObject *loo_esi_kriging_2d(PyObject *self, PyObject *args){
   std::cout << "[C++] creating ESI kriging instance" << "\n";
   // #endif
 
-  sptlz::ESI_Kriging* esi = new sptlz::ESI_Kriging(c_smp, c_val, lambda, forest_size, bbox, model, nugget, range, sill, seed);
+  sptlz::ESI_Kriging* esi = new sptlz::ESI_Kriging(c_smp,
+                                                   c_val,
+                                                   lambda,
+                                                   forest_size,
+                                                   bbox,
+                                                   model,
+                                                   nugget,
+                                                   range,
+                                                   sill,
+                                                   [func](std::string s){
+                                                       PyObject *tup = Py_BuildValue("(s)", s.c_str());
+                                                       PyObject_Call(func, tup, NULL);
+                                                       return(0);
+                                                   },
+                                                   seed);
 
   // #ifdef DEBUG
   std::cout << "[C++] calling ESI kriging leave-one-out" << "\n";
   // #endif
-  auto r = esi->leave_one_out([func](std::string s){
-    PyObject *tup = Py_BuildValue("(s)", s.c_str());
-    PyObject_Call(func, tup, NULL);
-    return(0);
-  });
+  auto r = esi->leave_one_out();
   auto output = sptlz::as_1d_array(&r);
 
   // stuff to return data to python
@@ -1683,12 +1706,22 @@ static PyObject *kfold_esi_kriging_2d(PyObject *self, PyObject *args){
   float lambda = sptlz::bbox_sum_interval(bbox);
   lambda = 1/(lambda-alpha*lambda);
 
-  sptlz::ESI_Kriging* esi = new sptlz::ESI_Kriging(c_smp, c_val, lambda, forest_size, bbox, model, nugget, range, sill, creation_seed);
-  auto r = esi->k_fold(k, [func](std::string s){
-    PyObject *tup = Py_BuildValue("(s)", s.c_str());
-    PyObject_Call(func, tup, NULL);
-    return(0);
-  }, folding_seed);
+  sptlz::ESI_Kriging* esi = new sptlz::ESI_Kriging(c_smp,
+                                                   c_val,
+                                                   lambda,
+                                                   forest_size,
+                                                   bbox,
+                                                   model,
+                                                   nugget,
+                                                   range,
+                                                   sill,
+                                                   [func](std::string s){
+                                                      PyObject *tup = Py_BuildValue("(s)", s.c_str());
+                                                      PyObject_Call(func, tup, NULL);
+                                                      return(0);
+                                                   },
+                                                   creation_seed);
+  auto r = esi->k_fold(k, folding_seed);
   auto output = sptlz::as_1d_array(&r);
 
   // stuff to return data to python
@@ -1952,12 +1985,22 @@ static PyObject *loo_esi_kriging_3d(PyObject *self, PyObject *args){
   float lambda = sptlz::bbox_sum_interval(bbox);
   lambda = 1/(lambda-alpha*lambda);
 
-  sptlz::ESI_Kriging* esi = new sptlz::ESI_Kriging(c_smp, c_val, lambda, forest_size, bbox, model, nugget, range, sill, seed);
-  auto r = esi->leave_one_out([func](std::string s){
-    PyObject *tup = Py_BuildValue("(s)", s.c_str());
-    PyObject_Call(func, tup, NULL);
-    return(0);
-  });
+  sptlz::ESI_Kriging* esi = new sptlz::ESI_Kriging(c_smp,
+                                                   c_val,
+                                                   lambda,
+                                                   forest_size,
+                                                   bbox,
+                                                   model,
+                                                   nugget,
+                                                   range,
+                                                   sill,
+                                                   [func](std::string s){
+                                                       PyObject *tup = Py_BuildValue("(s)", s.c_str());
+                                                       PyObject_Call(func, tup, NULL);
+                                                       return(0);
+                                                   },
+                                                   seed);
+  auto r = esi->leave_one_out();
   auto output = sptlz::as_1d_array(&r);
 
   // stuff to return data to python
@@ -2086,12 +2129,22 @@ static PyObject *kfold_esi_kriging_3d(PyObject *self, PyObject *args){
   float lambda = sptlz::bbox_sum_interval(bbox);
   lambda = 1/(lambda-alpha*lambda);
 
-  sptlz::ESI_Kriging* esi = new sptlz::ESI_Kriging(c_smp, c_val, lambda, forest_size, bbox, model, nugget, range, sill, creation_seed);
-  auto r = esi->k_fold(k, [func](std::string s){
-    PyObject *tup = Py_BuildValue("(s)", s.c_str());
-    PyObject_Call(func, tup, NULL);
-    return(0);
-  }, folding_seed);
+  sptlz::ESI_Kriging* esi = new sptlz::ESI_Kriging(c_smp,
+                                                   c_val,
+                                                   lambda,
+                                                   forest_size,
+                                                   bbox,
+                                                   model,
+                                                   nugget,
+                                                   range,
+                                                   sill,
+                                                   [func](std::string s){
+                                                       PyObject *tup = Py_BuildValue("(s)", s.c_str());
+                                                       PyObject_Call(func, tup, NULL);
+                                                       return(0);
+                                                   },
+                                                   creation_seed);
+  auto r = esi->k_fold(k, folding_seed);
   auto output = sptlz::as_1d_array(&r);
 
   // stuff to return data to python

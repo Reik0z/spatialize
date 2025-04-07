@@ -905,11 +905,30 @@ namespace sptlz{
       }
 
     public:
+     // alvaro: to be deprecated soon
       ADAPTIVE_ESI_IDW(std::vector<std::vector<float>> _coords, std::vector<float> _values, float lambda, int forest_size, std::vector<std::vector<float>> bbox, int seed=206936):ESI(_coords, _values, lambda, forest_size, bbox, seed){
         post_process();
       }
 
       ADAPTIVE_ESI_IDW(std::vector<sptlz::MondrianTree*> _mondrian_forest, std::vector<std::vector<float>> _coords, std::vector<float> _values):ESI(_mondrian_forest, _coords, _values){}
+      // ------------
+
+      ADAPTIVE_ESI_IDW(std::vector<std::vector<float>> _coords,
+                       std::vector<float> _values,
+                       float lambda,
+                       int forest_size,
+                       std::vector<std::vector<float>> bbox,
+                       std::function<int(std::string)> visitor,
+                       int seed=206936):
+      ESI(_coords, _values, lambda, forest_size, bbox, visitor, seed){
+        post_process();
+      }
+
+      ADAPTIVE_ESI_IDW(std::vector<sptlz::MondrianTree*> _mondrian_forest,
+                       std::vector<std::vector<float>> _coords,
+                       std::vector<float> _values,
+                       std::function<int(std::string)> visitor):
+      ESI(_mondrian_forest, _coords, _values, visitor){}
   };
 }
 

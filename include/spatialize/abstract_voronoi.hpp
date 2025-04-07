@@ -115,6 +115,7 @@ namespace sptlz{
 	class VORONOI {
 		protected:
 		    std::string class_name;
+		    std::function<int(std::string)> callback_visitor;
 			std::vector<sptlz::VoronoiTree*> voronoi_forest;
 			std::vector<std::vector<float>> coords;
 			std::vector<float> values;
@@ -136,6 +137,7 @@ namespace sptlz{
 			virtual void post_process(){}
 
 		public:
+		   // alvaro: to be deprecated soon
 			VORONOI(std::vector<std::vector<float>> _coords, std::vector<float> _values, float alpha, int forest_size, std::vector<std::vector<float>> bbox, int seed=206936){
 			    class_name = __func__;
 				my_rand = std::mt19937(seed);
@@ -154,6 +156,40 @@ namespace sptlz{
 
 			VORONOI(std::vector<sptlz::VoronoiTree*> _voronoi_forest, std::vector<std::vector<float>> _coords, std::vector<float> _values){
 			    class_name = __func__;
+				this->voronoi_forest = _voronoi_forest;
+				this->coords = _coords;
+				this->values = _values;
+			}
+            // ------------------
+			VORONOI(std::vector<std::vector<float>> _coords,
+			        std::vector<float> _values,
+			        float alpha,
+			        int forest_size,
+			        std::vector<std::vector<float>> bbox,
+			        std::function<int(std::string)> visitor,
+			        int seed=206936){
+			    this->class_name = __func__;
+			    this->callback_visitor = visitor;
+				this->my_rand = std::mt19937(seed);
+				this->coords = _coords;
+				this->values = _values;
+				std::uniform_int_distribution<int> uni_int;
+
+				std::poisson_distribution<int> pdistribution(coords.size()*0.5*std::abs(alpha)); // Poisson distribution with a mean of half the sample size
+
+				for(int i=0; i<forest_size; i++){
+					int vsize = std::max(1,pdistribution(my_rand));
+					vsize = std::min(vsize, (int)coords.size());
+					voronoi_forest.push_back(new sptlz::VoronoiTree(&coords, alpha, bbox, vsize, uni_int(my_rand)));
+				}
+			}
+
+			VORONOI(std::vector<sptlz::VoronoiTree*> _voronoi_forest,
+			        std::vector<std::vector<float>> _coords,
+			        std::vector<float> _values,
+			        std::function<int(std::string)> visitor) {
+			    this->class_name = __func__;
+			    this->callback_visitor = visitor;
 				this->voronoi_forest = _voronoi_forest;
 				this->coords = _coords;
 				this->values = _values;
