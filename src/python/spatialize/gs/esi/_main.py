@@ -420,6 +420,8 @@ def _call_libspatialize(points, values, xi, **kwargs):
 
     if not kwargs["best_params_found"] is None:
         try:
+            log_message(logging.logger.debug(f"best number of partitions found: "
+                                             f"{kwargs["best_params_found"]["n_partitions"]}"))
             del kwargs["best_params_found"]["n_partitions"]  # this param can be overwritten all cases
         except KeyError:
             pass

@@ -56,8 +56,8 @@ op_error = lf.OperationalErrorLoss(np.abs(np.nanmin(values) - np.nanmax(values))
 def esi_idw(p_process):
     search_result = esi_hparams_search(points, values, xi,
                                        local_interpolator="adaptiveidw", griddata=False, k=10,
-                                       n_partitions=[10, 50],
-                                       alpha=(0.5, 0.6, 0.7, 0.8, 0.9),
+                                       n_partitions=[5, 10, 15],
+                                       alpha=(0.7, 0.8, 0.9, 0.95),
                                        seed=1500)
 
     search_result.plot_cv_error()
@@ -65,7 +65,7 @@ def esi_idw(p_process):
 
     result = esi_nongriddata(points, values, xi,
                              local_interpolator="adaptiveidw",
-                             n_partitions=50,
+                             n_partitions=200,
                              best_params_found=search_result.best_result())
     print(result)
     result.precision(op_error)
