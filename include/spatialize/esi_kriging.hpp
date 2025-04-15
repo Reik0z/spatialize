@@ -220,19 +220,41 @@ namespace sptlz{
       }
 
     public:
-      ESI_Kriging(std::vector<std::vector<float>> _coords, std::vector<float> _values, float lambda, int forest_size, std::vector<std::vector<float>> bbox, int _model, float _nugget, float _range, float _sill, int seed=206936):ESI(_coords, _values, lambda, forest_size, bbox, seed){
+      ESI_Kriging(std::vector<std::vector<float>> _coords,
+                  std::vector<float> _values,
+                  float lambda,
+                  int forest_size,
+                  std::vector<std::vector<float>> bbox,
+                  int _model,
+                  float _nugget,
+                  float _range,
+                  float _sill,
+                  std::function<int(std::string)> visitor,
+                  int seed=206936):
+      ESI(_coords, _values, lambda, forest_size, bbox, visitor, seed){
+        class_name = __func__;
         variogram_model = _model;
         nugget = _nugget;
         range = _range;
         sill = _sill;
       }
 
-      ESI_Kriging(std::vector<sptlz::MondrianTree*> _mondrian_forest, std::vector<std::vector<float>> _coords, std::vector<float> _values, int _model, float _nugget, float _range, float _sill):ESI(_mondrian_forest, _coords, _values){
+      ESI_Kriging(std::vector<sptlz::MondrianTree*> _mondrian_forest,
+                  std::vector<std::vector<float>> _coords,
+                  std::vector<float> _values,
+                  int _model,
+                  float _nugget,
+                  float _range,
+                  float _sill,
+                  std::function<int(std::string)> visitor):
+      ESI(_mondrian_forest, _coords, _values, visitor){
+        class_name = __func__;
         variogram_model = _model;
         nugget = _nugget;
         range = _range;
         sill = _sill;
       }
+
 
       ~ESI_Kriging() {}
 

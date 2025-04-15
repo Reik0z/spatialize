@@ -114,13 +114,28 @@ namespace sptlz{
       }
 
     public:
-      ESI_IDW(std::vector<std::vector<float>> _coords, std::vector<float> _values, float lambda, int forest_size, std::vector<std::vector<float>> bbox, float _exponent, int seed=206936):ESI(_coords, _values, lambda, forest_size, bbox, seed){
-        exponent = _exponent;
+      ESI_IDW(std::vector<std::vector<float>> _coords,
+              std::vector<float> _values, float lambda,
+              int forest_size,
+              std::vector<std::vector<float>> bbox,
+              float _exponent,
+              std::function<int(std::string)> visitor,
+              int seed=206936):
+      ESI(_coords, _values, lambda, forest_size, bbox, visitor, seed){
+        this->class_name = __func__;
+        this->exponent = _exponent;
       }
 
-      ESI_IDW(std::vector<sptlz::MondrianTree*> _mondrian_forest, std::vector<std::vector<float>> _coords, std::vector<float> _values, float _exponent):ESI(_mondrian_forest, _coords, _values){
-        exponent = _exponent;
+      ESI_IDW(std::vector<sptlz::MondrianTree*> _mondrian_forest,
+              std::vector<std::vector<float>> _coords,
+              std::vector<float> _values,
+              float _exponent,
+              std::function<int(std::string)> visitor):
+      ESI(_mondrian_forest, _coords, _values, visitor){
+        this->class_name = __func__;
+        this->exponent = _exponent;
       }
+
 
       ~ESI_IDW() {}
 

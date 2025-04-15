@@ -49,9 +49,6 @@ namespace sptlz{
 				std::mt19937 my_rand(seed);
 				std::uniform_int_distribution<int> samples_choice(0, (int)coords->size()-1);
 
-// #ifdef DEBUG
-//   std::cout << "[C++] tree voronoi samples:" << vsize << " and alpha : " << alpha << "\n";
-// #endif
 				if (alpha < 0) {
 					for (int i=0; i<vsize; ++i) {
 						std::vector<float> rand_coord(coords->at(0).size());
@@ -114,6 +111,8 @@ namespace sptlz{
 
 	class VORONOI {
 		protected:
+		    std::string class_name;
+		    std::function<int(std::string)> callback_visitor;
 			std::vector<sptlz::VoronoiTree*> voronoi_forest;
 			std::vector<std::vector<float>> coords;
 			std::vector<float> values;
@@ -135,12 +134,20 @@ namespace sptlz{
 			virtual void post_process(){}
 
 		public:
-			VORONOI(std::vector<std::vector<float>> _coords, std::vector<float> _values, float alpha, int forest_size, std::vector<std::vector<float>> bbox, int seed=206936){
-				my_rand = std::mt19937(seed);
-				coords = _coords;
-				values = _values;
+			VORONOI(std::vector<std::vector<float>> _coords,
+			        std::vector<float> _values,
+			        float alpha,
+			        int forest_size,
+			        std::vector<std::vector<float>> bbox,
+			        std::function<int(std::string)> visitor,
+			        int seed=206936){
+			    this->class_name = __func__;
+			    this->callback_visitor = visitor;
+				this->my_rand = std::mt19937(seed);
+				this->coords = _coords;
+				this->values = _values;
 				std::uniform_int_distribution<int> uni_int;
-				
+
 				std::poisson_distribution<int> pdistribution(coords.size()*0.5*std::abs(alpha)); // Poisson distribution with a mean of half the sample size
 
 				for(int i=0; i<forest_size; i++){
@@ -150,7 +157,12 @@ namespace sptlz{
 				}
 			}
 
-			VORONOI(std::vector<sptlz::VoronoiTree*> _voronoi_forest, std::vector<std::vector<float>> _coords, std::vector<float> _values){
+			VORONOI(std::vector<sptlz::VoronoiTree*> _voronoi_forest,
+			        std::vector<std::vector<float>> _coords,
+			        std::vector<float> _values,
+			        std::function<int(std::string)> visitor) {
+			    this->class_name = __func__;
+			    this->callback_visitor = visitor;
 				this->voronoi_forest = _voronoi_forest;
 				this->coords = _coords;
 				this->values = _values;
@@ -183,21 +195,18 @@ namespace sptlz{
 				return(&(this->values));
 			}
 
-			std::vector<std::vector<float>> estimate(std::vector<std::vector<float>> *locations, std::function<int(std::string)> visitor){
+			std::vector<std::vector<float>> estimate(std::vector<std::vector<float>> *locations){
 				std::stringstream json;
 				std::vector<std::vector<float>> results(locations->size());
 				std::vector<std::vector<int>> locations_by_leaf;
 				int aux, n = voronoi_forest.size();
 
-				// {"message": {"text": "<the log text>", "level": "<DEBUG|INFO|WARNING|ERROR|CRITICAL>"}}
-				json.str("");
-				json << "{\"message\": { \"text\":\"" << "[C++|VORONOI->estimate] computing estimates" << "\", \"level\":\"" << "DEBUG" <<"\"}}";
-				visitor(json.str());
+                sptlz::CallbackLogger *logger = new sptlz::CallbackLogger(this->callback_visitor, this->class_name);
+                sptlz::CallbackProgressSender *progress = new sptlz::CallbackProgressSender(this->callback_visitor);
 
-				// {"progress": {"init": <total expected count>, "step": <increment step>}}
-				json.str("");
-				json << "{\"progress\": { \"init\":" << n << ", \"step\":" << 1 <<"}}";
-				visitor(json.str());
+                logger->debug("computing estimates");
+
+				progress->init(n, 1);
 
 				for(int i=0; i<n; i++){
 					// get tree
@@ -223,39 +232,30 @@ namespace sptlz{
 							}
 						}
 					}
-					// {"progress": {"token": <value>}}
-					json.str("");
-					json << "{\"progress\": {\"token\":" << 100.0*(i+1.0)/n << "}}";
+
 					if (PyErr_CheckSignals() != 0)  // to allow ctrl-c from user
                       exit(0);
-					visitor(json.str());
+					progress->inform(100.0*(i+1.0)/n);
 				}
 
-				// {"progress": "done"}
-				json.str("");
-				json << "{\"progress\": \"done\"}";
-				visitor(json.str());
+				progress->stop();
+
+				delete logger;
+				delete progress;
 				return(results);
 			}
 
-			std::vector<std::vector<float>> leave_one_out(std::function<int(std::string)> visitor){
+			std::vector<std::vector<float>> leave_one_out(){
 				std::stringstream json;
 				std::vector<std::vector<float>> results(coords.size());
 				int n = voronoi_forest.size();
 
-                // #ifdef DEBUG
-                // std::cout << "[C++] inside leave-one-out" << "\n";
-                // #endif
+				sptlz::CallbackLogger *logger = new sptlz::CallbackLogger(this->callback_visitor, this->class_name);
+                sptlz::CallbackProgressSender *progress = new sptlz::CallbackProgressSender(this->callback_visitor);
 
-				// {"message": {"text": "<the log text>", "level": "<DEBUG|INFO|WARNING|ERROR|CRITICAL>"}}
-				json.str("");
-				json << "{\"message\": { \"text\":\"" << "[C++|VORONOI->leave_one_out] computing estimates" << "\", \"level\":\"" << "DEBUG" <<"\"}}";
-				visitor(json.str());
+				logger->debug("computing leave-one-out");
 
-				// {"progress": {"init": <total expected count>, "step": <increment step>}}
-				json.str("");
-				json << "{\"progress\": { \"init\":" << n << ", \"step\":" << 1 <<"}}";
-				visitor(json.str());
+				progress->init(n, 1);
 
 				for(int i=0; i<n; i++){
 					// get tree
@@ -270,22 +270,20 @@ namespace sptlz{
 							}
 						}
 					}
-					// {"progress": {"token": <value>}}
-					json.str("");
-					json << "{\"progress\": {\"token\":" << 100.0*(i+1.0)/n << "}}";
+
 					if (PyErr_CheckSignals() != 0)  // to allow ctrl-c from user
                       exit(0);
-					visitor(json.str());
+					progress->inform(100.0*(i+1.0)/n);
 				}
 
-				// {"progress": "done"}
-				json.str("");
-				json << "{\"progress\": \"done\"}";
-				visitor(json.str());
+				progress->stop();
+
+				delete logger;
+				delete progress;
 				return(results);
 			}
 
-			std::vector<std::vector<float>> k_fold(int k, std::function<int(std::string)> visitor, int seed=206936){
+			std::vector<std::vector<float>> k_fold(int k, int seed=206936){
 				std::stringstream json;
 				auto fold_rand = std::mt19937(seed);
 				std::uniform_real_distribution<float> uni_float;
@@ -293,15 +291,10 @@ namespace sptlz{
 				std::vector<std::vector<float>> results(coords.size());
 				int n = voronoi_forest.size();
 
-				// {"message": {"text": "<the log text>", "level": "<DEBUG|INFO|WARNING|ERROR|CRITICAL>"}}
-				json.str("");
-				json << "{\"message\": { \"text\":\"" << "[C++|VORONOI->k_fold] computing estimates" << "\", \"level\":\"" << "DEBUG" <<"\"}}";
-				visitor(json.str());
+				sptlz::CallbackLogger *logger = new sptlz::CallbackLogger(this->callback_visitor, this->class_name);
+                sptlz::CallbackProgressSender *progress = new sptlz::CallbackProgressSender(this->callback_visitor);
 
-				// {"progress": {"init": <total expected count>, "step": <increment step>}}
-				json.str("");
-				json << "{\"progress\": { \"init\":" << n << ", \"step\":" << 1 <<"}}";
-				visitor(json.str());
+				logger->debug("computing k-fold");
 
 				for(int i=0; i<n; i++){
 					// get tree
@@ -315,18 +308,15 @@ namespace sptlz{
 							}
 						}
 					}
-					// {"progress": {"token": <value>}}
-					json.str("");
-					json << "{\"progress\": {\"token\":" << 100.0*(i+1.0)/n << "}}";
 					if (PyErr_CheckSignals() != 0)  // to allow ctrl-c from user
                       exit(0);
-					visitor(json.str());
+					progress->inform(100.0*(i+1.0)/n);
 				}
 
-				// {"progress": "done"}
-				json.str("");
-				json << "{\"progress\": \"done\"}";
-				visitor(json.str());
+				progress->stop();
+
+				delete logger;
+				delete progress;
 				return(results);
 			}
 	};

@@ -9,13 +9,14 @@ import spatialize.gs.esi.aggfunction as af
 from spatialize.gs.esi import esi_hparams_search, esi_griddata
 from spatialize.gs.idw import idw_hparams_search, idw_griddata
 
-
 logging.log.setLevel("DEBUG")
 
 grid_cmap, prec_cmap = 'coolwarm', 'bwr'
 
+
 def func(x, y):  # a kind of "cubic" function
     return x * (1 - x) * np.cos(4 * np.pi * x) * np.sin(4 * np.pi * y ** 2) ** 2
+
 
 # grid points creation
 grid_x, grid_y = np.mgrid[0:1:100j, 0:1:200j]
@@ -27,7 +28,7 @@ values = func(points[:, 0], points[:, 1])
 
 # running the idw (not esi) grid search
 search_result = idw_hparams_search(points, values, (grid_x, grid_y),
-                                   griddata=True, k=10,
+                                   griddata=True, k=-1,
                                    radius=[0.07, 0.08],
                                    exponent=(0.001, 0.01, 0.1, 1, 2))
 
@@ -41,8 +42,7 @@ search_result.plot_cv_error()
 
 # using grid search best result to estimate with idw (not esi)
 result_idw = idw_griddata(points, values, (grid_x, grid_y),
-                      best_params_found=search_result.best_result(optimize_data_usage=False))
-
+                          best_params_found=search_result.best_result(optimize_data_usage=False))
 
 # *** idw as local interpolator ***
 
@@ -64,8 +64,8 @@ search_result.plot_cv_error()
 plt.show()
 
 result_esi_idw = esi_griddata(points, values, (grid_x, grid_y),
-                      best_params_found=search_result.best_result()
-                      )
+                              best_params_found=search_result.best_result()
+                              )
 
 # *** kriging as local interpolator ***
 search_result = esi_hparams_search(points, values, (grid_x, grid_y),
@@ -81,11 +81,11 @@ search_result.plot_cv_error()
 plt.show()
 
 result_esi_kriging = esi_griddata(points, values, (grid_x, grid_y),
-                      best_params_found=search_result.best_result()
-                      )
+                                  best_params_found=search_result.best_result()
+                                  )
 
 # plot original, results and precisions
-fig = plt.figure(dpi=150, figsize=(15,10))
+fig = plt.figure(dpi=150, figsize=(15, 10))
 gs = fig.add_gridspec(2, 3, wspace=0.3)
 (ax1, ax2) = gs.subplots()
 ax1, ax2, ax3, ax4, ax5, ax6 = ax1[0], ax1[1], ax1[2], ax2[0], ax2[1], ax2[2]
@@ -100,7 +100,7 @@ img2 = result_esi_idw.plot_estimation(ax2)
 
 ax3.set_aspect('equal')
 ax3.set_title('esi kriging')
-img3 = result_esi_idw.plot_estimation(ax3)
+img3 = result_esi_kriging.plot_estimation(ax3)
 
 ax4.set_aspect('equal')
 ax4.set_title('original data')

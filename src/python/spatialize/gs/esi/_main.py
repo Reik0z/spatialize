@@ -1,4 +1,6 @@
 import tempfile
+from copy import deepcopy
+
 import numpy as np
 import pandas as pd
 from matplotlib import pyplot as plt
@@ -96,7 +98,7 @@ class ESIResult(EstimationResult):
         else:
             return prec
 
-    def esi_samples(self):
+    def esi_samples(self, raw=False):
         """
         The central concept for dealing with ESI estimation results is the `ESI sample`. 
         In this sense, it should be noted that each random partition delivers an estimate 
@@ -116,7 +118,7 @@ class ESIResult(EstimationResult):
             $d_1 \\times d_2 \\times m$ for gridded data -- remember that, in this case,
             $d_1 \\times d_2 = N_{x^*}$
         """
-        if self.griddata:
+        if self.griddata and not raw:
             N = self._esi_samples.shape[1]
             return self._esi_samples.reshape(tuple(list(self.original_shape) + [N]))
         else:
@@ -197,7 +199,8 @@ class ESIResult(EstimationResult):
                         li.KRIGING: {"model": ["spherical", "exponential", "cubic", "gaussian"],
                                      "nugget": [0.0, 0.5, 1.0],
                                      "range": [10.0, 50.0, 100.0, 200.0],
-                                     "sill": [0.9, 1.0, 1.1]}
+                                     "sill": [0.9, 1.0, 1.1]},
+                        li.ADAPTIVE_IDW: {}
                     })
 def esi_hparams_search(points, values, xi, **kwargs):
     """
@@ -237,7 +240,11 @@ def esi_hparams_search(points, values, xi, **kwargs):
     # get the actual parameter grid
     param_grid = ParameterGrid(grid)
 
-    p_xi = xi.copy()
+    if isinstance(xi, tuple):
+        p_xi = deepcopy(xi)
+    else:
+        p_xi = xi.copy()
+
     if kwargs["griddata"]:
         p_xi, _ = flatten_grid_data(xi)
 
@@ -396,7 +403,8 @@ def esi_nongriddata(points, values, xi, **kwargs):
                                  },
                     specific_args={
                         li.IDW: {"exponent": 2.0},
-                        li.KRIGING: {"model": 1, "nugget": 0.1, "range": 5000.0, "sill": 1.0}
+                        li.KRIGING: {"model": 1, "nugget": 0.1, "range": 5000.0, "sill": 1.0},
+                        li.ADAPTIVE_IDW: {}
                     })
 def _call_libspatialize(points, values, xi, **kwargs):
     """
@@ -412,6 +420,8 @@ def _call_libspatialize(points, values, xi, **kwargs):
 
     if not kwargs["best_params_found"] is None:
         try:
+            log_message(logging.logger.debug(f"best number of partitions found: "
+                                             f"{kwargs["best_params_found"]["n_partitions"]}"))
             del kwargs["best_params_found"]["n_partitions"]  # this param can be overwritten all cases
         except KeyError:
             pass
@@ -468,6 +478,9 @@ def build_arg_list(points, values, xi, nonpos_args):
         l_args.insert(-2, nonpos_args["nugget"])
         l_args.insert(-2, nonpos_args["range"])
         l_args.insert(-2, nonpos_args["sill"])
+        l_args.insert(-2, nonpos_args["seed"])
+
+    if nonpos_args["local_interpolator"] == li.ADAPTIVE_IDW:
         l_args.insert(-2, nonpos_args["seed"])
 
     return l_args

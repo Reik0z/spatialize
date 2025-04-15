@@ -209,8 +209,9 @@ class EstimationResult:
         **figargs : (optional)
             Additional keyword arguments passed to the figure creation (e.g., DPI, figure size).
         """
-        if self._xi.shape[1] > 2:
-            raise SpatializeError("quick_plot() for 3D data is not supported")
+        if not self._xi is None:
+            if self._xi.shape[1] > 2:
+                raise SpatializeError("quick_plot() for 3D data is not supported")
 
         fig = plt.figure(dpi=150, **figargs)
         gs = fig.add_gridspec(1, 1, wspace=0.45)
