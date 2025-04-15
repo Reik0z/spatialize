@@ -98,7 +98,7 @@ class ESIResult(EstimationResult):
         else:
             return prec
 
-    def esi_samples(self):
+    def esi_samples(self, raw=False):
         """
         The central concept for dealing with ESI estimation results is the `ESI sample`. 
         In this sense, it should be noted that each random partition delivers an estimate 
@@ -118,7 +118,7 @@ class ESIResult(EstimationResult):
             $d_1 \\times d_2 \\times m$ for gridded data -- remember that, in this case,
             $d_1 \\times d_2 = N_{x^*}$
         """
-        if self.griddata:
+        if self.griddata and not raw:
             N = self._esi_samples.shape[1]
             return self._esi_samples.reshape(tuple(list(self.original_shape) + [N]))
         else:
