@@ -18,7 +18,7 @@ class ESSResult:
 
 def ess_sample(esi_result, n_sims=100, point_model_name="kde", nan_model_name="ignore", nan_replace_func_name="median"):
     """
-    To sample scenarios out of an interpolation result generative model
+    To sample scenarios out of an interpolation result generative model.
 
     :param esi_result: The interpolation result. It has to be an ESIResult object.
     :param n_sims: Number of scenarios to be generated. Its has to be a positive integer (default is 100).
