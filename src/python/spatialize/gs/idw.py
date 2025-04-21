@@ -5,11 +5,10 @@ import pandas as pd
 from sklearn.model_selection import ParameterGrid
 
 import spatialize.gs
-from spatialize import SpatializeError, logging
+from spatialize import SpatializeError, logging, GridSearchResult, EstimationResult
 from spatialize._math_util import flatten_grid_data
 from spatialize.logging import default_singleton_callback, singleton_null_callback, log_message
 from spatialize.gs import lib_spatialize_facade
-from spatialize._util import GridSearchResult, EstimationResult
 
 
 class IDWGridSearchResult(GridSearchResult):

@@ -6,10 +6,10 @@ import pandas as pd
 from matplotlib import pyplot as plt
 from sklearn.model_selection import ParameterGrid
 
-from spatialize import SpatializeError, logging
+from spatialize import SpatializeError, logging, GridSearchResult, EstimationResult
 import spatialize.gs.esi.aggfunction as af
 import spatialize.gs.esi.lossfunction as lf
-from spatialize._util import signature_overload, GridSearchResult, EstimationResult
+from spatialize._util import signature_overload
 from spatialize._math_util import flatten_grid_data
 from spatialize.gs import lib_spatialize_facade, partitioning_process, local_interpolator as li
 from spatialize.logging import log_message, default_singleton_callback, singleton_null_callback
