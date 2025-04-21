@@ -4,8 +4,6 @@ from copy import deepcopy
 import numpy as np
 import pandas as pd
 from matplotlib import pyplot as plt
-from matplotlib.pyplot import colorbar
-from mpl_toolkits.axes_grid1 import make_axes_locatable
 from sklearn.model_selection import ParameterGrid
 
 from spatialize import SpatializeError, logging

@@ -6,17 +6,27 @@ from sklearn.exceptions import ConvergenceWarning
 # just to turn warnings off
 import warnings
 
+from spatialize import logging
+from spatialize.logging import log_message, default_singleton_callback
+
 warnings.filterwarnings("ignore", category=ConvergenceWarning)
 warnings.filterwarnings("ignore", category=RuntimeWarning)
 
 
 class ESSResult:
-    def __init__(self, esi_result, ess_scenarios):
+    def __init__(self, ess_scenarios, esi_result):
         self.esi_result = esi_result
         self.scenarios = ess_scenarios
 
 
-def ess_sample(esi_result, n_sims=100, point_model_name="kde", nan_model_name="ignore", nan_replace_func_name="median"):
+def ess_sample(esi_result,
+               n_sims=100,
+               point_model_name="kde",
+               nan_model_name="ignore",
+               nan_replace_func_name="median",
+               kernel="tophat",
+               n_components=1,
+               callback=default_singleton_callback):
     """
     To sample scenarios out of an interpolation result generative model.
 
@@ -30,11 +40,14 @@ def ess_sample(esi_result, n_sims=100, point_model_name="kde", nan_model_name="i
     The default value is "ignore".
     :param nan_replace_func_name: Valid when nan_model_name="replace". Set "mean" to replace with the mean of the
     point data at each position or "median" to replace with the median.
+    :param callback: Callback function for logging progress.
     :return: ESSResult containing the scenarios sampled out of an interpolation result.
     """
 
     # work always with the flattened array just to support arbitrary dimensions
     esi_samples = np.array(esi_result.esi_samples(raw=True))
+
+    log_message(logging.logger.debug(f"esi_samples shape: {esi_samples.shape}"))
 
     if nan_replace_func_name == "median":
         nan_replace_func_def = np.median
@@ -60,15 +73,17 @@ def ess_sample(esi_result, n_sims=100, point_model_name="kde", nan_model_name="i
 
     # the bandwidth is calculated automatically using the silverman method
     if point_model_name == "kde":
-        model = KernelDensity(kernel="tophat", bandwidth="silverman", atol=0.5, rtol=0.5)
+        model = KernelDensity(kernel=kernel, bandwidth="silverman", atol=0.5, rtol=0.5)
     elif point_model_name == "vim":  # Variational inference dirichlet process gaussian mixture model
-        model = BayesianGaussianMixture(n_components=2, covariance_type='full')
+        model = BayesianGaussianMixture(n_components=n_components, covariance_type='full')
     elif point_model_name == "emm":  # Expectation-Maximisation gaussian mixture model
         model = GaussianMixture(n_components=2, covariance_type='full')
     else:
         raise ValueError("point_model_name must be either 'kde', 'vim', or 'emm'")
 
     scenarios = np.empty([esi_samples.shape[0], n_sims])
+
+    callback(logging.progress.init(esi_samples.shape[0], 1))
     for esi_sample_idx in range(esi_samples.shape[0]):
         # dealing with nans
         point_data = nan_model(esi_samples, esi_sample_idx)
@@ -84,5 +99,9 @@ def ess_sample(esi_result, n_sims=100, point_model_name="kde", nan_model_name="i
             s = model.sample(n_sims).reshape(1, n_sims)[0]
 
         scenarios[esi_sample_idx, :] = s[:]
+
+        callback(logging.progress.inform())
+
+    callback(logging.progress.stop())
 
     return ESSResult(scenarios, esi_result)

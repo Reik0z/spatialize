@@ -38,3 +38,34 @@ def load_drill_holes_andes_3D():
     input_samples = pd.DataFrame(aux, columns=['x', 'y', 'z', 'cu', 'au', 'rocktype'])
 
     return input_samples, output_locations
+
+
+def load_simulated_anisotropic_data():
+    prefix = "sim_data_geom_anis_nugg0"
+    path = os.path.join(str(rs.files(data)), prefix + ".csv")
+    ground_truth = pd.read_csv(path)
+
+    path = os.path.join(str(rs.files(data)), prefix + ".1_1perc.csv")
+    input_samples_1perc = pd.read_csv(path)
+
+    path = os.path.join(str(rs.files(data)), prefix + ".1_5perc.csv")
+    input_samples_5perc = pd.read_csv(path)
+
+    path = os.path.join(str(rs.files(data)), prefix + ".1_reduced.csv")
+    input_samples_reduced = pd.read_csv(path)
+
+    # ordinary kriging example
+    prefix = "sim_kriging_geom_anis_nugg0"
+    path = os.path.join(str(rs.files(data)), prefix + ".1_1perc.csv")
+    kriging_1perc = pd.read_csv(path)
+
+    path = os.path.join(str(rs.files(data)), prefix + ".1_5perc.csv")
+    kriging_5perc = pd.read_csv(path)
+
+    path = os.path.join(str(rs.files(data)), prefix + ".1_reduced.csv")
+    kriging_reduced = pd.read_csv(path)
+
+    return ((input_samples_1perc, kriging_1perc),
+            (input_samples_5perc, kriging_5perc),
+            (input_samples_reduced, kriging_reduced),
+            ground_truth)

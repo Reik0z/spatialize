@@ -184,7 +184,8 @@ class EstimationResult:
                     raise SpatializeError(f"Wrong image size (w: {w}, h: {h})")
                 else:
                     h, w = len(np.unique(self._xi[:, 0]))-1, len(np.unique(self._xi[:, 1]))-1
-                    print(f"Image size not provided. Using shapes: {w} x {h}")
+                    if len(data) != h * w:
+                        h, w = len(np.unique(self._xi[:, 0])), len(np.unique(self._xi[:, 1]))
             im = data.reshape(w, h)
 
         plotter = plt
