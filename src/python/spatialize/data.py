@@ -3,13 +3,54 @@ import os, json
 import numpy as np
 import pandas as pd
 
+from spatialize import EstimationResult
 from spatialize.gs.esi import ESIResult
 from spatialize.gs.ess import ESSResult
 from spatialize.resources import data
 
 
 def load_result(result_dir_path):
-    pass
+    # load the metadata file
+    meta_data_fn = os.path.join(result_dir_path, "metadata.json")
+    with open(meta_data_fn, "r") as outfile:
+        meta_data = json.load(outfile)
+
+    # load the estimation
+    fn = os.path.join(result_dir_path, meta_data['estimation'])
+    estimation = pd.read_csv(fn).values.reshape(-1)
+
+    # load the xi locations
+    fn = os.path.join(result_dir_path, meta_data['xi'])
+    xi = pd.read_csv(fn).values
+
+    try:
+        # load the esi_samples
+        fn = os.path.join(result_dir_path, meta_data['esi_samples'])
+        esi_samples = pd.read_csv(fn).values
+    except:
+        esi_samples = None
+
+    if esi_samples is None:
+        return EstimationResult(estimation,
+                                griddata=meta_data['griddata'],
+                                original_shape=meta_data['original_shape'],
+                                xi=xi)
+
+    esi_result = ESIResult(estimation, esi_samples,
+                           griddata=meta_data['griddata'],
+                           original_shape=meta_data['original_shape'],
+                           xi=xi)
+
+    if meta_data["main_result"] == "estimation":
+        return esi_result
+
+    sim_results = []
+    for sim in meta_data["simulations"]:
+        fn = os.path.join(result_dir_path, sim)
+        ess_scenarios = pd.read_csv(fn).values
+        sim_results.append(ESSResult(ess_scenarios, esi_result))
+
+    return sim_results
 
 
 def save_result(result_dir_path, result):
@@ -35,7 +76,7 @@ def save_result(result_dir_path, result):
         est_result = result.esi_result
 
     else:
-        if not(already_exists and meta_data["main_result"] == "simulation"):
+        if not (already_exists and meta_data["main_result"] == "simulation"):
             meta_data["main_result"]: "estimation"
         est_result = result
 

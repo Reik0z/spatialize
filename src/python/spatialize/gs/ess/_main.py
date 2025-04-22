@@ -8,6 +8,7 @@ import warnings
 
 from spatialize import logging
 from spatialize.logging import log_message, default_singleton_callback
+from spatialize.viz import plot_colormap_array
 
 warnings.filterwarnings("ignore", category=ConvergenceWarning)
 warnings.filterwarnings("ignore", category=RuntimeWarning)
@@ -17,6 +18,16 @@ class ESSResult:
     def __init__(self, ess_scenarios, esi_result):
         self.esi_result = esi_result
         self.scenarios = ess_scenarios
+
+    def __repr__(self):
+        return str(self.esi_result)
+
+    def quick_plot(self, n_imgs=9, n_cols=3, norm_lims=False, title_prefix="scenario"):
+        return plot_colormap_array(self.scenarios, n_imgs=n_imgs,
+                                   n_cols=n_cols, norm_lims=norm_lims,
+                                   xi_locations=self.esi_result._xi,
+                                   reference_map=self.esi_result.estimation(),
+                                   title_prefix=title_prefix)
 
 
 def ess_sample(esi_result,

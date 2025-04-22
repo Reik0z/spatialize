@@ -9,7 +9,7 @@ from sklearn.model_selection import ParameterGrid
 from spatialize import SpatializeError, logging, GridSearchResult, EstimationResult
 import spatialize.gs.esi.aggfunction as af
 import spatialize.gs.esi.lossfunction as lf
-from spatialize._util import signature_overload
+from spatialize._util import signature_overload, in_notebook
 from spatialize._math_util import flatten_grid_data
 from spatialize.gs import lib_spatialize_facade, partitioning_process, local_interpolator as li
 from spatialize.logging import log_message, default_singleton_callback, singleton_null_callback
@@ -175,7 +175,8 @@ class ESIResult(EstimationResult):
         self.plot_precision(ax2, w=w, h=h)
         ax2.set_aspect('equal')
 
-        return fig  # just in case you want to embed it somewhere else
+        if in_notebook():
+            return fig  # just in case you want to embed it somewhere else
 
 
 # ============================================= PUBLIC API ==========================================================

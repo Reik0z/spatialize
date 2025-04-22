@@ -1,7 +1,7 @@
 import numpy as np
 from matplotlib import pyplot as plt
 
-from spatialize import SpatializeError
+from spatialize import SpatializeError, in_notebook
 from spatialize.viz import plot_colormap_data
 
 
@@ -122,7 +122,8 @@ class EstimationResult:
         self.plot_estimation(ax, w=w, h=h)
         ax.set_aspect('equal')
 
-        return fig
+        if not in_notebook():
+            return fig
 
     def __repr__(self):
         min, max = np.nanmin(self.estimation()), np.nanmax(self.estimation())
