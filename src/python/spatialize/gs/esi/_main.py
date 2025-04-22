@@ -175,7 +175,7 @@ class ESIResult(EstimationResult):
         self.plot_precision(ax2, w=w, h=h)
         ax2.set_aspect('equal')
 
-        if in_notebook():
+        if not in_notebook():
             return fig  # just in case you want to embed it somewhere else
 
 

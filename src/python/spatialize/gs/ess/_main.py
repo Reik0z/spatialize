@@ -15,12 +15,13 @@ warnings.filterwarnings("ignore", category=RuntimeWarning)
 
 
 class ESSResult:
-    def __init__(self, ess_scenarios, esi_result):
+    def __init__(self, ess_scenarios, esi_result, desc):
         self.esi_result = esi_result
         self.scenarios = ess_scenarios
+        self.desc = desc
 
     def __repr__(self):
-        return str(self.esi_result)
+        return str(self.desc)
 
     def quick_plot(self, n_imgs=9, n_cols=3, norm_lims=False, title_prefix="scenario"):
         return plot_colormap_array(self.scenarios, n_imgs=n_imgs,
@@ -37,6 +38,7 @@ def ess_sample(esi_result,
                nan_replace_func_name="median",
                kernel="tophat",
                n_components=1,
+               desc=None,
                callback=default_singleton_callback):
     """
     To sample scenarios out of an interpolation result generative model.
@@ -115,4 +117,10 @@ def ess_sample(esi_result,
 
     callback(logging.progress.stop())
 
-    return ESSResult(scenarios, esi_result)
+    if desc is None:
+        if point_model_name == "kde":
+            desc = f"{n_sims}sims_kde_{kernel}"
+        else:
+            desc = f"{n_sims}sims_{point_model_name}_{n_components}n_components"
+
+    return ESSResult(scenarios, esi_result, desc)

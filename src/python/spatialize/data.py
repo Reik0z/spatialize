@@ -1,19 +1,25 @@
 import importlib.resources as rs
 import os, json
+from pathlib import Path
+
 import numpy as np
 import pandas as pd
 
-from spatialize import EstimationResult
+from spatialize import EstimationResult, logging, SpatializeError
 from spatialize.gs.esi import ESIResult
 from spatialize.gs.ess import ESSResult
+from spatialize.logging import log_message
 from spatialize.resources import data
 
 
-def load_result(result_dir_path):
+def load_result(result_dir_path, just_esi_result=False, simulation_desc=None):
     # load the metadata file
     meta_data_fn = os.path.join(result_dir_path, "metadata.json")
     with open(meta_data_fn, "r") as outfile:
         meta_data = json.load(outfile)
+
+    if meta_data["main_result"] != "simulation":
+        raise SpatializeError("Not a simulation result directory")
 
     # load the estimation
     fn = os.path.join(result_dir_path, meta_data['estimation'])
@@ -31,6 +37,7 @@ def load_result(result_dir_path):
         esi_samples = None
 
     if esi_samples is None:
+        log_message(logging.logger.info(f"an instances of EstimationResult was loaded"))
         return EstimationResult(estimation,
                                 griddata=meta_data['griddata'],
                                 original_shape=meta_data['original_shape'],
@@ -41,14 +48,29 @@ def load_result(result_dir_path):
                            original_shape=meta_data['original_shape'],
                            xi=xi)
 
-    if meta_data["main_result"] == "estimation":
+    if meta_data["main_result"] == "estimation" or just_esi_result:
+        log_message(logging.logger.info(f"an instances of ESIResult was loaded"))
         return esi_result
+
+    if not simulation_desc is None:
+        if not (simulation_desc + ".csv") in set(meta_data["simulations"]):
+            raise SpatializeError(f"Simulation description not found in metadata {simulation_desc}")
+
+        fn = os.path.join(result_dir_path, simulation_desc + ".csv")
+        ess_scenarios = pd.read_csv(fn).values
+
+        log_message(logging.logger.info(f"an instances of ESSResult was loaded ({simulation_desc})"))
+        return ESSResult(ess_scenarios, esi_result, Path(simulation_desc).stem)
 
     sim_results = []
     for sim in meta_data["simulations"]:
         fn = os.path.join(result_dir_path, sim)
         ess_scenarios = pd.read_csv(fn).values
-        sim_results.append(ESSResult(ess_scenarios, esi_result))
+        sim_results.append(ESSResult(ess_scenarios, esi_result, Path(sim).stem))
+
+    log_message(logging.logger.info(f"{len(sim_results)}"
+                                    f" instance{"" if len(sim_results) == 1 else "s"}"
+                                    f" of ESSResult {"was" if len(sim_results) else "were"} loaded : {sim_results}"))
 
     return sim_results
 
@@ -72,12 +94,15 @@ def save_result(result_dir_path, result):
             meta_data = {}
 
     if isinstance(result, ESSResult):
-        meta_data["main_result"]: "simulation"
+        meta_data["main_result"] = "simulation"
         est_result = result.esi_result
-
     else:
-        if not (already_exists and meta_data["main_result"] == "simulation"):
-            meta_data["main_result"]: "estimation"
+        try:
+            is_simulation = (meta_data["main_result"] == "simulation")
+        except KeyError:
+            is_simulation = False
+        if not (already_exists and is_simulation):
+            meta_data["main_result"] = "estimation"
         est_result = result
 
     meta_data.update({
@@ -107,9 +132,10 @@ def save_result(result_dir_path, result):
 
     if isinstance(result, ESSResult):
         # save the simulations
-        fn = os.path.join(result_dir_path, str(result) + ".csv")
-        columns = [f"sim{i}" for i in range(result.scenarios().shape[1])]
-        pd.DataFrame(est_result.esi_samples(raw=True)).to_csv(fn, index=False, header=columns)
+        fn = str(result) + ".csv"
+        pn = os.path.join(result_dir_path, fn)
+        columns = [f"sim{i}" for i in range(result.scenarios.shape[1])]
+        pd.DataFrame(result.scenarios).to_csv(pn, index=False, header=columns)
         if not "simulations" in meta_data:
             meta_data["simulations"] = [fn]
         else:

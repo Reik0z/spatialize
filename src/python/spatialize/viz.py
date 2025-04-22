@@ -1,15 +1,16 @@
 import numpy as np
 import random as rd
-from spatialize import in_notebook
+from spatialize import in_notebook, logging
 
 import matplotlib.pyplot as plt
 from matplotlib.pyplot import colorbar
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 
 from spatialize import SpatializeError
+from spatialize.logging import log_message
 
 
-def plot_colormap_data(data, ax=None, w=None, h=None, xi_locations=None, griddata=False, **figargs):
+def plot_colormap_data(data, ax=None, w=None, h=None, xi_locations=None, griddata=False, title="", **figargs):
     if griddata:
         im = data.T
     else:
@@ -20,11 +21,17 @@ def plot_colormap_data(data, ax=None, w=None, h=None, xi_locations=None, griddat
                 h, w = len(np.unique(xi_locations[:, 0])) - 1, len(np.unique(xi_locations[:, 1])) - 1
                 if len(data) != h * w:
                     h, w = len(np.unique(xi_locations[:, 0])), len(np.unique(xi_locations[:, 1]))
+                log_message(logging.logger.debug(f"using h={h}, w={w}"))
         im = data.reshape(w, h)
 
-    plotter = plt
+    # plotter = plt
     if ax is not None:
         plotter = ax
+    else:
+        fig = plt.figure(dpi=150)
+        gs = fig.add_gridspec(1, 1)
+        plotter = gs.subplots()
+        plotter.set_title(title)
 
     img = plotter.imshow(im, origin='lower', **figargs)
     divider = make_axes_locatable(plotter)
