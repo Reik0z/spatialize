@@ -13,12 +13,27 @@ from spatialize.resources import data
 
 
 def load_result(result_dir_path, just_esi_result=False, simulation_desc=None):
+    """
+    Loads results from a result directory, including metadata, estimations, ESI samples,
+    and optionally simulation results (ESSResults).
+
+    :param result_dir_path: Path to the directory containing result files and metadata.
+    :param just_esi_result: If True, returns only an ESIResult instance even if simulations are available.
+    :param simulation_desc: Base name of the specific simulation file to load (without `.csv` extension).
+                            If provided, only that simulation will be loaded.
+    :raises SpatializeError: If the directory does not correspond to a simulation but a simulation description is provided.
+    :raises SpatializeError: If the provided simulation description is not found in the metadata.
+
+    :return: Depending on the available data, returns an instance of EstimationResult,
+             ESIResult, ESSResult, or a list of ESSResult instances.
+    :rtype: EstimationResult | ESIResult | ESSResult | list[ESSResult]
+    """
     # load the metadata file
     meta_data_fn = os.path.join(result_dir_path, "metadata.json")
     with open(meta_data_fn, "r") as outfile:
         meta_data = json.load(outfile)
 
-    if meta_data["main_result"] != "simulation":
+    if meta_data["main_result"] != "simulation" and not simulation_desc is None:
         raise SpatializeError("Not a simulation result directory")
 
     # load the estimation
@@ -77,6 +92,19 @@ def load_result(result_dir_path, just_esi_result=False, simulation_desc=None):
 
 
 def save_result(result_dir_path, result):
+    """
+    Saves an estimation or simulation result to a specified directory, including metadata,
+    estimations, locations, ESI samples, and simulation data if applicable.
+
+    :param result_dir_path: Path to the directory where the result should be saved.
+                            If it does not exist, it will be created.
+    :param result: The result object to save. Can be an instance of EstimationResult,
+                   ESIResult, or ESSResult. If the directory already contains an
+                   estimation result (ESIResult), and `result` is an ESSResult
+                   (simulation), the metadata will be updated to reflect a simulation-type
+                   result, and the simulation will be added to the existing simulations list.
+    """
+
     def ensure_directory(path):
         if not os.path.exists(path):
             os.makedirs(path)

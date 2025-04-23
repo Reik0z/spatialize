@@ -11,6 +11,22 @@ from spatialize.logging import log_message
 
 
 def plot_colormap_data(data, ax=None, w=None, h=None, xi_locations=None, griddata=False, title="", **figargs):
+    """
+    Plots a colormap (heatmap-like visualization) of the given data using matplotlib.
+
+    :param data: The data to visualize. Should be either 2D grid data (if `griddata=True`)
+                 or a flat array that can be reshaped into a 2D array.
+    :param ax: Matplotlib axes object to plot into. If None, a new figure and axes will be created.
+    :param w: Width of the image (number of columns). Required if `griddata=False` and `xi_locations` is not provided.
+    :param h: Height of the image (number of rows). Required if `griddata=False` and `xi_locations` is not provided.
+    :param xi_locations: Coordinates of the data points, used to infer shape (h, w) if not provided explicitly.
+    :param griddata: If True, assumes `data` is already in 2D format and transposes it for display.
+    :param title: Title to display on the plot (only used if `ax` is None and a new figure is created).
+    :param figargs: Additional keyword arguments to pass to `imshow()`, such as `cmap`, `vmin`, or `vmax`.
+
+    :raises SpatializeError: If neither `w`/`h` nor `xi_locations` are provided when `griddata` is False,
+                             or if reshaping fails due to inconsistent dimensions.
+    """
     if griddata:
         im = data.T
     else:
@@ -40,7 +56,27 @@ def plot_colormap_data(data, ax=None, w=None, h=None, xi_locations=None, griddat
 
 def plot_colormap_array(data, n_imgs=9, n_cols=3, norm_lims=False, xi_locations=None, reference_map=None,
                         cmap='coolwarm', title="", title_prefix="scenario", seed=None, **figargs):
+    """
+      Plots an array of colormap visualizations (heatmaps) for a subset of data columns in a grid layout.
 
+      :param data: The data to visualize. A 2D array where each column represents a separate dataset to plot.
+      :param n_imgs: The number of images (subplots) to display from the data. Defaults to 9.
+      :param n_cols: The number of columns in the plot grid. Defaults to 3.
+      :param norm_lims: If True, normalizes the colormap limits using a reference map. Defaults to False.
+      :param xi_locations: Coordinates of the data points. Used for reshaping the data if necessary.
+      :param reference_map: A map to use for normalizing the colormap range (`vmin`, `vmax`).
+                             The min and max of this map are used to adjust the normalization.
+      :param cmap: The colormap to use for plotting. Defaults to 'coolwarm'.
+      :param title: The title for the entire plot. If `None`, no title will be set.
+      :param title_prefix: Prefix for individual subplot titles (e.g., "scenario 1", "scenario 2").
+      :param seed: The seed for random number generation. If `None`, a random seed will be generated for reproducibility.
+      :param figargs: Additional arguments to pass to the `plot_colormap_data` function, such as `vmin` or `vmax`.
+
+      :return: A Matplotlib figure object and the seed used for random sampling.
+      :rtype: matplotlib.figure.Figure, int
+
+      :raises ValueError: If the number of images to plot exceeds the number of columns in the data.
+      """
     if n_imgs > data.shape[1]:
         n_imgs = data.shape[1]
 

@@ -13,6 +13,7 @@ from spatialize._util import signature_overload, in_notebook
 from spatialize._math_util import flatten_grid_data
 from spatialize.gs import lib_spatialize_facade, partitioning_process, local_interpolator as li
 from spatialize.logging import log_message, default_singleton_callback, singleton_null_callback
+from spatialize.viz import plot_colormap_array
 
 
 class ESIGridSearchResult(GridSearchResult):
@@ -178,6 +179,24 @@ class ESIResult(EstimationResult):
         if not in_notebook():
             return fig  # just in case you want to embed it somewhere else
 
+    def preview_esi_samples(self, n_imgs=9, n_cols=3, title_prefix="ESI sample", title=""):
+        """
+        Visualizes a preview of the ESI samples as a grid of colormap images.
+
+        This method displays a subset of the ESI samples using the `plot_colormap_array` function.
+        The ESI samples are visualized in a grid layout, where each image corresponds to one ESI sample.
+
+        :param n_imgs: The number of ESI samples (images) to display. Defaults to 9.
+        :param n_cols: The number of columns in the grid layout. Defaults to 3.
+        :param title_prefix: A prefix to add to each subplot title (e.g., "ESI sample 1", "ESI sample 2").
+        :param title: The title for the entire plot.
+        """
+        return plot_colormap_array(self.esi_samples(raw=True), n_imgs=n_imgs,
+                                   n_cols=n_cols, norm_lims=False,
+                                   xi_locations=self._xi,
+                                   reference_map=self.estimation(),
+                                   title_prefix=title_prefix,
+                                   title=title)
 
 # ============================================= PUBLIC API ==========================================================
 @signature_overload(pivot_arg=("local_interpolator", li.IDW, "local interpolator"),
