@@ -24,7 +24,6 @@ def plot_colormap_data(data, ax=None, w=None, h=None, xi_locations=None, griddat
                 log_message(logging.logger.debug(f"using h={h}, w={w}"))
         im = data.reshape(w, h)
 
-    # plotter = plt
     if ax is not None:
         plotter = ax
     else:
@@ -40,7 +39,7 @@ def plot_colormap_data(data, ax=None, w=None, h=None, xi_locations=None, griddat
 
 
 def plot_colormap_array(data, n_imgs=9, n_cols=3, norm_lims=False, xi_locations=None, reference_map=None,
-                        cmap='coolwarm', title_prefix="scenario", seed=None, **figargs):
+                        cmap='coolwarm', title="", title_prefix="scenario", seed=None, **figargs):
 
     if n_imgs > data.shape[1]:
         n_imgs = data.shape[1]
@@ -83,7 +82,8 @@ def plot_colormap_array(data, n_imgs=9, n_cols=3, norm_lims=False, xi_locations=
 
     for i in range(n_imgs, n_rows * n_cols):
         axis[i].set_axis_off()
-    fig.tight_layout()
+    fig.tight_layout(rect=(0, 0.03, 1, 0.95))
+    fig.suptitle(title, fontsize=14)
 
     if in_notebook():
         return seed

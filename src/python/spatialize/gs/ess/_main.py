@@ -23,12 +23,15 @@ class ESSResult:
     def __repr__(self):
         return str(self.desc)
 
-    def quick_plot(self, n_imgs=9, n_cols=3, norm_lims=False, title_prefix="scenario"):
+    def quick_plot(self, n_imgs=9, n_cols=3, norm_lims=False, title_prefix="scenario", title=None):
+        if title is None:
+            title = self.desc
         return plot_colormap_array(self.scenarios, n_imgs=n_imgs,
                                    n_cols=n_cols, norm_lims=norm_lims,
                                    xi_locations=self.esi_result._xi,
                                    reference_map=self.esi_result.estimation(),
-                                   title_prefix=title_prefix)
+                                   title_prefix=title_prefix,
+                                   title=title)
 
 
 def ess_sample(esi_result,

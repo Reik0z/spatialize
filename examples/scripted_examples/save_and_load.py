@@ -67,15 +67,15 @@ except Exception as e:
 
     sim_result = ess_sample(esi_result=result, n_sims=n_sims, point_model_name="emm", n_components=1)
     save_result(model_dir_path, sim_result)
-
-    sim_result = ess_sample(esi_result=result, n_sims=n_sims, point_model_name="emm", n_components=2)
-    save_result(model_dir_path, sim_result)
-
-    sim_result = ess_sample(esi_result=result, n_sims=n_sims, point_model_name="vim", n_components=1)
-    save_result(model_dir_path, sim_result)
-
-    sim_result = ess_sample(esi_result=result, n_sims=n_sims, point_model_name="vim", n_components=2)
-    save_result(model_dir_path, sim_result)
+    #
+    # sim_result = ess_sample(esi_result=result, n_sims=n_sims, point_model_name="emm", n_components=2)
+    # save_result(model_dir_path, sim_result)
+    #
+    # sim_result = ess_sample(esi_result=result, n_sims=n_sims, point_model_name="vim", n_components=1)
+    # save_result(model_dir_path, sim_result)
+    #
+    # sim_result = ess_sample(esi_result=result, n_sims=n_sims, point_model_name="vim", n_components=2)
+    # save_result(model_dir_path, sim_result)
 
 sim_result = load_result(model_dir_path, simulation_desc="10sims_emm_1_components")
 seed = sim_result.quick_plot(n_imgs=9, n_cols=3, norm_lims=False, title_prefix="Scenario")
