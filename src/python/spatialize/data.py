@@ -49,7 +49,7 @@ def load_result(result_dir_path, just_esi_result=False, simulation_desc=None):
                            xi=xi)
 
     if meta_data["main_result"] == "estimation" or just_esi_result:
-        log_message(logging.logger.info(f"an instances of ESIResult was loaded"))
+        log_message(logging.logger.info(f"an instance of ESIResult was loaded"))
         return esi_result
 
     if not simulation_desc is None:
@@ -59,7 +59,7 @@ def load_result(result_dir_path, just_esi_result=False, simulation_desc=None):
         fn = os.path.join(result_dir_path, simulation_desc + ".csv")
         ess_scenarios = pd.read_csv(fn).values
 
-        log_message(logging.logger.info(f"an instances of ESSResult was loaded ({simulation_desc})"))
+        log_message(logging.logger.info(f"an instance of ESSResult was loaded ({simulation_desc})"))
         return ESSResult(ess_scenarios, esi_result, Path(simulation_desc).stem)
 
     sim_results = []
@@ -70,7 +70,8 @@ def load_result(result_dir_path, just_esi_result=False, simulation_desc=None):
 
     log_message(logging.logger.info(f"{len(sim_results)}"
                                     f" instance{"" if len(sim_results) == 1 else "s"}"
-                                    f" of ESSResult {"was" if len(sim_results) else "were"} loaded : {sim_results}"))
+                                    f" of ESSResult {"was" if len(sim_results) == 1 else "were"} "
+                                    f"loaded : {sim_results}"))
 
     return sim_results
 

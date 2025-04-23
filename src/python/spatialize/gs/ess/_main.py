@@ -121,6 +121,6 @@ def ess_sample(esi_result,
         if point_model_name == "kde":
             desc = f"{n_sims}sims_kde_{kernel}"
         else:
-            desc = f"{n_sims}sims_{point_model_name}_{n_components}n_components"
+            desc = f"{n_sims}sims_{point_model_name}_{n_components}_components"
 
     return ESSResult(scenarios, esi_result, desc)

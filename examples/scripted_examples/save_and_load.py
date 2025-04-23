@@ -58,25 +58,26 @@ try:
     for sim_result in sim_results:
         seed = sim_result.quick_plot(n_imgs=9, n_cols=3, norm_lims=False, title_prefix="Scenario")
 except Exception as e:
-    sim_result = ess_sample(esi_result=result, n_sims=10, point_model_name="kde", kernel="gaussian")
+    n_sims = 10
+    sim_result = ess_sample(esi_result=result, n_sims=n_sims, point_model_name="kde", kernel="gaussian")
     save_result(model_dir_path, sim_result)
 
-    sim_result = ess_sample(esi_result=result, n_sims=10, point_model_name="kde", kernel="tophat")
+    sim_result = ess_sample(esi_result=result, n_sims=n_sims, point_model_name="kde", kernel="tophat")
     save_result(model_dir_path, sim_result)
 
-    sim_result = ess_sample(esi_result=result, n_sims=10, point_model_name="emm", n_components=1)
+    sim_result = ess_sample(esi_result=result, n_sims=n_sims, point_model_name="emm", n_components=1)
     save_result(model_dir_path, sim_result)
 
-    sim_result = ess_sample(esi_result=result, n_sims=10, point_model_name="emm", n_components=2)
+    sim_result = ess_sample(esi_result=result, n_sims=n_sims, point_model_name="emm", n_components=2)
     save_result(model_dir_path, sim_result)
 
-    sim_result = ess_sample(esi_result=result, n_sims=10, point_model_name="vim", n_components=1)
+    sim_result = ess_sample(esi_result=result, n_sims=n_sims, point_model_name="vim", n_components=1)
     save_result(model_dir_path, sim_result)
 
-    sim_result = ess_sample(esi_result=result, n_sims=10, point_model_name="vim", n_components=2)
+    sim_result = ess_sample(esi_result=result, n_sims=n_sims, point_model_name="vim", n_components=2)
     save_result(model_dir_path, sim_result)
 
-sim_result = load_result(model_dir_path, simulation_desc="10sims_emm_1n_components")
+sim_result = load_result(model_dir_path, simulation_desc="10sims_emm_1_components")
 seed = sim_result.quick_plot(n_imgs=9, n_cols=3, norm_lims=False, title_prefix="Scenario")
 
 plt.show()
