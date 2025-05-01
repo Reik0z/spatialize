@@ -25,8 +25,8 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: List files
-        run: ls -R
+      - name: Install spatialize
+        run: pip install spatialize
  
       - name: Run test script
         run: python examples/scripted_examples/esi_3d_nongriddata.py
