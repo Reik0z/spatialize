@@ -18,7 +18,7 @@ libspatialize_extensions = [
     Extension(name='libspatialize',
               sources=[libsptlzsrc],
               include_dirs=[ os.path.join('.', 'include'), numpy.get_include()],
-              extra_compile_args=['-std=c++14'],
+              extra_compile_args=['-std=c++17'],
               define_macros=macros,
               ),
 ]

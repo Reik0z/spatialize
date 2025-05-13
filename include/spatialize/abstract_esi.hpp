@@ -31,7 +31,7 @@ namespace sptlz{
 		return(s.str());
 	}
 
-	std::vector<std::vector<float>> samples_coords_bbox(std::vector<std::vector<float>> *coords){
+	std::vector<std::vector<float>> samples_coords_bbox(std::vector<std::vector<float>> *coords, std::vector<std::vector<float>> *queries=NULL){
 		std::vector<std::vector<float>> bbox;
 
 		for(size_t i=0; i<coords->at(0).size(); i++){
@@ -49,9 +49,21 @@ namespace sptlz{
 			}
 		}
 
+		if(queries != NULL){
+			for(size_t i=0; i<queries->size(); i++){
+				for(size_t j=0; j<queries->at(i).size(); j++){
+					if(queries->at(i).at(j) < bbox.at(j).at(0)){
+						bbox.at(j).at(0) = queries->at(i).at(j);
+					}
+					if(bbox.at(j).at(1) < queries->at(i).at(j)){
+						bbox.at(j).at(1) = queries->at(i).at(j);
+					}
+				}
+			}
+		}
+
 		return(bbox);
 	}
-
 	float bbox_sum_interval(std::vector<std::vector<float>> bbox){
 		float c = 0.0;
 		for(std::vector<float> axis : bbox){
@@ -474,8 +486,8 @@ namespace sptlz{
 					for(size_t j=0; j<mt->samples_by_leaf.size(); j++){
 						if(mt->samples_by_leaf.at(j).size()!=0){
 							auto predictions = leaf_kfold(k, &coords, &values, &folds, &(mt->samples_by_leaf.at(j)), &(mt->leaf_params.at(j)));
-							for(size_t k=0; k<mt->samples_by_leaf.at(j).size(); k++){
-								results.at(mt->samples_by_leaf.at(j).at(k)).push_back(predictions.at(k));
+							for(size_t l=0; l<mt->samples_by_leaf.at(j).size(); l++){
+								results.at(mt->samples_by_leaf.at(j).at(l)).push_back(predictions.at(l));
 							}
 						}
 					}
