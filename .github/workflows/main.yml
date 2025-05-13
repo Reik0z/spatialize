@@ -1,5 +1,7 @@
 name: Test
 
+run-name: Running test on Linux
+
 on:
   push:
     branches: [ feature/actions-test ]
@@ -28,6 +30,6 @@ jobs:
       - name: Install spatialize
         run: pip install spatialize
  
-      - name: Run test script
+      - name: Run example script
         run: python examples/scripted_examples/esi_3d_nongriddata.py
          
