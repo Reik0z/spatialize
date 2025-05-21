@@ -35,3 +35,19 @@ jobs:
         with:
           name: release-dists
           path: dist/
+
+      - name: Extract version
+        id: get_version
+        run: |
+          VERSION=$(python -c "import re; f = open('_version.py').read(); print(re.search(r'__version__ = [\"\\']([^\"\\']+)[\"\\']', f).group(1))")
+          echo \"version=$VERSION\" >> $GITHUB_OUTPUT
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: Release v${{ steps.get_version.outputs.version }}
+          tag_name: v${{ steps.get_version.outputs.version }}
+          files: dist/*
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
