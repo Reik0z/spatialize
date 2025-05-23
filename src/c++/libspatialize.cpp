@@ -38,6 +38,8 @@ py::array_t<float> get_partitions_using_esi(py::array_t<float> samples, int fore
     sptlz::ESI* esi = new sptlz::ESI(smp, {}, lambda, forest_size, bbox, _visitor, seed);
     auto r = esi->get_partitions();
 
+    delete esi;
+
     return(sptlz::vector_2d_to_ndarray(&r));
 }
 
@@ -70,6 +72,8 @@ py::array_t<float> estimation_nn_idw(py::array_t<float> samples, py::array_t<flo
 
     auto r = myIDW->estimate(&qry);
 
+    delete myIDW;
+    
     return(sptlz::vector_1d_to_ndarray(&r));
 }
 
@@ -99,6 +103,8 @@ py::array_t<float> loo_nn_idw(py::array_t<float> samples, py::array_t<float> val
     
     auto r = myIDW->leave_one_out();
 
+    delete myIDW;
+    
     return(sptlz::vector_1d_to_ndarray(&r));
 }
 
@@ -128,6 +134,8 @@ py::array_t<float> kfold_nn_idw(py::array_t<float> samples, py::array_t<float> v
 
     auto r = myIDW->k_fold(k, seed);
 
+    delete myIDW;
+    
     return(sptlz::vector_1d_to_ndarray(&r));
 }
 
@@ -162,6 +170,8 @@ std::tuple<py::object, py::array_t<float>> estimation_esi_idw(py::array_t<float>
     sptlz::ESI_IDW* esi = new sptlz::ESI_IDW(smp, val, lambda, forest_size, bbox, exp, _visitor, seed);
     
     auto r = esi->estimate(&qry);
+
+    delete esi;
 
     std::tuple<py::object, py::array_t<float>> out = std::make_tuple(py::cast<py::none>(Py_None), sptlz::vector_2d_to_ndarray(&r));
     return(out);
@@ -199,6 +209,8 @@ std::tuple<py::object, py::array_t<float>> loo_esi_idw(py::array_t<float> sample
     
     auto r = esi->leave_one_out();
 
+    delete esi;
+
     std::tuple<py::object, py::array_t<float>> out = std::make_tuple(py::cast<py::none>(Py_None), sptlz::vector_2d_to_ndarray(&r));
     return(out);
 }
@@ -234,6 +246,8 @@ std::tuple<py::object, py::array_t<float>> kfold_esi_idw(py::array_t<float> samp
     sptlz::ESI_IDW* esi = new sptlz::ESI_IDW(smp, val, lambda, forest_size, bbox, exp, _visitor, creation_seed);
 
     auto r = esi->k_fold(k, folding_seed);
+
+    delete esi;
 
     std::tuple<py::object, py::array_t<float>> out = std::make_tuple(py::cast<py::none>(Py_None), sptlz::vector_2d_to_ndarray(&r));
     return(out);
@@ -275,6 +289,8 @@ std::tuple<py::object, py::array_t<float>> estimation_esi_kriging_2d(py::array_t
 
     auto r = esi->estimate(&qry);
 
+    delete esi;
+
     std::tuple<py::object, py::array_t<float>> out = std::make_tuple(py::cast<py::none>(Py_None), sptlz::vector_2d_to_ndarray(&r));
     return(out);
 }
@@ -314,6 +330,8 @@ std::tuple<py::object, py::array_t<float>> loo_esi_kriging_2d(py::array_t<float>
     sptlz::ESI_Kriging* esi = new sptlz::ESI_Kriging(smp, val, lambda, forest_size, bbox, model, nugget, range, sill, _visitor, seed);
 
     auto r = esi->leave_one_out();
+
+    delete esi;
 
     std::tuple<py::object, py::array_t<float>> out = std::make_tuple(py::cast<py::none>(Py_None), sptlz::vector_2d_to_ndarray(&r));
     return(out);
@@ -355,6 +373,8 @@ std::tuple<py::object, py::array_t<float>> kfold_esi_kriging_2d(py::array_t<floa
 
     auto r = esi->k_fold(k, folding_seed);
 
+    delete esi;
+
     std::tuple<py::object, py::array_t<float>> out = std::make_tuple(py::cast<py::none>(Py_None), sptlz::vector_2d_to_ndarray(&r));
     return(out);
 }
@@ -394,6 +414,8 @@ std::tuple<py::object, py::array_t<float>> estimation_esi_kriging_3d(py::array_t
     sptlz::ESI_Kriging* esi = new sptlz::ESI_Kriging(smp, val, lambda, forest_size, bbox, model, nugget, range, sill, _visitor, seed);
 
     auto r = esi->estimate(&qry);
+
+    delete esi;
 
     std::tuple<py::object, py::array_t<float>> out = std::make_tuple(py::cast<py::none>(Py_None), sptlz::vector_2d_to_ndarray(&r));
     return(out);
@@ -435,6 +457,8 @@ std::tuple<py::object, py::array_t<float>> loo_esi_kriging_3d(py::array_t<float>
 
     auto r = esi->leave_one_out();
 
+    delete esi;
+
     std::tuple<py::object, py::array_t<float>> out = std::make_tuple(py::cast<py::none>(Py_None), sptlz::vector_2d_to_ndarray(&r));
     return(out);
 }
@@ -475,6 +499,8 @@ std::tuple<py::object, py::array_t<float>> kfold_esi_kriging_3d(py::array_t<floa
 
     auto r = esi->k_fold(k, folding_seed);
 
+    delete esi;
+
     std::tuple<py::object, py::array_t<float>> out = std::make_tuple(py::cast<py::none>(Py_None), sptlz::vector_2d_to_ndarray(&r));
     return(out);
 }
@@ -508,6 +534,8 @@ std::tuple<py::object, py::array_t<float>> estimation_voronoi_idw(py::array_t<fl
     sptlz::VORONOI_IDW* voronoi = new sptlz::VORONOI_IDW(smp, val, alpha, forest_size, bbox, exp, _visitor, seed);
     
     auto r = voronoi->estimate(&qry);
+
+    delete voronoi;
 
     std::tuple<py::object, py::array_t<float>> out = std::make_tuple(py::cast<py::none>(Py_None), sptlz::vector_2d_to_ndarray(&r));
     return(out);
@@ -543,6 +571,8 @@ std::tuple<py::object, py::array_t<float>> loo_voronoi_idw(py::array_t<float> sa
     
     auto r = voronoi->leave_one_out();
 
+    delete voronoi;
+
     std::tuple<py::object, py::array_t<float>> out = std::make_tuple(py::cast<py::none>(Py_None), sptlz::vector_2d_to_ndarray(&r));
     return(out);
 }
@@ -576,6 +606,8 @@ std::tuple<py::object, py::array_t<float>> kfold_voronoi_idw(py::array_t<float> 
     sptlz::VORONOI_IDW* voronoi = new sptlz::VORONOI_IDW(smp, val, alpha, forest_size, bbox, exp, _visitor, creation_seed);
     
     auto r = voronoi->k_fold(k, folding_seed);
+
+    delete voronoi;
 
     std::tuple<py::object, py::array_t<float>> out = std::make_tuple(py::cast<py::none>(Py_None), sptlz::vector_2d_to_ndarray(&r));
     return(out);
@@ -617,6 +649,8 @@ std::tuple<py::object, py::array_t<float>> estimation_adaptive_esi_idw_2d(py::ar
     
     auto r = esi->estimate(&qry);
 
+    delete esi;
+
     std::tuple<py::object, py::array_t<float>> out = std::make_tuple(py::cast<py::none>(Py_None), sptlz::vector_2d_to_ndarray(&r));
     return(out);
 }
@@ -656,6 +690,8 @@ std::tuple<py::object, py::array_t<float>> loo_adaptive_esi_idw_2d(py::array_t<f
     sptlz::ADAPTIVE_ESI_IDW* esi = new sptlz::ADAPTIVE_ESI_IDW(smp, val, lambda, forest_size, bbox, _visitor, seed);
     
     auto r = esi->leave_one_out();
+
+    delete esi;
 
     std::tuple<py::object, py::array_t<float>> out = std::make_tuple(py::cast<py::none>(Py_None), sptlz::vector_2d_to_ndarray(&r));
     return(out);
@@ -697,6 +733,8 @@ std::tuple<py::object, py::array_t<float>> kfold_adaptive_esi_idw_2d(py::array_t
     
     auto r = esi->k_fold(k, folding_seed);
 
+    delete esi;
+
     std::tuple<py::object, py::array_t<float>> out = std::make_tuple(py::cast<py::none>(Py_None), sptlz::vector_2d_to_ndarray(&r));
     return(out);
 }
@@ -736,6 +774,8 @@ std::tuple<py::object, py::array_t<float>> estimation_adaptive_esi_idw_3d(py::ar
     sptlz::ADAPTIVE_ESI_IDW* esi = new sptlz::ADAPTIVE_ESI_IDW(smp, val, lambda, forest_size, bbox, _visitor, seed);
     
     auto r = esi->estimate(&qry);
+
+    delete esi;
 
     std::tuple<py::object, py::array_t<float>> out = std::make_tuple(py::cast<py::none>(Py_None), sptlz::vector_2d_to_ndarray(&r));
     return(out);
@@ -777,6 +817,8 @@ std::tuple<py::object, py::array_t<float>> loo_adaptive_esi_idw_3d(py::array_t<f
     
     auto r = esi->leave_one_out();
 
+    delete esi;
+
     std::tuple<py::object, py::array_t<float>> out = std::make_tuple(py::cast<py::none>(Py_None), sptlz::vector_2d_to_ndarray(&r));
     return(out);
 }
@@ -816,6 +858,8 @@ std::tuple<py::object, py::array_t<float>> kfold_adaptive_esi_idw_3d(py::array_t
     sptlz::ADAPTIVE_ESI_IDW* esi = new sptlz::ADAPTIVE_ESI_IDW(smp, val, lambda, forest_size, bbox, _visitor, creation_seed);
     
     auto r = esi->k_fold(k, folding_seed);
+
+    delete esi;
 
     std::tuple<py::object, py::array_t<float>> out = std::make_tuple(py::cast<py::none>(Py_None), sptlz::vector_2d_to_ndarray(&r));
     return(out);
@@ -870,6 +914,8 @@ std::tuple<py::object, py::array_t<float>> estimation_custom_esi(py::array_t<flo
     }, NULL, NULL, _visitor, seed);
     auto r = esi->estimate(&qry);
 
+    delete esi;
+
     std::tuple<py::object, py::array_t<float>> out = std::make_tuple(py::cast<py::none>(Py_None), sptlz::vector_2d_to_ndarray(&r));
     return(out);
 }
@@ -921,6 +967,8 @@ std::tuple<py::object, py::array_t<float>> loo_custom_esi(py::array_t<float> sam
       return(sptlz::ndarray_to_vector_1d(&res));
     }, NULL, _visitor, seed);
     auto r = esi->leave_one_out();
+
+    delete esi;
 
     std::tuple<py::object, py::array_t<float>> out = std::make_tuple(py::cast<py::none>(Py_None), sptlz::vector_2d_to_ndarray(&r));
     return(out);
@@ -974,6 +1022,8 @@ std::tuple<py::object, py::array_t<float>> kfold_custom_esi(py::array_t<float> s
       return(sptlz::ndarray_to_vector_1d(&res));
     }, _visitor, creation_seed);
     auto r = esi->k_fold(k, folding_seed);
+
+    delete esi;
 
     std::tuple<py::object, py::array_t<float>> out = std::make_tuple(py::cast<py::none>(Py_None), sptlz::vector_2d_to_ndarray(&r));
     return(out);

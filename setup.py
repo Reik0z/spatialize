@@ -1,32 +1,43 @@
 import numpy
 import os
 import sys
-from setuptools import setup, find_packages, Extension
+from setuptools import setup, find_packages #, Extension
+from pybind11.setup_helpers import Pybind11Extension
 import pathlib
+
+#sys.path.insert(0, ("./src/python"))
+#from spatialize import __version__
 
 with open(os.path.join(os.path.dirname(__file__), 'requirements.txt')) as reqh:
     install_requires = reqh.readlines()
 
-sys.path.insert(0, ("./src/python"))
- 
-from spatialize import __version__
-
 libsptlzsrc = os.path.join('src', 'c++', 'libspatialize.cpp')
 macros = [('NPY_NO_DEPRECATED_API', 'NPY_1_7_API_VERSION')]
 
+# libspatialize_extensions = [
+#     Extension(name='libspatialize',
+#               sources=[libsptlzsrc],
+#               include_dirs=[ os.path.join('.', 'include'), numpy.get_include()],
+#               extra_compile_args=['-std=c++17'],
+#               define_macros=macros,
+#               ),
+# ]
+
 libspatialize_extensions = [
-    Extension(name='libspatialize',
-              sources=[libsptlzsrc],
-              include_dirs=[ os.path.join('.', 'include'), numpy.get_include()],
-              extra_compile_args=['-std=c++17'],
-              define_macros=macros,
-              ),
+    Pybind11Extension(
+        "libspatialize",
+        sources=[libsptlzsrc],
+        include_dirs=[ os.path.join('.', 'include')],#, numpy.get_include()],
+        extra_compile_args=['-std=c++17'],
+        define_macros=macros,
+    ),
 ]
 
 if __name__ == '__main__':
     setup(
         name='spatialize',
-        version=__version__,
+#        version=__version__,
+        version='1.0.2',
         author='ALGES Laboratory',
         author_email='dev@alges.cl',
         description='Python wrapper for ESI',

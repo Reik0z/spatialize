@@ -1,7 +1,3 @@
-jedi
-pandas
-numpy
-jupyter
 scikit-learn
 scipy
 rich
@@ -9,5 +5,4 @@ tqdm
 matplotlib
 opencv-python
 setuptools
-pybind11
 numba
