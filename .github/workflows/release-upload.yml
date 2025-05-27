@@ -7,7 +7,7 @@ on:
     branches: [ feature/actions-test ]
 
 jobs:
-  release:
+  build-linux:
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -27,27 +27,107 @@ jobs:
           pip install -r requirements.txt
           pip install spatialize build
 
-      - name: Build project
+      - name: Build project (Linux)
         run: python -m build
 
-      - name: Upload distributions
+      - name: Upload Linux dist
         uses: actions/upload-artifact@v4
         with:
-          name: release-dists
+          name: dist-linux
           path: dist/
+
+  build-windows:
+    runs-on: windows-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install spatialize build
+
+      - name: Build project (Windows)
+        run: python -m build
+
+      - name: Upload Windows dist
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist-windows
+          path: dist/
+
+  build-macos:
+    runs-on: macos-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install spatialize build
+
+      - name: Build project (macOS)
+        run: python -m build
+
+      - name: Upload macOS dist
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist-macos
+          path: dist/
+
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    needs:
+      - build-linux
+      - build-windows
+      - build-macos
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
 
       - name: Extract version
         id: get_version
         run: |
-          VERSION=$(python -c "import re; f = open('src\python\spatialize\_version.py').read(); print(re.search(r'__version__ = [\"\\']([^\"\\']+)[\"\\']', f).group(1))")
-          echo \"version=$VERSION\" >> $GITHUB_OUTPUT
+          VERSION=$(python -c "import re; f = open('src/python/spatialize/_version.py').read(); print(re.search(r'__version__ = [\"\']([^\"\']+)[\"\']', f).group(1))")
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Download all dists
+        uses: actions/download-artifact@v4
+        with:
+          path: combined-dist
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
           name: Release v${{ steps.get_version.outputs.version }}
           tag_name: v${{ steps.get_version.outputs.version }}
-          files: dist/*
+          files: combined-dist/**
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
