@@ -127,6 +127,17 @@ jobs:
           prerelease: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        continue-on-error: true  # Allow the workflow to proceed if this step fails
+
+      - name: Update existing GitHub Release
+        if: failure()  # Run only if the previous step failed
+        uses: softprops/action-gh-release@v2
+        with:
+          files: combined-dist/**
+          name: Release v${{ steps.get_version.outputs.version }}
+          tag_name: v${{ steps.get_version.outputs.version }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
   
       - name: Upload assets to GitHub Release
         uses: softprops/action-gh-release@v2
