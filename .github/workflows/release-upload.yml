@@ -129,6 +129,10 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         continue-on-error: true  # Allow the workflow to proceed if this step fails
 
+      - name: Check ls
+        run: |
+          ls
+
       - name: Update existing GitHub Release
         if: failure()  # Run only if the previous step failed
         uses: softprops/action-gh-release@v2
