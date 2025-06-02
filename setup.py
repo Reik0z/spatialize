@@ -1,12 +1,6 @@
-import numpy
 import os
-import sys
 from setuptools import setup, find_packages #, Extension
 from pybind11.setup_helpers import Pybind11Extension
-import pathlib
-
-#sys.path.insert(0, ("./src/python"))
-#from spatialize import __version__
 
 with open(os.path.join(os.path.dirname(__file__), 'requirements.txt')) as reqh:
     install_requires = reqh.readlines()
@@ -23,12 +17,15 @@ macros = [('NPY_NO_DEPRECATED_API', 'NPY_1_7_API_VERSION')]
 #               ),
 # ]
 
+
+# the '-Wno-error=c++11-narrowing' argument is needed for
+# compiling with CLang (OS X)
 libspatialize_extensions = [
     Pybind11Extension(
         "libspatialize",
         sources=[libsptlzsrc],
         include_dirs=[ os.path.join('.', 'include')],#, numpy.get_include()],
-        extra_compile_args=['-std=c++17'],
+        extra_compile_args=['-std=c++17', '-Wno-error=c++11-narrowing'],
         define_macros=macros,
     ),
 ]
