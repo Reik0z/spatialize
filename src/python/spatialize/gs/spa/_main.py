@@ -16,7 +16,7 @@ from spatialize.gs.esi._main import build_arg_list
 from spatialize._util import signature_overload
 from spatialize.logging import default_singleton_callback, log_message
 from spatialize import SpatializeError, logging # Assuming 'logging' here refers to your custom logging
-from empirical import EmpiricalModel, FittedModelFactory
+from spatialize.gs.spa.empirical import EmpiricalModel, FittedModelFactory
 
 
 class PosteriorSampleAnalizer:

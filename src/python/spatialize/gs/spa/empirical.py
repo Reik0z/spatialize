@@ -1,7 +1,6 @@
 import numpy as np
 from numba import njit
 from scipy.interpolate import Akima1DInterpolator
-from sklearn.mixture import BayesianGaussianMixture
 
 from sklearn.mixture import BayesianGaussianMixture, GaussianMixture
 from sklearn.neighbors import KernelDensity
