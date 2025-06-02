@@ -129,9 +129,11 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         continue-on-error: true  # Allow the workflow to proceed if this step fails
 
-      - name: Check ls
-        run: |
-          ls
+      - name: Download artifact
+        uses: actions/download-artifact@v4
+
+      - name: Display files
+        run: ls -R
 
       - name: Update existing GitHub Release
         if: failure()  # Run only if the previous step failed
