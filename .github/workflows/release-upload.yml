@@ -131,6 +131,8 @@ jobs:
 
       - name: Download artifact
         uses: actions/download-artifact@v4
+        with:
+          path: dist
 
       - name: Display files
         run: ls -R
@@ -139,7 +141,10 @@ jobs:
         if: failure()  # Run only if the previous step failed
         uses: softprops/action-gh-release@v2
         with:
-          files: combined-dist/**
+          files: |
+            dist/dist-linux/**
+            dist/dist-macos/**
+            dist/dist-windows/**
           name: Release v${{ steps.get_version.outputs.version }}
           tag_name: v${{ steps.get_version.outputs.version }}
         env:
@@ -148,7 +153,10 @@ jobs:
       - name: Upload assets to GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          files: combined-dist/**
+          files: |
+            dist/dist-linux/**
+            dist/dist-macos/**
+            dist/dist-windows/**
           name: Release v${{ steps.get_version.outputs.version }}
           tag_name: v${{ steps.get_version.outputs.version }}
         env:
