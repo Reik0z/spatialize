@@ -128,11 +128,11 @@ jobs:
 
       - name: Delete previously uploaded assets
         run: |
-          ASSET_NAME="spatialize-1.0.2.tar.gz"
+          ASSET_NAME="spatialize-${{ steps.get_version.outputs.version }}.tar.gz"
           ASSET_ID=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
           "https://api.github.com/repos/${{ github.repository }}/releases/assets" | \
-          jq -r '.[] | select(.name == "'$ASSET_NAME'") | .id')
-      
+          jq -r '.[] | select(.name == "'"$ASSET_NAME"'") | .id')
+
           if [ -z "$ASSET_ID" ]; then
             echo "Asset $ASSET_NAME not found, skipping deletion."
           else
