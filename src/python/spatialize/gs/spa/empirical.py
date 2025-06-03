@@ -177,7 +177,7 @@ class BaseEmpiricalModel: # Renamed from BaseProbabilisticModel
         """
         raise NotImplementedError
 
-    def entropy_interval_around_point(self, x0, alpha=0.9, base=np.e, epsilon=1e-10):
+    def entropy_informative_interval(self, x0, alpha=0.9, base=np.e, epsilon=1e-10):
         """
         Finds an interval [a, b] around a given point x0 that contains `alpha`
         percentage of the total entropy. The interval is expanded outwards
@@ -350,7 +350,7 @@ class BaseEmpiricalModel: # Renamed from BaseProbabilisticModel
         L_alpha_prob = credible_info['interval'][1] - credible_info['interval'][0]
 
         # get Parameters from Entropy Interval
-        entropy_info = self.entropy_interval_around_point(x0, alpha=alpha_entropy_target)
+        entropy_info = self.entropy_informative_interval(x0, alpha=alpha_entropy_target)
         alpha_entropy_percent = alpha_entropy_target # The 'alpha' input to entropy_interval_around_point is the percentage inside
         L_alpha_entropy = entropy_info['interval'][1] - entropy_info['interval'][0]
 
@@ -360,13 +360,13 @@ class BaseEmpiricalModel: # Renamed from BaseProbabilisticModel
         if Z_normalization == 0: Z_normalization = 1.0 # Prevent division by zero if range is 0
 
         # calculate Confidence Measures
-        simple_rel_conf = calculate_simple_relative_confidence(
+        simple_rel_conf = compute_simple_relative_confidence_numba(
             alpha_prob, L_alpha_prob, alpha_entropy_percent, L_alpha_entropy, Z_normalization
         )
-        harm_rel_conf = calculate_relative_harmonic_confidence(
+        harm_rel_conf = compute_relative_harmonic_confidence_numba(
             alpha_prob, L_alpha_prob, alpha_entropy_percent, L_alpha_entropy
         )
-        log_ratio_conf = calculate_log_ratio_confidence(
+        log_ratio_conf = compute_log_ratio_confidence_numba(
             alpha_prob, L_alpha_prob, alpha_entropy_percent, L_alpha_entropy
         )
 
@@ -392,7 +392,7 @@ class BaseEmpiricalModel: # Renamed from BaseProbabilisticModel
             }
         }
 
-    def find_optimal_estimator_for_confidence(self, confidence_measure_type, alpha_credible_target = 0.95, alpha_entropy_target = 0.05):
+    def mc_estimator(self, confidence_measure_type, alpha_credible_target = 0.95, alpha_entropy_target = 0.05):
         """
         Finds an estimator (x_e) that maximizes a specified confidence measure.
 
@@ -520,7 +520,7 @@ def find_central_entropy_interval_numba(pdf, x, dx, alpha, log_base, epsilon):
 
 
 @njit
-def find_entropy_interval_around_point_numba(pdf, x, dx, center_idx, target_entropy, log_base, epsilon):
+def find_entropy_informative_interval_numba(pdf, x, dx, center_idx, target_entropy, log_base, epsilon):
     """
     Numba-optimized function to find an interval [a, b] around `center_idx`
     that contains `target_entropy`. The interval is expanded outwards
@@ -852,7 +852,7 @@ class EmpiricalModel(BaseEmpiricalModel):
             'total_entropy': total_entropy
         }
 
-    def entropy_interval_around_point(self, x0, alpha=0.9, base=np.e, epsilon=1e-10):
+    def entropy_informative_interval(self, x0, alpha=0.9, base=np.e, epsilon=1e-10):
         """
         Finds an interval [a, b] around a given point x0 that contains ``alpha``
         percentage of the total entropy. The interval is expanded outwards
@@ -887,7 +887,7 @@ class EmpiricalModel(BaseEmpiricalModel):
 
         # Call the Numba-optimized function to find the interval around x0
         left_idx, right_idx, current_interval_entropy = \
-            find_entropy_interval_around_point_numba(
+            find_entropy_informative_interval_numba(
                 pdf_for_entropy, self.x_, dx, center_idx, target_entropy, log_base, epsilon
             )
 
@@ -1096,8 +1096,8 @@ class EmpiricalModel(BaseEmpiricalModel):
 # --- Functions for Confidence Measures (Optimized with @njit and no type hints) ---
 
 @njit
-def calculate_simple_relative_confidence(alpha_prob, L_alpha_prob, 
-                                         alpha_entropy_percent, L_alpha_entropy, Z):
+def compute_simple_relative_confidence_numba(alpha_prob, L_alpha_prob,
+                                             alpha_entropy_percent, L_alpha_entropy, Z):
     """
     Calculates the Simple Relative Confidence (C_simple^rel).
 
@@ -1137,8 +1137,8 @@ def calculate_simple_relative_confidence(alpha_prob, L_alpha_prob,
     return numerator / denominator
 
 @njit
-def calculate_relative_harmonic_confidence(alpha_prob, L_alpha_prob, 
-                                           alpha_entropy_percent, L_alpha_entropy):
+def compute_relative_harmonic_confidence_numba(alpha_prob, L_alpha_prob,
+                                               alpha_entropy_percent, L_alpha_entropy):
     """
     Calculates the Relative Harmonic Confidence (C_harm^rel).
 
@@ -1168,8 +1168,8 @@ def calculate_relative_harmonic_confidence(alpha_prob, L_alpha_prob,
     return 1 / (1 + term1 + term2)
 
 @njit
-def calculate_log_ratio_confidence(alpha_prob, L_alpha_prob, 
-                                   alpha_entropy_percent, L_alpha_entropy):
+def compute_log_ratio_confidence_numba(alpha_prob, L_alpha_prob,
+                                       alpha_entropy_percent, L_alpha_entropy):
     """
     Calculates the Log-Ratio Confidence (C_log-ratio).
 
