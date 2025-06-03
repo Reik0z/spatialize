@@ -613,7 +613,7 @@ std::tuple<py::object, py::array_t<float>> kfold_voronoi_idw(py::array_t<float> 
     return(out);
 }
 
-std::tuple<py::object, py::array_t<float>> estimation_adaptive_esi_idw_2d(py::array_t<float> samples, py::array_t<float> values, int forest_size, float alpha, float exp, int seed, py::array_t<float> queries, std::optional<py::function> visitor){
+std::tuple<py::object, py::array_t<float>> estimation_adaptive_esi_idw_2d(py::array_t<float> samples, py::array_t<float> values, int forest_size, float alpha, int seed, py::array_t<float> queries, std::optional<py::function> visitor){
     py::buffer_info smp_info = samples.request(), val_info = values.request(), qry_info = queries.request();
     
     if (smp_info.ndim != 2)
@@ -655,7 +655,7 @@ std::tuple<py::object, py::array_t<float>> estimation_adaptive_esi_idw_2d(py::ar
     return(out);
 }
 
-std::tuple<py::object, py::array_t<float>> loo_adaptive_esi_idw_2d(py::array_t<float> samples, py::array_t<float> values, int forest_size, float alpha, float exp, int seed, py::array_t<float> queries, std::optional<py::function> visitor){
+std::tuple<py::object, py::array_t<float>> loo_adaptive_esi_idw_2d(py::array_t<float> samples, py::array_t<float> values, int forest_size, float alpha, int seed, py::array_t<float> queries, std::optional<py::function> visitor){
     py::buffer_info smp_info = samples.request(), val_info = values.request(), qry_info = queries.request();
     
     if (smp_info.ndim != 2)
@@ -697,7 +697,7 @@ std::tuple<py::object, py::array_t<float>> loo_adaptive_esi_idw_2d(py::array_t<f
     return(out);
 }
 
-std::tuple<py::object, py::array_t<float>> kfold_adaptive_esi_idw_2d(py::array_t<float> samples, py::array_t<float> values, int forest_size, float alpha, float exp, int creation_seed, int k, int folding_seed, py::array_t<float> queries, std::optional<py::function> visitor){
+std::tuple<py::object, py::array_t<float>> kfold_adaptive_esi_idw_2d(py::array_t<float> samples, py::array_t<float> values, int forest_size, float alpha, int creation_seed, int k, int folding_seed, py::array_t<float> queries, std::optional<py::function> visitor){
     py::buffer_info smp_info = samples.request(), val_info = values.request(), qry_info = queries.request();
     
     if (smp_info.ndim != 2)
@@ -739,7 +739,7 @@ std::tuple<py::object, py::array_t<float>> kfold_adaptive_esi_idw_2d(py::array_t
     return(out);
 }
 
-std::tuple<py::object, py::array_t<float>> estimation_adaptive_esi_idw_3d(py::array_t<float> samples, py::array_t<float> values, int forest_size, float alpha, float exp, int seed, py::array_t<float> queries, std::optional<py::function> visitor){
+std::tuple<py::object, py::array_t<float>> estimation_adaptive_esi_idw_3d(py::array_t<float> samples, py::array_t<float> values, int forest_size, float alpha, int seed, py::array_t<float> queries, std::optional<py::function> visitor){
     py::buffer_info smp_info = samples.request(), val_info = values.request(), qry_info = queries.request();
     
     if (smp_info.ndim != 2)
@@ -781,7 +781,7 @@ std::tuple<py::object, py::array_t<float>> estimation_adaptive_esi_idw_3d(py::ar
     return(out);
 }
 
-std::tuple<py::object, py::array_t<float>> loo_adaptive_esi_idw_3d(py::array_t<float> samples, py::array_t<float> values, int forest_size, float alpha, float exp, int seed, py::array_t<float> queries, std::optional<py::function> visitor){
+std::tuple<py::object, py::array_t<float>> loo_adaptive_esi_idw_3d(py::array_t<float> samples, py::array_t<float> values, int forest_size, float alpha, int seed, py::array_t<float> queries, std::optional<py::function> visitor){
     py::buffer_info smp_info = samples.request(), val_info = values.request(), qry_info = queries.request();
     
     if (smp_info.ndim != 2)
@@ -823,7 +823,7 @@ std::tuple<py::object, py::array_t<float>> loo_adaptive_esi_idw_3d(py::array_t<f
     return(out);
 }
 
-std::tuple<py::object, py::array_t<float>> kfold_adaptive_esi_idw_3d(py::array_t<float> samples, py::array_t<float> values, int forest_size, float alpha, float exp, int creation_seed, int k, int folding_seed, py::array_t<float> queries, std::optional<py::function> visitor){
+std::tuple<py::object, py::array_t<float>> kfold_adaptive_esi_idw_3d(py::array_t<float> samples, py::array_t<float> values, int forest_size, float alpha, int creation_seed, int k, int folding_seed, py::array_t<float> queries, std::optional<py::function> visitor){
     py::buffer_info smp_info = samples.request(), val_info = values.request(), qry_info = queries.request();
     
     if (smp_info.ndim != 2)
