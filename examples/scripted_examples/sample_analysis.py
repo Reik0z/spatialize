@@ -1,14 +1,10 @@
 import numpy as np
-import pandas as pd
-
 import matplotlib.pyplot as plt
 
 from spatialize import logging
-from spatialize.data import load_drill_holes_andes_2D, load_result, save_result
-from spatialize.gs.ess import ess_sample
+from spatialize.data import load_drill_holes_andes_2D
 from spatialize.gs.esi import esi_nongriddata, esi_hparams_search
 from spatialize.gs.spa import cv_sample_pred_posterior
-from spatialize.viz import plot_colormap_data
 
 # for a more explanatory output of the spatialize functions
 logging.log.setLevel("INFO")
@@ -48,6 +44,7 @@ def esi_idw(p_process, values):
     result.preview_esi_samples(n_imgs=9, n_cols=3)
     return result
 
+
 def adaptive_esi_idw(values):
     search_result = esi_hparams_search(points, values, xi,
                                        local_interpolator="adaptiveidw", griddata=False, k=10,
@@ -72,13 +69,13 @@ def cv_post_samples_adaptive_esi_idw():
                                       alpha=0.5)
     return result
 
+
 def cv_post_samples_esi_idw(p_process):
     search_result = esi_hparams_search(points, values, xi,
                                        local_interpolator="idw", griddata=False, k=10,
                                        p_process=p_process,
                                        exponent=list(np.arange(1.0, 15.0, 1.0)),
-                                       alpha=(0.5, 0.6, 0.8, 0.9, 0.95, 0.98),
-                                       seed=1500)
+                                       alpha=(0.5, 0.6, 0.8, 0.9, 0.95, 0.98))
 
     result = cv_sample_pred_posterior(points, values, xi,
                                       local_interpolator="idw",
@@ -88,10 +85,14 @@ def cv_post_samples_esi_idw(p_process):
 
     return result
 
-sample_analyzer = cv_post_samples_esi_idw("mondrian")
 
-sample_analyzer.plot_summary(figsize=(14, 5))
-sample_analyzer.quick_plot_models(n_imgs=9, n_cols=3, figsize=(14, 10))
+if __name__ == '__main__':
+    sample_analyzer = cv_post_samples_esi_idw("mondrian")
+    # sample_analyzer = cv_post_samples_adaptive_esi_idw()
 
-samples_ranking = sample_analyzer.rank_samples()
-sample_analyzer.plot_ranking(samples_ranking)
+    sample_analyzer.plot_summary(figsize=(14, 5))
+    sample_analyzer.quick_plot_models(n_imgs=9, n_cols=3, figsize=(14, 10))
+
+    samples_ranking = sample_analyzer.rank_samples()
+    sample_analyzer.plot_ranking(samples_ranking)
+    plt.show()

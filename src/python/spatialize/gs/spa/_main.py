@@ -15,7 +15,7 @@ import spatialize.gs.esi.aggfunction as af
 from spatialize.gs.esi._main import build_arg_list
 from spatialize._util import signature_overload
 from spatialize.logging import default_singleton_callback, log_message
-from spatialize import SpatializeError, logging # Assuming 'logging' here refers to your custom logging
+from spatialize import SpatializeError, logging  # Assuming 'logging' here refers to your custom logging
 from spatialize.gs.spa.empirical import EmpiricalModel, FittedModelFactory
 
 
@@ -28,6 +28,7 @@ class PosteriorSampleAnalizer:
     quantiles, and entropy for each sample. It also provides methods for
     ranking samples based on entropy and for visualizing the results.
     """
+
     def __init__(self, cv_post_result, points, sample_values, fitted_model_factory,
                  callback=default_singleton_callback):
         """
@@ -69,7 +70,7 @@ class PosteriorSampleAnalizer:
                 # Use your existing logging mechanism
                 log_message(logging.logger.debug(f"error for values[{i}] = {self.sample_values[i]}: {e}"))
                 continue
-    
+
     def rank_samples(self, entropy_mass_alphas=[0.5, 0.7, 0.9, 0.99], n_jobs=-1):
         """
         Categorizes sample values based on their central entropy intervals.
@@ -109,14 +110,16 @@ class PosteriorSampleAnalizer:
         :type entropy_mass_alphas: list[float], optional
         :param n_jobs: Number of parallel jobs to run for categorization.
                        -1 means using all available cores. 1 means serial execution.
-                       Defaults to -1.
+                       Defaults to -1. When using ``n_jobs != 1``, this function must be called within a
+                       ``if __name__ == "__main__":`` block to avoid multiprocessing issues
+                       (especially on Windows and macOS).
         :type n_jobs: int, optional
         :return: A DataFrame with 'value' (original sample value) and
                  'category' (e.g., "level_0") columns.
         :rtype: pandas.DataFrame
         """
-        alphas_ = sorted(entropy_mass_alphas) # narrowest to widest intervals
-        categories_results = [] # Using a temporary list to store results before assigning to self or returning
+        alphas_ = sorted(entropy_mass_alphas)  # narrowest to widest intervals
+        categories_results = []  # Using a temporary list to store results before assigning to self or returning
 
         values = self.sample_values
         callback = self.callback
@@ -138,48 +141,48 @@ class PosteriorSampleAnalizer:
                             cat = j
                             break  # stop at most certain matching category
 
-                    local_categories.append(f"level_{cat}") # Corrected category naming
+                    local_categories.append(f"level_{cat}")  # Corrected category naming
                 except Exception as e:
                     log_message(logging.logger.debug(f"error for values[{i}] = {values[i]}: {e}"))
-                    local_categories.append(None) # Append None or some error marker
+                    local_categories.append(None)  # Append None or some error marker
                     continue
                 callback(logging.progress.inform())
             callback(logging.progress.stop())
             return local_categories
 
-        def run_parallel():
-            # Inner function for parallel execution
-            def categorize_single_sample(idx, value_item, emodel_item, alphas_list, progress_q):
-                try:
-                    cat_val = len(alphas_list)
-                    for j_idx, alpha_val in enumerate(reversed(alphas_list)):
-                        cei_val = emodel_item.central_entropy_interval(alpha_val)
-                        low_val, high_val = cei_val['interval']
-                        if value_item < low_val or value_item > high_val:
-                            cat_val = j_idx
-                            break
-                    if progress_q: # Check if progress_queue is provided (it will be)
-                        progress_q.put(1)
-                    return idx, f"level_{cat_val}" # Corrected category naming
-                except Exception as e_inner:
-                    log_message(logging.logger.debug(f"error for values[{idx}] = {value_item}: {e_inner}"))
-                    if progress_q:
-                        progress_q.put(1) # Still signal progress even on error
-                    return idx, None # Return None or an error marker for this sample
+        # just for parallel execution ----------------------------------------------------------------
+        def categorize_single_sample(idx, value_item, emodel_item, alphas_list, progress_q):
+            try:
+                cat_val = len(alphas_list)
+                for j_idx, alpha_val in enumerate(reversed(alphas_list)):
+                    cei_val = emodel_item.central_entropy_interval(alpha_val)
+                    low_val, high_val = cei_val['interval']
+                    if value_item < low_val or value_item > high_val:
+                        cat_val = j_idx
+                        break
+                if progress_q:  # Check if progress_queue is provided (it will be)
+                    progress_q.put(1)
+                return idx, f"level_{cat_val}"  # Corrected category naming
+            except Exception as e_inner:
+                log_message(logging.logger.debug(f"error for values[{idx}] = {value_item}: {e_inner}"))
+                if progress_q:
+                    progress_q.put(1)  # Still signal progress even on error
+                return idx, None  # Return None or an error marker for this sample
 
+        def run_parallel():
             # Progress monitor thread remains similar
             def progress_monitor(queue, total, cb):
                 count = 0
-                cb(logging.progress.init(total, 1)) # Init progress here for monitor
+                cb(logging.progress.init(total, 1))  # Init progress here for monitor
                 while count < total:
-                    queue.get() # Blocks until an item is available
+                    queue.get()  # Blocks until an item is available
                     count += 1
                     cb(logging.progress.inform())
                 cb(logging.progress.stop())
 
             # Main parallel execution logic
             # callback(logging.progress.init(len(values), 1)) # Moved to progress_monitor
-            
+
             with Manager() as manager:
                 progress_queue = manager.Queue()
 
@@ -190,11 +193,11 @@ class PosteriorSampleAnalizer:
                 )
                 monitor_thread.start()
 
-                results = Parallel(n_jobs=n_jobs, backend='loky')( # Use passed n_jobs
+                results = Parallel(n_jobs=n_jobs, backend='loky')(  # Use passed n_jobs
                     delayed(categorize_single_sample)(i, values[i], self.emodels[i], alphas_, progress_queue)
                     for i in range(len(values))
                 )
-                
+
                 monitor_thread.join()
 
             # Sort results by original index and extract categories
@@ -209,9 +212,10 @@ class PosteriorSampleAnalizer:
             categories_results = run_serial()
         else:
             categories_results = run_parallel()
-        
-        log_message(logging.logger.info(f"categorized {len(values)} samples into {len(set(cat for cat in categories_results if cat is not None))} categories."))
-        
+
+        log_message(logging.logger.info(
+            f"categorized {len(values)} samples into {len(set(cat for cat in categories_results if cat is not None))} categories."))
+
         return pd.DataFrame({'value': self.sample_values, 'category': categories_results})
 
     def plot_summary(self, **figargs):
@@ -234,12 +238,14 @@ class PosteriorSampleAnalizer:
         ax[0].hist(self.sample_values, 25, density=True, histtype='stepfilled', alpha=0.3)
         ax[0].set_title("Value")
 
-        ax[1].hist(list(self.sample_quantiles.values()), 25, density=True, histtype='stepfilled', alpha=0.3) # Ensure it's a list for hist
+        ax[1].hist(list(self.sample_quantiles.values()), 25, density=True, histtype='stepfilled',
+                   alpha=0.3)  # Ensure it's a list for hist
         ax[1].set_title("Percentiles")
 
-        ax[2].hist(list(self.sample_entropy.values()), 25, density=True, histtype='stepfilled', alpha=0.3) # Ensure it's a list for hist
+        ax[2].hist(list(self.sample_entropy.values()), 25, density=True, histtype='stepfilled',
+                   alpha=0.3)  # Ensure it's a list for hist
         ax[2].set_title("Entropy")
-        
+
         # Consider plt.show() or returning fig if used in non-interactive environments
         # plt.show() 
 
@@ -272,26 +278,26 @@ class PosteriorSampleAnalizer:
         n_rows = n_imgs // n_cols if n_imgs % n_cols == 0 else (n_imgs // n_cols + 1)
 
         # Handle seeding for reproducibility
-        current_random_state = rd.getstate() # Save current state
+        current_random_state = rd.getstate()  # Save current state
         if seed is not None:
             rd.seed(seed)
-        
+
         # random sample of colormap images to plot
         # Ensure emodels keys match the indices used (0 to len(values)-1)
         available_indices = [i for i in range(values.shape[0]) if i in self.emodels]
         if n_imgs > len(available_indices):
-            n_imgs = len(available_indices) # Cap n_imgs by available models
-        
+            n_imgs = len(available_indices)  # Cap n_imgs by available models
+
         if not available_indices:
             log_message(logging.logger.warning("No empirical models available to plot in quick_plot_models."))
-            rd.setstate(current_random_state) # Restore random state
+            rd.setstate(current_random_state)  # Restore random state
             return
 
         hist_idx = rd.sample(available_indices, k=n_imgs)
-        rd.setstate(current_random_state) # Restore random state
+        rd.setstate(current_random_state)  # Restore random state
 
         plot_histogram_grid_with_pdf_cdf(r, hist_idx, self.emodels, n_rows, n_cols,
-                                        bins=25, **figargs)        
+                                         bins=25, **figargs)
 
     def plot_ranking(self, samples_ranking, figsize=(11, 6)):
         """
@@ -309,18 +315,19 @@ class PosteriorSampleAnalizer:
         """
         fig, ax = plt.subplots(1, 2, figsize=figsize)
 
-        categories_series = samples_ranking["category"] # This is a pandas Series
+        categories_series = samples_ranking["category"]  # This is a pandas Series
         # For bar plot, count occurrences of each category
         category_counts = categories_series.value_counts().sort_index()
 
         ax[0].bar(category_counts.index.astype(str), category_counts.values)
         ax[0].set_title("Categories")
-        ax[0].tick_params(axis='x', rotation=45) # Rotate labels if they overlap
+        ax[0].tick_params(axis='x', rotation=45)  # Rotate labels if they overlap
 
         # Scatter plot part
         # Ensure categories are strings for consistent processing
         categories_str = categories_series.astype(str).values
-        unique_cats = sorted(list(set(c for c in categories_str if c != 'None'))) # Exclude 'None' if it's an error marker
+        unique_cats = sorted(
+            list(set(c for c in categories_str if c != 'None')))  # Exclude 'None' if it's an error marker
 
         if not unique_cats:
             log_message(logging.logger.warning("No valid categories to plot in plot_ranking scatter plot."))
@@ -330,13 +337,13 @@ class PosteriorSampleAnalizer:
             return
 
         cat_to_num = {cat: i for i, cat in enumerate(unique_cats)}
-        
+
         # Map categories to numbers, handling potential 'None' or unmapped
         category_nums = np.array([cat_to_num.get(str(cat), -1) for cat in categories_series.values])
 
         # Filter out points where category was None or unmapped (-1)
         valid_indices = (category_nums != -1)
-        
+
         if not np.any(valid_indices):
             log_message(logging.logger.warning("All categories are unmapped or None in plot_ranking."))
             ax[1].set_title("Categorized Samples (No valid data)")
@@ -348,25 +355,24 @@ class PosteriorSampleAnalizer:
         category_nums_to_plot = category_nums[valid_indices]
 
         # Check array lengths
-        if len(points_to_plot) != len(category_nums_to_plot): # Should not happen if logic is correct
-             log_message(logging.logger.error("Mismatch between points and categories after filtering!"))
-             # Fallback or raise error
-             plt.tight_layout()
-             return
-        
+        if len(points_to_plot) != len(category_nums_to_plot):  # Should not happen if logic is correct
+            log_message(logging.logger.error("Mismatch between points and categories after filtering!"))
+            # Fallback or raise error
+            plt.tight_layout()
+            return
+
         # Create custom colormap
         # cmap = ListedColormap(plt.cm.plasma(np.linspace(0, 1, len(unique_cats))))
         # Use a robust colormap if plt.cm.plasma is not always available or for better distinction
         try:
             cmap_colors = plt.cm.get_cmap('viridis', len(unique_cats))
-        except ValueError: # Fallback if len(unique_cats) is 0 or 1
-            cmap_colors = plt.cm.get_cmap('viridis', 2) # Default to at least 2 colors
-        
+        except ValueError:  # Fallback if len(unique_cats) is 0 or 1
+            cmap_colors = plt.cm.get_cmap('viridis', 2)  # Default to at least 2 colors
+
         cmap = ListedColormap(cmap_colors(np.linspace(0, 1, len(unique_cats))))
 
-
         # Plot
-        if points_to_plot.shape[0] > 0: # Check if there's anything to plot
+        if points_to_plot.shape[0] > 0:  # Check if there's anything to plot
             sc = ax[1].scatter(points_to_plot[:, 0], points_to_plot[:, 1],
                                c=category_nums_to_plot, cmap=cmap, s=30, edgecolor='none')
             # Add colorbar
@@ -374,7 +380,6 @@ class PosteriorSampleAnalizer:
             cbar.set_ticklabels(unique_cats)  # Set colorbar labels to category names
         else:
             log_message(logging.logger.info("No points to display in categorized scatter plot."))
-
 
         # Set the aspect ratio to 1:1 (equal axes)
         ax[1].set_aspect('equal', adjustable='box')
@@ -384,6 +389,7 @@ class PosteriorSampleAnalizer:
         # plt.grid(True) # grid can sometimes make scatter plots busy
         plt.tight_layout()
         # plt.show() # Depending on usage
+
 
 @signature_overload(pivot_arg=("local_interpolator", li.IDW, "local interpolator"),
                     common_args={"k": -1,
@@ -397,9 +403,9 @@ class PosteriorSampleAnalizer:
                                  "seed": np.random.randint(1000, 10000),
                                  "folding_seed": np.random.randint(1000, 10000),
                                  "fitted_model_factory": FittedModelFactory(
-                                    nan_model_name="ignore",
-                                    point_model_name="vim", n_components=3,
-                                    bgm_sample_size=1000, bgm_max_iter=100
+                                     nan_model_name="ignore",
+                                     point_model_name="vim", n_components=3,
+                                     bgm_sample_size=1000, bgm_max_iter=100
                                  ),
                                  "callback": default_singleton_callback,
                                  "best_params_found": None
@@ -451,15 +457,15 @@ def cv_sample_pred_posterior(points, values, xi, **kwargs):
 
     log_message(logging.logger.debug('calling libspatialize'))
 
-    if kwargs.get("best_params_found") is not None: # Use .get for safer access
+    if kwargs.get("best_params_found") is not None:  # Use .get for safer access
         try:
             log_message(logging.logger.debug(f"best number of partitions found: "
-                                            f"{kwargs['best_params_found']['n_partitions']}"))
+                                             f"{kwargs['best_params_found']['n_partitions']}"))
             # It's generally safer not to delete from kwargs if it's passed around,
             # but if this is intended, it's fine.
             # del kwargs["best_params_found"]["n_partitions"]
         except KeyError:
-            pass # n_partitions might not be in best_params_found
+            pass  # n_partitions might not be in best_params_found
         log_message(logging.logger.debug(f"using best params found: {kwargs['best_params_found']}"))
         for param_key, param_val in kwargs["best_params_found"].items():
             # Only overwrite if not 'n_partitions' or if explicitly allowed to be overwritten
@@ -467,18 +473,17 @@ def cv_sample_pred_posterior(points, values, xi, **kwargs):
             # then potentially again from kwargs["n_partitions"] if 'n_partitions' was
             # not deleted from best_params_found.
             # The logic here seems to be that `n_partitions` in `kwargs` takes precedence.
-            if param_key != "n_partitions": # Avoid overwriting n_partitions if it's special
-                 kwargs[param_key] = param_val
-
+            if param_key != "n_partitions":  # Avoid overwriting n_partitions if it's special
+                kwargs[param_key] = param_val
 
     # get the cross validation function
     cross_validate = lib_spatialize_facade.get_operator(points, kwargs["local_interpolator"],
                                                         method, kwargs["p_process"])
-    
+
     if isinstance(xi, tuple):
         p_xi = deepcopy(xi)
     else:
-        p_xi = xi.copy() # Assuming xi is copyable (e.g., numpy array)
+        p_xi = xi.copy()  # Assuming xi is copyable (e.g., numpy array)
 
     # get the argument list
     l_args = build_arg_list(points, values, p_xi, kwargs)
@@ -487,17 +492,17 @@ def cv_sample_pred_posterior(points, values, xi, **kwargs):
         # The original insertion points were -2, -2.
         # This depends on the structure of l_args from build_arg_list
         # Assuming k and folding_seed are appended towards the end.
-        l_args.insert(len(l_args) -1, kwargs["folding_seed"]) # Insert before the last element (often callback)
-        l_args.insert(len(l_args) -2, k) # Insert before seed and callback
+        l_args.insert(len(l_args) - 1, kwargs["folding_seed"])  # Insert before the last element (often callback)
+        l_args.insert(len(l_args) - 2, k)  # Insert before seed and callback
 
     # run
     try:
-         _, cv = cross_validate(*l_args)
+        _, cv = cross_validate(*l_args)
     except Exception as e:
-        raise SpatializeError(e) # from e might be better for traceback
+        raise SpatializeError(e)  # from e might be better for traceback
 
     log_message(logging.logger.info(f"using fitted model factory: {kwargs['fitted_model_factory']}"))
-    return PosteriorSampleAnalizer(cv, points, values, kwargs['fitted_model_factory'],  
+    return PosteriorSampleAnalizer(cv, points, values, kwargs['fitted_model_factory'],
                                    callback=kwargs['callback'])
 
 
@@ -540,31 +545,33 @@ def plot_histogram_grid_with_pdf_cdf(r, data_indices, emodels, n_rows, n_cols, b
 
     N = len(data_indices)
     fig, axs = plt.subplots(n_rows, n_cols, figsize=figsize)
-    axs = axs.flatten() # Flatten to easily iterate regardless of grid shape
+    axs = axs.flatten()  # Flatten to easily iterate regardless of grid shape
 
     for i in range(n_rows * n_cols):
         ax = axs[i]
         if i < N:
             idx = data_indices[i]
             if idx >= r.shape[0]:
-                log_message(logging.logger.warning(f"Index {idx} out of bounds for posterior samples matrix r. Skipping."))
+                log_message(
+                    logging.logger.warning(f"Index {idx} out of bounds for posterior samples matrix r. Skipping."))
                 ax.axis('off')
                 continue
-            
+
             data = r[idx, :]
-            
+
             try:
                 # Access emodel, works if emodels is dict keyed by idx, or list if idx is 0-based sequential
                 emodel = emodels[idx]
             except (KeyError, IndexError):
-                log_message(logging.logger.warning(f"Empirical model for index {idx} not found. Skipping plot for this index."))
+                log_message(
+                    logging.logger.warning(f"Empirical model for index {idx} not found. Skipping plot for this index."))
                 ax.axis('off')
                 continue
-            except TypeError: # If emodels is None or not subscriptable
-                log_message(logging.logger.error(f"Emodels is not a valid collection (dict/list). Skipping plot for index {idx}."))
+            except TypeError:  # If emodels is None or not subscriptable
+                log_message(logging.logger.error(
+                    f"Emodels is not a valid collection (dict/list). Skipping plot for index {idx}."))
                 ax.axis('off')
                 continue
-
 
             color = warm_pastel_colors[i % len(warm_pastel_colors)]
 
@@ -577,7 +584,6 @@ def plot_histogram_grid_with_pdf_cdf(r, data_indices, emodels, n_rows, n_cols, b
             else:
                 log_message(logging.logger.warning(f"Emodel for index {idx} missing x_ or pdf_ attributes."))
 
-
             # Get current axis limits for scaling CDF
             # ymin, ymax = ax.get_ylim() # Get ylim *after* histogram and PDF are plotted for better scale
 
@@ -589,14 +595,14 @@ def plot_histogram_grid_with_pdf_cdf(r, data_indices, emodels, n_rows, n_cols, b
                 scaled_cdf = emodel.cdf_ * (current_ymax - current_ymin) + current_ymin
                 ax.plot(emodel.x_, scaled_cdf, '-b', label="CDF (scaled)")
             else:
-                log_message(logging.logger.warning(f"Emodel for index {idx} missing x_ or cdf_ attributes for CDF plotting."))
-
+                log_message(
+                    logging.logger.warning(f"Emodel for index {idx} missing x_ or cdf_ attributes for CDF plotting."))
 
             # Label
             ax.set_title(f'Sample {idx}', fontsize=10)
             ax.set_xlabel('Value', fontsize=8)
             ax.set_ylabel('Density', fontsize=8)
-            ax.tick_params(axis='both', which='major', labelsize=7) # Smaller tick labels
+            ax.tick_params(axis='both', which='major', labelsize=7)  # Smaller tick labels
             ax.legend(fontsize=6)
         else:
             ax.axis('off')  # hide unused plots
