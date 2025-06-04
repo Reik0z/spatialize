@@ -154,7 +154,7 @@ params = np.concatenate(([power], scaling))
 
 power = 2.0
 params_iso = np.array([power])              # isotropic (no scaling specified)
-params_aniso = np.array([power, 1.0, 1.0]) # anisotropic with all ones scaling
+params_aniso = np.array([power, 1.0, 1.0])  # anisotropic with all ones scaling
 
 t = time.time()
 est1 = lsp.estimation_esi_idw(
