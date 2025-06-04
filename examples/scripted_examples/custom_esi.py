@@ -84,10 +84,10 @@ def idw_local_interpolator_numba2(smp: np.ndarray, val: np.ndarray, qry: np.ndar
 
 @njit
 def idw_local_interpolator_anisotropic(
-    smp: np.ndarray,
-    val: np.ndarray,
-    qry: np.ndarray,
-    params: np.ndarray
+        smp: np.ndarray,
+        val: np.ndarray,
+        qry: np.ndarray,
+        params: np.ndarray
 ) -> np.ndarray:
     """
     Anisotropic Inverse Distance Weighting interpolation with fixed numerical stability.
@@ -107,6 +107,7 @@ def idw_local_interpolator_anisotropic(
     n_dim = smp.shape[1]
 
     power = params[0]
+    print(power)
 
     # Use scaling if provided, else default to ones
     if params.size > 1:
@@ -137,6 +138,7 @@ def idw_local_interpolator_anisotropic(
 
     return result
 
+
 # the samples included in the spatialize package
 samples, locations, krig, _ = load_drill_holes_andes_2D()
 
@@ -148,13 +150,18 @@ points = samples[['x', 'y']].values
 values = samples[['cu']].values[:, 0]
 xi = locations[['x', 'y']].values
 
-power = 2.0
+power = 3.0
 scaling = np.array([1.0, 1.0])  # Emphasize second dimension
 params = np.concatenate(([power], scaling))
 
-power = 2.0
-params_iso = np.array([power])              # isotropic (no scaling specified)
+power = 3.0
+params_iso = np.array([power])  # isotropic (no scaling specified)
 params_aniso = np.array([power, 1.0, 1.0])  # anisotropic with all ones scaling
+
+
+def set_params(cell_points, cell_values):
+    return params
+
 
 t = time.time()
 est1 = lsp.estimation_esi_idw(
@@ -172,7 +179,7 @@ est2 = lsp.estimation_custom_esi(
     values,
     100, 0.7, 206936,
     xi,
-    None,
+    set_params,
     idw_local_interpolator_anisotropic,
     default_singleton_callback
 )
