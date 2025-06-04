@@ -1,130 +1,58 @@
 import time, numpy as np, libspatialize as lsp
+
+from matplotlib import pyplot as plt
 from numba import njit
 
+from spatialize import logging
 from spatialize.data import load_drill_holes_andes_2D
+from spatialize.gs.esi import ESIResult
 from spatialize.logging import default_singleton_callback
 
+logging.log.setLevel("DEBUG")
 
 @njit
-def idw_local_interpolator_numba(smp: np.ndarray, val: np.ndarray, qry: np.ndarray, params: np.ndarray) -> np.ndarray:
-    """
-    Perform Inverse Distance Weighting (IDW) interpolation for a set of query points.
-
-    :param smp: Coordinates of known sample points.
-    :type smp: np.ndarray (shape: [n_samples, n_dimensions])
-
-    :param val: Values associated with the sample points.
-    :type val: np.ndarray (shape: [n_samples])
-
-    :param qry: Coordinates of query points where interpolation is desired.
-    :type qry: np.ndarray (shape: [n_queries, n_dimensions])
-
-    :param params: Additional parameters for interpolation (currently unused).
-    :type params: np.ndarray
-
-    :return: Interpolated values at each query point.
-    :rtype: np.ndarray (shape: [n_queries])
-    """
-    power = params[0] if params.shape[0] > 0 else 2.0  # fallback if empty
+def idw_local_interpolator(cell_points: np.ndarray,
+                           cell_values: np.ndarray,
+                           cell_xi: np.ndarray,
+                           cell_params: np.ndarray) -> np.ndarray:
+    power = cell_params[0] if cell_params.shape[0] > 0 else 2.0  # fallback if empty
 
     result = []
-    for q in qry:
-        dists = np.array([np.sqrt(np.sum(np.power(s - q, power * np.ones((smp.shape[1],))))) for s in smp])
+    for q in cell_xi:
+        dists = np.array([np.sqrt(np.sum(np.power(s - q, power * np.ones((cell_points.shape[1],))))) for s in cell_points])
         weights = 1.0 / (1 + np.power(dists, power * np.ones((len(dists),))))
         norm = np.sum(weights)
-        result.append(np.sum(val * weights) / norm)
+        result.append(np.sum(cell_values * weights) / norm)
     return (np.array(result))
-
-
-@njit
-def idw_local_interpolator_numba2(smp: np.ndarray, val: np.ndarray, qry: np.ndarray, params: np.ndarray) -> np.ndarray:
-    """
-    Perform fast Inverse Distance Weighting (IDW) interpolation for a set of query points using Numba.
-
-    :param smp: Coordinates of known sample points.
-    :type smp: np.ndarray (shape: [n_samples, n_dimensions])
-
-    :param val: Values associated with the sample points.
-    :type val: np.ndarray (shape: [n_samples])
-
-    :param qry: Coordinates of query points where interpolation is desired.
-    :type qry: np.ndarray (shape: [n_queries, n_dimensions])
-
-    :param params: Interpolation parameters (expects power as the first element).
-                   Example: params = np.array([2.0]) for inverse squared distance.
-    :type params: np.ndarray
-
-    :return: Interpolated values at each query point.
-    :rtype: np.ndarray (shape: [n_queries])
-    """
-    n_qry = qry.shape[0]
-    n_smp = smp.shape[0]
-    power = params[0] if params.shape[0] > 0 else 2.0  # fallback if empty
-    result = np.empty(n_qry, dtype=np.float64)
-
-    for i in range(n_qry):
-        q = qry[i]
-        weights_sum = 0.0
-        weighted_val_sum = 0.0
-
-        for j in range(n_smp):
-            s = smp[j]
-            d = 0.0
-            for k in range(smp.shape[1]):
-                d += (s[k] - q[k]) ** 2
-            d = np.sqrt(d)
-            w = 1.0 / (1.0 + d ** power)
-            weights_sum += w
-            weighted_val_sum += val[j] * w
-
-        result[i] = weighted_val_sum / weights_sum if weights_sum > 0 else 0.0
-
-    return result
-
 
 @njit
 def idw_local_interpolator_anisotropic(
-        smp: np.ndarray,
-        val: np.ndarray,
-        qry: np.ndarray,
-        params: np.ndarray
-) -> np.ndarray:
-    """
-    Anisotropic Inverse Distance Weighting interpolation with fixed numerical stability.
+        cell_points: np.ndarray,
+        cell_values: np.ndarray,
+        cell_xi: np.ndarray,
+        cell_params: np.ndarray) -> np.ndarray:
+    n_qry = cell_xi.shape[0]
+    n_smp = cell_points.shape[0]
+    n_dim = cell_points.shape[1]
 
-    params format:
-        [power, scale_dim_0, scale_dim_1, ..., scale_dim_(n_dimensions-1)]
-    If no scaling factors provided (params length == 1), isotropic scaling of 1.0 per dimension is assumed.
-
-    :param smp: Sample points, shape (n_samples, n_dimensions).
-    :param val: Values at sample points, shape (n_samples,).
-    :param qry: Query points, shape (n_queries, n_dimensions).
-    :param params: [power, scale_0, scale_1, ..., scale_n]
-    :return: Interpolated values at query points, shape (n_queries,).
-    """
-    n_qry = qry.shape[0]
-    n_smp = smp.shape[0]
-    n_dim = smp.shape[1]
-
-    power = params[0]
-    print(power)
+    power = cell_params[0] if cell_params.shape[0] > 0 else 2.0  # fallback if empty
 
     # Use scaling if provided, else default to ones
-    if params.size > 1:
-        scaling = params[1:]
+    if cell_params.size > 1:
+        scaling = cell_params[1:]
     else:
-        scaling = np.ones(n_dim, dtype=params.dtype)
+        scaling = np.ones(n_dim, dtype=cell_params.dtype)
 
     result = np.empty(n_qry, dtype=np.float64)
     eps = 1e-12  # small epsilon for numerical stability
 
     for i in range(n_qry):
-        q = qry[i]
+        q = cell_xi[i]
         weights_sum = 0.0
         weighted_val_sum = 0.0
 
         for j in range(n_smp):
-            s = smp[j]
+            s = cell_points[j]
             dist_sq = 0.0
             for k in range(n_dim):
                 diff = (s[k] - q[k]) * scaling[k]
@@ -132,13 +60,13 @@ def idw_local_interpolator_anisotropic(
             dist = np.sqrt(dist_sq)
             w = 1.0 / (eps + dist ** power)
             weights_sum += w
-            weighted_val_sum += val[j] * w
+            weighted_val_sum += cell_values[j] * w
 
         result[i] = weighted_val_sum / weights_sum if weights_sum > 0 else 0.0
 
     return result
 
-
+# loading data
 # the samples included in the spatialize package
 samples, locations, krig, _ = load_drill_holes_andes_2D()
 
@@ -150,43 +78,50 @@ points = samples[['x', 'y']].values
 values = samples[['cu']].values[:, 0]
 xi = locations[['x', 'y']].values
 
-power = 3.0
-scaling = np.array([1.0, 1.0])  # Emphasize second dimension
-params = np.concatenate(([power], scaling))
+# general parameters
+n_partitions = 100
+alpha = 0.9
+exponent = 2.0
 
-power = 3.0
-params_iso = np.array([power])  # isotropic (no scaling specified)
-params_aniso = np.array([power, 1.0, 1.0])  # anisotropic with all ones scaling
-
-
-def set_params(cell_points, cell_values):
-    return params
-
-
-t = time.time()
+# pure C++ implementation
+print("running pure c++ esi idw:")
 est1 = lsp.estimation_esi_idw(
     points,
     values,
-    100, 0.7, 2.0, 206936,
+    n_partitions, alpha, exponent, 206936,
     xi,
     default_singleton_callback
 )
-t1 = time.time() - t
 
-t = time.time()
+esi_result1 = ESIResult(np.nanmean(est1[1], axis=1), est1[1], False, None, xi)
+esi_result1.quick_plot()
+
+# custom implementation using numba and C++
+print("running custom (numba and c++) esi idw:")
+params_iso = np.array([exponent])  # isotropic (no scaling specified)
+params_aniso = np.array([exponent, 1.0, 1.0])  # anisotropic with all ones scaling
+
+@njit
+def set_cell_params(cell_points, cell_values):
+    return params_aniso
+
 est2 = lsp.estimation_custom_esi(
     points,
     values,
-    100, 0.7, 206936,
+    n_partitions, alpha, 206936,
     xi,
-    set_params,
+    set_cell_params,
     idw_local_interpolator_anisotropic,
     default_singleton_callback
 )
-t2 = time.time() - t
 
-d = est1[1] - est2[1]
+esi_result2 = ESIResult(np.nanmean(est2[1], axis=1), est2[1], False, None, xi)
+esi_result2.quick_plot()
+
+d = esi_result1.esi_samples(raw=True) - esi_result2.esi_samples(raw=True)
 d = d[~np.isnan(d)]
 
 r = sorted(list(d.flatten()))
-print('%d:%f' % (t1 // 60, t1 % 60), '%d:%f' % (t2 // 60, t2 % 60), r[-1])
+print(f'max error:{r[-1]}')
+
+plt.show()

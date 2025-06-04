@@ -73,10 +73,12 @@ namespace sptlz{
                   std::function<int(std::string)> visitor,
                   int seed=206936):
       ESI(_coords, _values, lambda, forest_size, bbox, visitor, seed){
+        this->class_name = __func__;
         post_creation = _post;
         estimation_by_leaf = _est;
         loo_by_leaf = _loo;
         kfold_by_leaf = _kfold;
+        post_process();
       }
 
       CUSTOM_ESI( std::vector<sptlz::MondrianTree*> _mondrian_forest, 
@@ -88,6 +90,7 @@ namespace sptlz{
                   std::function<std::vector<float>(int, std::vector<std::vector<float>>*, std::vector<float>*, std::vector<int> *, std::vector<float> *)> _kfold,
                   std::function<int(std::string)> visitor):
       ESI(_mondrian_forest, _coords, _values, visitor){
+        this->class_name = __func__;
         post_creation = _post;
         estimation_by_leaf = _est;
         loo_by_leaf = _loo;
