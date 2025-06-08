@@ -8,34 +8,39 @@ on:
 
 jobs:
   build_wheels:
-    name: Build wheels on ${{ matrix.os }}
+    name: Build wheels on ${{ matrix.os }} / Python ${{ matrix.python }}
     runs-on: ${{ matrix.os }}
+
     strategy:
       matrix:
-        # os: [ubuntu-latest, ubuntu-24.04-arm, windows-latest, macos-13, macos-latest]
-        os: [ubuntu-latest, windows-latest]
-        python: ["3.8", "3.x" ]
+        os: [ubuntu-latest, windows-latest]  # Agrega 'macos-latest' si lo necesitas
+        python: ["3.8", "3.x"]  # 3.x = latest estable soportado por setup-python
 
     steps:
-      - name: checkout
+      - name: Check out repository
         uses: actions/checkout@v4
 
-      - name: setup python
+      - name: Set up Python ${{ matrix.python }}
         uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python }}
 
       - name: Install cibuildwheel
-        run: python -m pip install cibuildwheel
+        run: |
+          python -m pip install --upgrade pip
+          pip install cibuildwheel
 
       - name: Build wheels
-        run: python -m cibuildwheel --output-dir wheelhouse
+        run: |
+          cibuildwheel --output-dir wheelhouse
+        env:
+          CIBW_SKIP: "pp* cp310-* cp311-* cp312-*"  # evitamos duplicar latest
 
-      - name: upload artifact
+      - name: Upload wheels
         uses: actions/upload-artifact@v4
         with:
-          name: cibw-wheels-${{ matrix.os }}-${{ strategy.job-index }}
-          path: ./wheelhouse/*.whl
+          name: wheels-${{ matrix.os }}-py${{ matrix.python }}
+          path: wheelhouse/*.whl
 
       - name: DEBUG ls
         run: ls -R
