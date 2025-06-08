@@ -38,6 +38,7 @@ jobs:
         with:
           name: dist-linux
           path: dist/
+          overwrite: true
 
   # build-windows:
   #   runs-on: windows-latest
