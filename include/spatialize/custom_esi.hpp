@@ -39,12 +39,17 @@ namespace sptlz{
       }
 
       void post_process(){
+
         if(post_creation == NULL){
             return;
         }
         
         std::vector<std::vector<float>> leaf_coords;
         std::vector<float> leaf_values;
+        sptlz::CallbackLogger *logger = new sptlz::CallbackLogger(this->callback_visitor, this->class_name);
+        sptlz::CallbackProgressSender *progress = new sptlz::CallbackProgressSender(this->callback_visitor);
+
+        logger->info("computing cell parameters");
 
         for(int i=0; i<mondrian_forest.size(); i++){
           auto mt = mondrian_forest.at(i);
@@ -57,7 +62,15 @@ namespace sptlz{
             }
             mt->leaf_params.at(j) = post_creation(&leaf_coords, &leaf_values);
           }
+          if (PyErr_CheckSignals() != 0)  // to allow ctrl-c from user
+            exit(0);
+		  progress->inform(i + 1);
         }
+
+        progress->stop();
+
+        delete logger;
+        delete progress;
       }
 
     public:

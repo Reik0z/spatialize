@@ -385,7 +385,7 @@ namespace sptlz{
                 sptlz::CallbackLogger *logger = new sptlz::CallbackLogger(this->callback_visitor, this->class_name);
                 sptlz::CallbackProgressSender *progress = new sptlz::CallbackProgressSender(this->callback_visitor);
 
-                logger->debug("computing estimates");
+                logger->info("computing estimates");
 
 				progress->init(n, 1);
 
