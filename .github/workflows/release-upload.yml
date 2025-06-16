@@ -5,7 +5,7 @@ run-name: Building and uploading release
 on:
   push:
     tags:
-      - "release"
+      - "v*.*.*"
 
 jobs:
   build-linux:
