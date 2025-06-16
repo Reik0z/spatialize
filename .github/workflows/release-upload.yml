@@ -4,7 +4,8 @@ run-name: Building and uploading release
 
 on:
   push:
-    branches: [ feature/actions-test ]
+    tags:
+      - "release"
 
 jobs:
   build-linux:

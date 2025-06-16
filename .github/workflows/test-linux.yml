@@ -4,7 +4,8 @@ run-name: Running test on Linux
 
 on:
   push:
-    branches: [ feature/actions-test ]
+    tags:
+      - 'test'
 
 jobs:
   build:

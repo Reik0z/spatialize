@@ -1,5 +1,5 @@
 [project]
-name = "spatialize"
+name = "spatialize-test-reik0"
 dynamic = ["dependencies", "version"]
 authors = [{ name = "ALGES Lab", email = "contacto@alges.cl"}]
 classifiers = [
