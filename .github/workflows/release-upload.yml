@@ -138,5 +138,8 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Install twine
+        run: pip install twine
+
       - name: Upload to Pypi
         run: twine upload --repository-url https://test.pypi.org/legacy/ dist/* --verbose
