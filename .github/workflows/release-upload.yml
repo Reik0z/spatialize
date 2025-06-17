@@ -127,9 +127,6 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           path: dist
-
-      - name: Display files
-        run: ls -R
   
       - name: Upload assets to GitHub Release
         uses: softprops/action-gh-release@v2
@@ -140,3 +137,6 @@ jobs:
           fail_on_unmatched_files: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload to Pypi
+        run: twine upload --repository-url https://test.pypi.org/legacy/ dist/* --verbose
