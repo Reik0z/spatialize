@@ -51,6 +51,8 @@ namespace sptlz{
 
         logger->info("computing cell parameters");
 
+        progress->init(mondrian_forest.size(), 1);
+
         for(int i=0; i<mondrian_forest.size(); i++){
           auto mt = mondrian_forest.at(i);
           for(int j=0; j<mt->samples_by_leaf.size(); j++){
