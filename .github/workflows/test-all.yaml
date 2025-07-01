@@ -35,7 +35,7 @@ jobs:
   #       run: python examples/scripted_examples/esi_3d_nongriddata.py
     
   build-windows:
-    runs-on: windows-latest
+    runs-on: self-hosted
 
     permissions:
       contents: write
