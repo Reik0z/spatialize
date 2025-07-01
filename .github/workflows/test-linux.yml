@@ -2,11 +2,14 @@ name: Test
 
 run-name: Running test on Linux
 
-on: [push]
+on:
+  push:
+    tags: 
+      - "test-linux"
 
 jobs:
   test:
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
  
     permissions:
       contents: write
@@ -25,12 +28,8 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
           pip install build
-
       - name: Build
         run: python -m build
-
-      - name: debug ls
-        run: ls -a
 
       - name: Get WHL
         run: echo "WHEEL_FILE=$(ls dist/*.whl)" >> $GITHUB_ENV
@@ -40,4 +39,3 @@ jobs:
  
       - name: Run example script
         run: python examples/scripted_examples/esi_3d_nongriddata.py
-         
