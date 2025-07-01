@@ -2,37 +2,37 @@ name: Test All
 
 run-name: Running test on all plataforms
 
-on:
-  push:
-    tags:
-      - 'test-all'
+on: [push]
 
 jobs:
-  build-linux:
-    runs-on: ubuntu-latest
+  # build-linux:
+  #   runs-on: ubuntu-latest
  
-    permissions:
-      contents: write
+  #   permissions:
+  #     contents: write
  
-    steps:
-      - name: Checkout repo
-        uses: actions/checkout@v4
+  #   steps:
+  #     - name: Checkout repo
+  #       uses: actions/checkout@v4
  
-      - name: Setup Py
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.x'
+  #     - name: Setup Py
+  #       uses: actions/setup-python@v5
+  #       with:
+  #         python-version: '3.x'
  
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
+  #     - name: Install dependencies
+  #       run: |
+  #         python -m pip install --upgrade pip
+  #         pip install -r requirements.txt
 
-      - name: Install spatialize
-        run: pip install spatialize
+  #     - name: Get WHL
+  #       run: echo "WHEEL_FILE=$(ls dist/*.whl)" >> $GITHUB_ENV
+
+  #     - name: Install whl
+  #       run: pip install ${{ env.WHEEL_FILE }}
  
-      - name: Run example script
-        run: python examples/scripted_examples/esi_3d_nongriddata.py
+  #     - name: Run example script
+  #       run: python examples/scripted_examples/esi_3d_nongriddata.py
     
   build-windows:
     runs-on: windows-latest
@@ -53,37 +53,52 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
-          pip install spatialize build
+          pip install build
 
       - name: Build project (Windows)
         run: python -m build
 
-      - name: Test
+      - name: Debug ls
+        run: ls -a
+
+      - name: Get WHL
+        run: echo "WHEEL_FILE=$(ls dist/*.whl)" >> $GITHUB_ENV
+
+      - name: Install whl
+        run: pip install ${{ env.WHEEL_FILE }}
+
+      - name: Run example script
         run: python examples/scripted_examples/esi_3d_nongriddata.py
 
-  build-macos:
-    runs-on: macos-latest
-    permissions:
-      contents: write
+  # build-macos:
+  #   runs-on: macos-latest
+  #   permissions:
+  #     contents: write
 
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+  #   steps:
+  #     - name: Checkout repository
+  #       uses: actions/checkout@v4
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.x'
+  #     - name: Set up Python
+  #       uses: actions/setup-python@v5
+  #       with:
+  #         python-version: '3.x'
 
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
-          pip install spatialize build
+  #     - name: Install dependencies
+  #       run: |
+  #         python -m pip install --upgrade pip
+  #         pip install -r requirements.txt
+  #         pip install build
 
-      - name: Build project (macOS)
-        run: python -m build
+  #     - name: Build project (macOS)
+  #       run: python -m build
 
-      - name: Test
-        run: python examples/scripted_examples/esi_3d_nongriddata.py
+  #     - name: Get WHL
+  #       run: echo "WHEEL_FILE=$(ls dist/*.whl)" >> $GITHUB_ENV
+
+  #     - name: Install whl
+  #       run: pip install ${{ env.WHEEL_FILE }}
+
+  #     - name: Test
+  #       run: python examples/scripted_examples/esi_3d_nongriddata.py
          
