@@ -59,7 +59,7 @@ jobs:
         run: python -m build
 
       - name: Get WHL
-        run: echo "WHEEL_FILE=$(ls dist/*.whl)" >> $GITHUB_ENV
+        run: echo "WHEEL_FILE=$(dir dist/*.whl)" >> $GITHUB_ENV
 
       - name: Install whl
         run: pip install ${{ env.WHEEL_FILE }}
