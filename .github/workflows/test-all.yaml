@@ -58,9 +58,6 @@ jobs:
       - name: Build project (Windows)
         run: python -m build
 
-      - name: Debug ls
-        run: ls -a
-
       - name: Get WHL
         run: echo "WHEEL_FILE=$(ls dist/*.whl)" >> $GITHUB_ENV
 
