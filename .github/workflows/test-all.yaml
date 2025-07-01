@@ -58,11 +58,13 @@ jobs:
       - name: Build project (Windows)
         run: python -m build
 
-      - name: Get WHL
-        run: echo "WHEEL_FILE=$(dir dist/*.whl)" >> $GITHUB_ENV
+      - name: Get whl
+        run: echo "WHEEL_FILE=$(Get-ChildItem dist\*.whl | Select-Object -ExpandProperty FullName)" >> $env:GITHUB_ENV
+        shell: pwsh
 
       - name: Install whl
-        run: pip install ${{ env.WHEEL_FILE }}
+        run: pip install "$env:WHEEL_FILE"
+        shell: pwsh
 
       - name: Run example script
         run: python examples/scripted_examples/esi_3d_nongriddata.py
