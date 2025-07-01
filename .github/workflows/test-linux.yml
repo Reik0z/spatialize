@@ -36,7 +36,7 @@ jobs:
         run: echo "WHEEL_FILE=$(ls dist/*.whl)" >> $GITHUB_ENV
 
       - name: Install whl
-        run: pip install ${{ env.WHEEL_FILE }}"
+        run: pip install ${{ env.WHEEL_FILE }}
  
       - name: Run example script
         run: python examples/scripted_examples/esi_3d_nongriddata.py
