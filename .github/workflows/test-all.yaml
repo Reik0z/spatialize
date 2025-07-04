@@ -2,10 +2,7 @@ name: Test All
 
 run-name: Running test on all plataforms
 
-on:
-  push:
-    tags:
-      - "test-all"
+on: [ push ]
 
 jobs:
   build-linux:
