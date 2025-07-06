@@ -10,31 +10,35 @@ on:
 jobs:
   build-linux:
     runs-on: ubuntu-latest
+ 
     permissions:
       contents: write
+
     strategy:
       matrix:
         python: ["3.9", "3.x"]
-
+ 
     steps:
-      - name: Checkout repository
+      - name: Checkout repo
         uses: actions/checkout@v4
-
-      - name: Set up Python
+ 
+      - name: Setup Python
         uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python }}
-
+ 
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
-          pip install spatialize build
 
-      - name: Build project (Linux)
-        run: python -m build
+      - name: Get WHL
+        run: echo "WHEEL_FILE=$(ls dist/*.whl)" >> $GITHUB_ENV
 
-      - name: Test
+      - name: Install whl
+        run: pip install ${{ env.WHEEL_FILE }}
+ 
+      - name: Run example script
         run: python examples/scripted_examples/esi_3d_nongriddata.py
 
       - name: Upload Linux dist
@@ -43,70 +47,96 @@ jobs:
           name: dist-linux
           path: dist/
           overwrite: true
+    
+  build-windows:
+    runs-on: windows-latest
 
-  # build-windows:
-  #   runs-on: windows-latest
-  #   permissions:
-  #     contents: write
+    permissions:
+      contents: write
 
-  #   steps:
-  #     - name: Checkout repository
-  #       uses: actions/checkout@v4
+    strategy:
+      matrix:
+        python: ["3.9", "3.x"]
 
-  #     - name: Set up Python
-  #       uses: actions/setup-python@v5
-  #       with:
-  #         python-version: '3.x'
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-  #     - name: Install dependencies
-  #       run: |
-  #         python -m pip install --upgrade pip
-  #         pip install -r requirements.txt
-  #         pip install spatialize build
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
 
-  #     - name: Build project (Windows)
-  #       run: python -m build
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install build
 
-  #     - name: Test
-  #       run: python examples/scripted_examples/esi_3d_nongriddata.py
+      - name: Build project (Windows)
+        run: python -m build
 
-  #     - name: Upload Windows dist
-  #       uses: actions/upload-artifact@v4
-  #       with:
-  #         name: dist-windows
-  #         path: dist/
+      - name: Get whl
+        run: echo "WHEEL_FILE=$(Get-ChildItem dist\*.whl | Select-Object -ExpandProperty FullName)" >> $env:GITHUB_ENV
+        shell: pwsh
 
-  # build-macos:
-  #   runs-on: macos-latest
-  #   permissions:
-  #     contents: write
+      - name: Install whl
+        run: pip install "$env:WHEEL_FILE"
+        shell: pwsh
 
-  #   steps:
-  #     - name: Checkout repository
-  #       uses: actions/checkout@v4
+      - name: Test
+        run: python examples/scripted_examples/esi_3d_nongriddata.py
 
-  #     - name: Set up Python
-  #       uses: actions/setup-python@v5
-  #       with:
-  #         python-version: '3.x'
+      - name: Upload Windows dist
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist-windows
+          path: dist/
+          overwrite: true
 
-  #     - name: Install dependencies
-  #       run: |
-  #         python -m pip install --upgrade pip
-  #         pip install -r requirements.txt
-  #         pip install spatialize build
+  build-macos:
+    runs-on: macos-latest
 
-  #     - name: Build project (macOS)
-  #       run: python -m build
+    permissions:
+      contents: write
 
-  #     - name: Test
-  #       run: python examples/scripted_examples/esi_3d_nongriddata.py
+    strategy:
+      matrix:
+        python: ["3.9", "3.x"]
 
-  #     - name: Upload macOS dist
-  #       uses: actions/upload-artifact@v4
-  #       with:
-  #         name: dist-macos
-  #         path: dist/
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install build
+
+      - name: Build project (macOS)
+        run: python -m build
+
+      - name: Get WHL
+        run: echo "WHEEL_FILE=$(ls dist/*.whl)" >> $GITHUB_ENV
+
+      - name: Install whl
+        run: pip install ${{ env.WHEEL_FILE }}
+
+      - name: Test
+        run: python examples/scripted_examples/esi_3d_nongriddata.py
+
+      - name: Upload macOS dist
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist-macos
+          path: dist/
+          overwrite: true
 
   release:
     runs-on: ubuntu-latest
@@ -114,8 +144,8 @@ jobs:
       contents: write
     needs:
       - build-linux
-      # - build-windows
-      # - build-macos
+      - build-windows
+      - build-macos
   
     steps:
       - name: Checkout repository
