@@ -12,7 +12,7 @@ keywords = ['ESI ensemble spatial interpolation']
 readme = {file = "README.md", content-type = "text/markdown"}
 requires-python = ">=3.8"
 license = "MIT"
-license-files = ["LICEN[CS]E.*"]
+license-files = ["OSI Approved"]
 
 [project.urls]
 Repository = "https://github.com/alges/spatialize"
