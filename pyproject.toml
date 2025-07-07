@@ -14,7 +14,7 @@ license = "MIT"
 license-files = ["OSI Approved"]
 
 [project.urls]
-Repository = "https://github.com/alges/spatialize"
+Repository = "https://github.com/Reik0z/spatialize"
 
 [build-system]
 requires = [

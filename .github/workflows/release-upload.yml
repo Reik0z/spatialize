@@ -52,51 +52,51 @@ jobs:
           path: dist/
           overwrite: true
     
-  build-windows:
-    runs-on: windows-latest
+  # build-windows:
+  #   runs-on: windows-latest
 
-    permissions:
-      contents: write
+  #   permissions:
+  #     contents: write
 
-    strategy:
-      matrix:
-        python: ["3.9", "3.x"]
+  #   strategy:
+  #     matrix:
+  #       python: ["3.9", "3.x"]
 
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+  #   steps:
+  #     - name: Checkout repository
+  #       uses: actions/checkout@v4
 
-      - name: Setup Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: ${{ matrix.python }}
+  #     - name: Setup Python
+  #       uses: actions/setup-python@v5
+  #       with:
+  #         python-version: ${{ matrix.python }}
 
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
-          pip install build
+  #     - name: Install dependencies
+  #       run: |
+  #         python -m pip install --upgrade pip
+  #         pip install -r requirements.txt
+  #         pip install build
 
-      - name: Build project (Windows)
-        run: python -m build
+  #     - name: Build project (Windows)
+  #       run: python -m build
 
-      - name: Get whl
-        run: echo "WHEEL_FILE=$(Get-ChildItem dist\*.whl | Select-Object -ExpandProperty FullName)" >> $env:GITHUB_ENV
-        shell: pwsh
+  #     - name: Get whl
+  #       run: echo "WHEEL_FILE=$(Get-ChildItem dist\*.whl | Select-Object -ExpandProperty FullName)" >> $env:GITHUB_ENV
+  #       shell: pwsh
 
-      - name: Install whl
-        run: pip install "$env:WHEEL_FILE"
-        shell: pwsh
+  #     - name: Install whl
+  #       run: pip install "$env:WHEEL_FILE"
+  #       shell: pwsh
 
-      - name: Test
-        run: python examples/scripted_examples/esi_3d_nongriddata.py
+  #     - name: Test
+  #       run: python examples/scripted_examples/esi_3d_nongriddata.py
 
-      - name: Upload Windows dist
-        uses: actions/upload-artifact@v4
-        with:
-          name: dist-windows
-          path: dist/
-          overwrite: true
+  #     - name: Upload Windows dist
+  #       uses: actions/upload-artifact@v4
+  #       with:
+  #         name: dist-windows
+  #         path: dist/
+  #         overwrite: true
 
   build-macos:
     runs-on: macos-latest
@@ -146,11 +146,11 @@ jobs:
     runs-on: ubuntu-latest
     needs:
       - build-linux
-      - build-windows
+      # - build-windows
       - build-macos
     environment:
       name: testpypi
-      url: https://test.pypi.org/project/spatialize-test-reik0/
+      url: https://test.pypi.org/p/spatialize-test-reik0/
     permissions:
       contents: write
       id-token: write
@@ -187,10 +187,15 @@ jobs:
       - name: Install twine
         run: pip install twine
 
-      - name: Upload to Pypi
-        run: |
-          twine upload \
-            --repository-url https://test.pypi.org/legacy/ \
-            --username __token___ \
-            --password ${{ secrets.TEST_PYPI_TOKEN }} \
-            dist/* --verbose
+      # - name: Upload to Pypi
+      #   run: |
+      #     twine upload \
+      #       --repository-url https://test.pypi.org/legacy/ \
+      #       --username __token___ \
+      #       --password ${{ secrets.TEST_PYPI_TOKEN }} \
+      #       dist/* --verbose
+
+      - name: Publish package distributions to testpypi
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          repository-url: https://test.pypi.org/legacy/
