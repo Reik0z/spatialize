@@ -4,7 +4,6 @@ dynamic = ["dependencies", "version"]
 authors = [{ name = "ALGES Lab", email = "contacto@alges.cl"}]
 classifiers = [
     "Programming Language :: Python :: 3",
-    "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
 ]
 description = "Spatialize: A Python wrapper for C++ ESI library"
