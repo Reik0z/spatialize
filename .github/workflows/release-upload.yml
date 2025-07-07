@@ -176,6 +176,6 @@ jobs:
           path: dist/
 
       - name: Publish
-        uses: pypa/gh-actions-pypi-publish@release/v1
+        uses: pypa/gh-action-pypi-publish@release/v1
         with:
           repository-url: https://test.pypi.org/legacy/
