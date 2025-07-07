@@ -188,4 +188,9 @@ jobs:
         run: pip install twine
 
       - name: Upload to Pypi
-        run: twine upload --repository-url https://test.pypi.org/legacy/ dist/* --verbose
+        run: |
+          twine upload \
+            --repository-url https://test.pypi.org/legacy/ \
+            --username __token___ \
+            --password ${{ secrets.TEST_PYPI_TOKEN }} \
+            dist/* --verbose
