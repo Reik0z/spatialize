@@ -163,6 +163,9 @@ jobs:
         with:
           path: dist/
 
+      - name: DEBUG ls
+        run: ls -r
+
       - name: Publish
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
