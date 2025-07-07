@@ -195,7 +195,10 @@ jobs:
       #       --password ${{ secrets.TEST_PYPI_TOKEN }} \
       #       dist/* --verbose
 
-      - name: Publish package distributions to testpypi
-        uses: pypa/gh-action-pypi-publish@release/v1
-        with:
-          repository-url: https://test.pypi.org/legacy/
+      # - name: Publish package distributions to testpypi
+      #   uses: pypa/gh-action-pypi-publish@release/v1
+      #   with:
+      #     repository-url: https://test.pypi.org/legacy/
+
+      - name: Upload to testpypi
+        run: python3 -m twine upload --repository testpypi dist/*
