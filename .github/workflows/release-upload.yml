@@ -161,13 +161,24 @@ jobs:
       - name: Download artifact
         uses: actions/download-artifact@v4
         with:
-          path: dist/
+          path: dist
           merge-multiple: true
 
       - name: DEBUG ls
         run: ls -R
 
-      - name: Publish
-        uses: pypa/gh-action-pypi-publish@release/v1
+      - name: Upload assets to GitHub Release
+        uses: softprops/action-gh-release@v2
         with:
-          repository-url: https://test.pypi.org/legacy/
+          files: dist/**
+          name: Release v${{ steps.get_version.outputs.version }}
+          tag_name: v${{ steps.get_version.outputs.version }}
+          fail_on_unmatched_files: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Install twine
+        run: pip install twine
+
+      - name: Upload to Pypi
+        run: twine upload --repository-url https://test.pypi.org/legacy/ dist/* --verbose
