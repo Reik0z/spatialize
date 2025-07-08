@@ -19,7 +19,7 @@ jobs:
 
     strategy:
       matrix:
-        python: ["3.9", "3.11"]
+        python: ["3.9", "3.12"]
  
     steps:
       - name: Checkout repo
@@ -63,7 +63,7 @@ jobs:
 
     strategy:
       matrix:
-        python: ["3.9", "3.x"]
+        python: ["3.9", "3.12"]
 
     steps:
       - name: Checkout repository
@@ -109,7 +109,7 @@ jobs:
 
     strategy:
       matrix:
-        python: ["3.9", "3.x"]
+        python: ["3.9", "3.12"]
 
     steps:
       - name: Checkout repository
@@ -190,10 +190,10 @@ jobs:
     permissions:
       id-token: write
     steps:
-      - name: Download Artifact
+      - name: Download artifact
         uses: actions/download-artifact@v4
-        with: 
-          path: dist/
+        with:
+          path: dist
 
       - name: Publish package distributions to testpypi
         uses: pypa/gh-action-pypi-publish@release/v1
