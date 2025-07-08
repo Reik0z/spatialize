@@ -20,7 +20,7 @@ libspatialize_extensions = [
 if __name__ == '__main__':
     setup(
         name='spatialize',
-        version='1.0.6',
+        version='1.0.7',
         #author='ALGES Laboratory',
         author='Reik0z',
         author_email='dev@alges.cl',
