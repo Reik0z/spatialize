@@ -187,18 +187,18 @@ jobs:
       - name: Install twine
         run: pip install twine
 
-      # - name: Upload to Pypi
-      #   run: |
-      #     twine upload \
-      #       --repository-url https://test.pypi.org/legacy/ \
-      #       --username __token___ \
-      #       --password ${{ secrets.TEST_PYPI_TOKEN }} \
-      #       dist/*.tar.gz --verbose
+      - name: Upload to Pypi
+        run: |
+          twine upload \
+            --repository-url https://test.pypi.org/legacy/ \
+            --username __token___ \
+            --password ${{ secrets.TEST_PYPI_TOKEN }} \
+            dist/*.tar.gz --verbose
 
-      - name: Publish package distributions to testpypi
-        uses: pypa/gh-action-pypi-publish@release/v1
-        with:
-          repository-url: https://test.pypi.org/legacy/
+      # - name: Publish package distributions to testpypi
+      #   uses: pypa/gh-action-pypi-publish@release/v1
+      #   with:
+      #     repository-url: https://test.pypi.org/legacy/
 
       # - name: Upload to testpypi
       #   run: python3 -m twine upload --repository testpypi dist/*.tar.gz
