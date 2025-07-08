@@ -218,7 +218,7 @@ class AsyncProgressCounter(AsyncProgressHandler):  # callback function
             etime = f'{m:2d}m {s:2d}s'
         else:
             etime = f'{h}h {m:2d}m {s:2d}s'
-        tqdm.write(f"done (elpased time: {etime})")
+        tqdm.write(f"done (elapsed time: {etime})")
 
     def _update(self):
         super()._update()
