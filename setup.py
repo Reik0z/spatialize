@@ -21,7 +21,8 @@ if __name__ == '__main__':
     setup(
         name='spatialize',
         version='1.0.5',
-        author='ALGES Laboratory',
+        #author='ALGES Laboratory',
+        author='Reik0z'
         author_email='dev@alges.cl',
         description='Python wrapper for ESI',
         keywords="ESI ensemble spatial interpolation",
