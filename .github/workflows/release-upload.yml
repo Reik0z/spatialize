@@ -19,7 +19,7 @@ jobs:
 
     strategy:
       matrix:
-        python: ["3.9", "3.x"]
+        python: ["3.9", "3.11"]
  
     steps:
       - name: Checkout repo
