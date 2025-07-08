@@ -9,7 +9,6 @@ on:
 
 permissions:
   id-token: write
-  contents: read
 
 jobs:
   build-linux:
@@ -154,7 +153,6 @@ jobs:
       - build-macos
     environment:
       name: testpypi
-      url: https://test.pypi.org/p/spatialize-test-reik0/
     permissions:
       contents: write
       id-token: write
@@ -199,6 +197,7 @@ jobs:
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
           packages-dir: dist/
+          repository-url: https://test.pypi.org/p/spatialize-test-reik0/
 
       # - name: Upload to testpypi
       #   run: python3 -m twine upload --repository testpypi dist/*.tar.gz
