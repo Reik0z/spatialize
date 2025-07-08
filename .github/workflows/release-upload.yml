@@ -24,7 +24,7 @@ jobs:
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
-          python-version: "3.11"
+          python-version: "3.12"
  
       - name: Install dependencies
         run: |
@@ -40,21 +40,14 @@ jobs:
         env:
           CIBW_BUILD: "cp39-* cp312-*"
 
-      - name: debug
-        run: ls -R
-        
+      - name: Get WHL
+        run: echo "WHEEL_FILE=$(ls dist/*cp312*.whl | head -n 1)" >> $GITHUB_ENV
 
-      # - name: Build project (Linux)
-      #   run: python -m build
-
-      # - name: Get WHL
-      #   run: echo "WHEEL_FILE=$(ls dist/*.whl)" >> $GITHUB_ENV
-
-      # - name: Install whl
-      #   run: pip install ${{ env.WHEEL_FILE }}
+      - name: Install whl
+        run: pip install ${{ env.WHEEL_FILE }}
  
-      # - name: Run example script
-      #   run: python examples/scripted_examples/esi_3d_nongriddata.py
+      - name: Run example script
+        run: python examples/scripted_examples/esi_3d_nongriddata.py
 
       - name: Upload Linux dist
         uses: actions/upload-artifact@v4
