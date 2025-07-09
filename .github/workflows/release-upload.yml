@@ -197,9 +197,6 @@ jobs:
           path: dist
           merge-multiple: true
 
-      - name: debug
-        run: ls -R
-
       - name: Publish package distributions to testpypi
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
