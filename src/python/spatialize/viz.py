@@ -5,9 +5,233 @@ from spatialize import in_notebook, logging
 import matplotlib.pyplot as plt
 from matplotlib.pyplot import colorbar
 from mpl_toolkits.axes_grid1 import make_axes_locatable
+import matplotlib.colors as mcolors
 
 from spatialize import SpatializeError
 from spatialize.logging import log_message
+
+class PlotStyle:
+    """
+    Manage matplotlib plot styles with predefined themes.
+    
+    Parameters
+    ----------
+    theme : str, optional
+        Theme name. Available: 'darkgrid', 'whitegrid', 'dark', 'white', 
+        'alges', 'minimal', 'publication'
+    color : str, optional
+        Primary color for plots
+    cmap : str or colormap, optional
+        Colormap for plots
+        
+    Attributes
+    ----------
+    theme : str
+        Active theme name
+    color : str
+        Primary plot color
+    cmap : str or colormap
+        Plot colormap
+        
+    Examples
+    --------
+    Basic usage with context manager::
+
+        with PlotStyle(theme='dark', color='#ff6b6b') as style:
+            plt.plot(x, y, color=style.color)
+            plt.imshow(data, cmap=style.cmap)
+
+    Simple usage without context manager::
+
+        style = PlotStyle(theme='alges')
+        plt.plot(x, y, color=style.color)
+        style.reset_to_original()       # Manual reset
+    """
+    THEMES = {
+        'darkgrid': {
+            'rcparams': {
+                'lines.solid_capstyle': 'round',
+                'axes.grid': True,
+                'axes.facecolor': '#EAEAF2',
+                'axes.edgecolor': 'white',
+                'axes.labelweight': 'demibold',
+                'figure.titleweight': 'bold',
+                'grid.color': 'white',
+                'xtick.bottom': False,
+                'ytick.left': False,
+                'xtick.labelsize': 'small',
+                'ytick.labelsize': 'small'
+            },
+            'color': '#59a590',
+            'cmap': 'crest',
+        },
+        'whitegrid': {
+            'rcparams': {
+                'lines.solid_capstyle': 'round',
+                'axes.grid': True,
+                'axes.facecolor': 'white',
+                'axes.edgecolor': '#EAEAF2',
+                'axes.labelweight': 'demibold',
+                'figure.titleweight': 'bold',
+                'grid.color': '#EAEAF2',
+                'xtick.bottom': False,
+                'ytick.left': False,
+                'xtick.labelsize': 'small',
+                'ytick.labelsize': 'small'
+            },
+            'color': '#7dba91',
+            'cmap': 'crest',
+        },
+        'dark': {
+            'rcparams': {
+                'figure.facecolor': '#0d121a',
+                'axes.facecolor': '#16202c',
+                'axes.grid': False,
+                'axes.edgecolor': '#1e2832',
+                'axes.labelcolor': 'white',
+                'axes.labelweight': 'demibold',
+                'figure.titleweight': 'bold',
+                'text.color': 'white',
+                'xtick.color': '#b3b9c1',
+                'ytick.color': '#b3b9c1',
+                'patch.edgecolor': '#27ccab',
+                'xtick.labelsize': 'small',
+                'ytick.labelsize': 'small', 
+            },
+            'color': '#24a187',
+            'cmap': 'viridis'
+        },
+        'white': {
+            'rcparams': {
+                'lines.solid_capstyle': 'round',
+                'axes.grid': False,
+                'axes.facecolor': 'white',
+                'axes.edgecolor': '#EAEAF2',
+                'grid.color': '#EAEAF2',
+                'xtick.labelsize': 'small',
+                'ytick.labelsize': 'small',
+                'axes.labelweight': 'demibold',
+                'figure.titleweight': 'bold',
+                'xtick.bottom': True,
+                'ytick.left': True,
+            },
+            'color': '#7dba91',
+            'cmap': 'crest',
+        },
+        'alges': {
+            'rcparams': {
+                'lines.solid_capstyle': 'round',
+                'axes.grid': True,
+                'axes.facecolor': 'white',      # Fondo blanco
+                'axes.edgecolor': '#EAEAF2',     # Bordes grises
+                'axes.labelcolor': '#424e77',
+                'axes.labelweight': 'demibold',
+                'figure.titleweight': 'bold',
+                'grid.color': '#EAEAF2',
+                'grid.alpha': 0.3,
+                'xtick.labelsize': 'small',
+                'ytick.labelsize': 'small',
+                'xtick.color': '#808080',
+                'ytick.color': '#808080',
+                'patch.edgecolor': '#496070',#'#45d5b4',
+                'text.color': "#424e77",
+                'xtick.bottom': False,        # Sin ticks en bottom
+                'ytick.left': False,  
+            },
+            'color': "#84a6be",
+            'cmap': mcolors.LinearSegmentedColormap.from_list(
+                "alges_cmap", ["#142b3b", "#1e4058", "#285676", "#326c94", "#5a89a9", "#84a6be", "#adc4d4"], N=256)
+        },
+        'minimal': {
+            'rcparams': {
+                'axes.grid': False,
+                'axes.spines.top': False,
+                'axes.spines.right': False,
+            },
+            'color': '#333333',
+            'cmap': 'copper'
+        },
+        'publication': {
+            'rcparams': {
+                'figure.titleweight': 'bold',
+                'axes.grid': True,
+                'grid.color': '#E0E0E0',
+                'axes.spines.top': False,
+                'axes.spines.right': False,
+                'font.family': 'serif',
+                'font.size': 10,
+            },
+            'color': '#000000',
+            'cmap': 'cividis'
+        }
+    }
+
+    DEFAULT_COLOR = 'skyblue'
+    DEFAULT_CMAP = 'coolwarm'
+
+    def __init__(self,
+                 theme = None,
+                 color = None,
+                 cmap = None):
+        
+        if theme and theme not in self.THEMES:
+            raise ValueError(f"Theme '{theme}' not found. Available: {list(self.THEMES.keys())}")
+        
+        self._original_rcparams = plt.rcParams.copy()
+
+        self.theme = theme
+        self.color = self._set_color(color)
+        self.cmap = self._set_cmap(cmap)
+
+        if self.theme:
+            self._apply_theme()
+
+    def _set_color(self, color):
+        if color is not None:
+            return color
+        elif self.theme is not None:
+            return self.THEMES[self.theme]['color']
+        else:
+            return self.DEFAULT_COLOR
+    
+    def _set_cmap(self, cmap):
+        if cmap is not None:
+            return cmap
+        elif self.theme is not None:
+            return self.THEMES[self.theme]['cmap']
+        else:
+            return self.DEFAULT_CMAP
+
+    def _apply_theme(self):
+        if self.theme and self.theme in self.THEMES:
+            theme_config = self.THEMES[self.theme]['rcparams']
+            plt.rcParams.update(theme_config)
+    
+    def get_available_themes(self):
+        """Returns the list of available themes."""
+        return list(self.THEMES.keys())
+    
+    def reset_to_original(self) -> None:
+        """Restore the initial matplotlib configuration."""
+        plt.rcParams.update(self._original_rcparams)
+    
+    def get_theme_info(self, theme_name: str):
+        """Returns information about a specific theme."""
+        if theme_name not in self.THEMES:
+            raise ValueError(f"Theme '{theme_name}' not found.")
+        return self.THEMES[theme_name].copy()
+    
+    def __repr__(self):
+        """String representation of the object."""
+        return f"PlotStyle(theme='{self.theme}', color='{self.color}', cmap='{self.cmap}')"
+
+    def __enter__(self):
+        """Context manager support - apply the theme."""
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        """Context manager support - restores original configuration."""
+        self.reset_to_original()
 
 
 def plot_colormap_data(data, ax=None, w=None, h=None, xi_locations=None, griddata=False, title="", **figargs):
