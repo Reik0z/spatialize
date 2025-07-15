@@ -2,7 +2,9 @@ import numpy as np
 from matplotlib import pyplot as plt
 
 from spatialize import SpatializeError, in_notebook
-from spatialize.viz import plot_colormap_data
+from spatialize.viz import plot_colormap_data, PlotStyle
+
+from typing import Optional, Dict, Any
 
 
 class GridSearchResult:
@@ -14,30 +16,65 @@ class GridSearchResult:
         min_error = self.cv_error.min()['cv_error']
         self.best_params = data[data.cv_error <= min_error]
 
-    def plot_cv_error(self, **kwargs):
+    def plot_cv_error(self,
+                      fig_args: Optional[Dict[str, Any]] = None,
+                      subplot_args: Optional[Dict[str, Any]] = None,
+                      theme: Optional[str] = 'alges',
+                      color: Optional[str] = None):
         """
         It shows a graph of the cross-validation errors of the hyperparameter
         search process. The graph has two components: the first is the error histogram,
         and the second is the error level for each of the estimation scenarios generated
         by the gridded parameter search.
 
-        :param kwargs: Additional keyword arguments.
+        :param fig_args: Dictionary with figure configuration for plt.subplots().
+            Default assigns figsize=(10, 4) if not specified.
+        :param subplot_args: Dictionary with subplot configuration for
+            plt.subplots_adjust(). Default assigns wspace=0.45 if not specified.
+        :param theme: Theme name. Available: 'whitegrid', 'darkgrid', 'white', 'dark',
+            'alges', 'minimal', 'publication'
+        :param color: Color for the plots. If None, uses theme default or 'skyblue'
+        :return: Tuple with matplotlib figure and tuple of axes (fig, (ax1, ax2))
+        :raises ValueError: If the specified theme does not exist.
         """
-        fig = plt.figure(figsize=(10, 4), dpi=150)
-        gs = fig.add_gridspec(1, 2, wspace=0.45)
-        (ax1, ax2) = gs.subplots()
-        fig.suptitle("Cross Validation Error")
-        self.cv_error.plot(kind='hist', ax=ax1,
-                           title="Histogram",
-                           rot=25,
-                           color='skyblue',
-                           legend=False)
-        self.cv_error.plot(kind='line', ax=ax2,
-                           y='cv_error',
-                           xlabel="Search result data index",
-                           ylabel="Error",
-                           color='skyblue',
-                           legend=False)
+        # Default values for figsize and wspace if not specified
+        if fig_args is None:
+            fig_args = {'figsize': (10, 4)}
+        elif 'figsize' not in fig_args:
+            fig_args['figsize'] = (10, 4)
+
+        if subplot_args is None:
+            subplot_args = {'wspace': 0.45}
+        elif 'wspace' not in subplot_args:
+            subplot_args['wspace'] = 0.45
+
+        with PlotStyle(theme=theme, color=color) as style:
+            fig, (ax1, ax2) = plt.subplots(1, 2, **fig_args)
+            plt.subplots_adjust(**subplot_args)
+            fig.suptitle("Cross Validation Error")
+
+            counts, bin_edges, _ = ax1.hist(self.cv_error,
+                                            color=style.color,
+                                            alpha=0.9,
+                                            rwidth=0.95,
+                                            zorder=3)
+            ax1.set_xlabel("Error")
+            ax1.set_ylabel("Frequency")
+            bin_centers = (bin_edges[:-1] + bin_edges[1:]) / 2
+            ax1.set_xticks(bin_centers[counts > 0])
+            ax1.tick_params(axis='x', rotation=30)
+            ax1.xaxis.set_major_formatter(plt.FuncFormatter(lambda x, p: f'{x:.3f}'))
+
+            self.cv_error.plot(kind='line',
+                               ax=ax2,
+                               y='cv_error',
+                               xlabel="Search result data index",
+                               ylabel="Error",
+                               color=style.color,
+                               lw=2,
+                               legend=False)
+            
+            return fig, (ax1, ax2)
 
     def best_result(self, **kwargs):
         raise NotImplementedError
