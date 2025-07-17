@@ -32,7 +32,6 @@ libspatialize_extensions = [
 if __name__ == '__main__':
     setup(
         name='spatialize',
-#        version=__version__,
         version='1.0.2',
         author='ALGES Laboratory',
         author_email='dev@alges.cl',
