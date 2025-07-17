@@ -502,7 +502,7 @@ def cv_sample_pred_posterior(points, values, xi, **kwargs):
         raise SpatializeError(e)  # from e might be better for traceback
 
     log_message(logging.logger.info(f"using fitted model factory: {kwargs['fitted_model_factory']}"))
-    return PosteriorSampleAnalizer(cv, points, values, kwargs['fitted_model_factory'],
+    return PosteriorSampleAnalyzer(cv, points, values, kwargs['fitted_model_factory'],
                                    callback=kwargs['callback'])
 
 
