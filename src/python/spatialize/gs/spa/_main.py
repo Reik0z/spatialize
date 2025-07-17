@@ -19,7 +19,7 @@ from spatialize import SpatializeError, logging  # Assuming 'logging' here refer
 from spatialize.gs.spa.empirical import EmpiricalModel, FittedModelFactory
 
 
-class PosteriorSampleAnalizer:
+class PosteriorSampleAnalyzer:
     """
     Analyzes results from cross-validated posterior samples.
 
