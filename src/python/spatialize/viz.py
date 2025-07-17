@@ -5,9 +5,300 @@ from spatialize import in_notebook, logging
 import matplotlib.pyplot as plt
 from matplotlib.pyplot import colorbar
 from mpl_toolkits.axes_grid1 import make_axes_locatable
+import matplotlib.colors as mcolors
 
 from spatialize import SpatializeError
 from spatialize.logging import log_message
+
+PALETTES = {
+    'alges': ['#070f15', '#0f212d', '#19384d', '#275474', '#326c94', '#4b87af', '#78abce', '#a7c9e1', '#cfe2ef'],
+    'alges_muted': ['#142b3b','#1e4058', '#285676', '#326c94', '#5a89a9', '#84a6be', '#c1d2de'],
+    'noname': ['#ffcbb4', '#ad92be', '#786aa9', '#124dc5'],
+    'crest': ['#7dba91', '#59a590', '#40908e', '#287a8c', '#1c6488', '#254b7f']}
+
+class PlotStyle:
+    """
+    Manage matplotlib plot styles with predefined themes.
+    
+    Parameters
+    ----------
+    theme : str, optional
+        Theme name. Available: 'darkgrid', 'whitegrid', 'dark', 'white', 
+        'alges', 'minimal', 'publication'
+    color : str, optional
+        Primary color for plots
+    cmap : str or colormap, optional
+        Colormap for plots
+        
+    Attributes
+    ----------
+    theme : str
+        Active theme name
+    color : str
+        Primary plot color
+    cmap : str or colormap
+        Plot colormap
+        
+    Examples
+    --------
+    Basic usage with context manager::
+
+        with PlotStyle(theme='dark', color='#ff6b6b') as style:
+            plt.plot(x, y, color=style.color)
+            plt.imshow(data, cmap=style.cmap)
+
+    Simple usage without context manager::
+
+        style = PlotStyle(theme='alges')
+        plt.plot(x, y, color=style.color)
+        style.reset_to_original()       # Manual reset
+    """
+    THEMES = {
+        'darkgrid': {
+            'rcparams': {
+                'lines.solid_capstyle': 'round',
+                'axes.grid': True,
+                'axes.facecolor': '#EAEAF2',
+                'axes.edgecolor': 'white',
+                'axes.labelweight': 'demibold',
+                'figure.titleweight': 'bold',
+                'grid.color': 'white',
+                'xtick.bottom': False,
+                'ytick.left': False,
+                'xtick.labelsize': 'small',
+                'ytick.labelsize': 'small'
+            },
+            'color': '#59a590',
+            'cmap': mcolors.LinearSegmentedColormap.from_list(
+                'crest', PALETTES['crest'], N=256),
+        },
+        'whitegrid': {
+            'rcparams': {
+                'lines.solid_capstyle': 'round',
+                'axes.grid': True,
+                'axes.facecolor': 'white',
+                'axes.edgecolor': '#EAEAF2',
+                'axes.labelweight': 'demibold',
+                'figure.titleweight': 'bold',
+                'grid.color': '#EAEAF2',
+                'xtick.bottom': False,
+                'ytick.left': False,
+                'xtick.labelsize': 'small',
+                'ytick.labelsize': 'small'
+            },
+            'color': '#7dba91',
+            'cmap': mcolors.LinearSegmentedColormap.from_list(
+                'crest', PALETTES['crest'], N=256),
+        },
+        'dark': {
+            'rcparams': {
+                'figure.facecolor': '#0d121a',
+                'axes.facecolor': '#16202c',
+                'axes.grid': False,
+                'axes.edgecolor': '#1e2832',
+                'axes.labelcolor': 'white',
+                'axes.labelweight': 'demibold',
+                'figure.titleweight': 'bold',
+                'text.color': 'white',
+                'xtick.color': '#b3b9c1',
+                'ytick.color': '#b3b9c1',
+                'patch.edgecolor': '#27ccab',
+                'xtick.labelsize': 'small',
+                'ytick.labelsize': 'small', 
+            },
+            'color': '#24a187',
+            'cmap': 'viridis'
+        },
+        'white': {
+            'rcparams': {
+                'lines.solid_capstyle': 'round',
+                'axes.grid': False,
+                'axes.facecolor': 'white',
+                'axes.edgecolor': '#EAEAF2',
+                'grid.color': '#EAEAF2',
+                'xtick.labelsize': 'small',
+                'ytick.labelsize': 'small',
+                'axes.labelweight': 'demibold',
+                'figure.titleweight': 'bold',
+                'xtick.bottom': True,
+                'ytick.left': True,
+            },
+            'color': '#7dba91',
+            'cmap': mcolors.LinearSegmentedColormap.from_list(
+                'crest', PALETTES['crest'], N=256),
+        },
+        'alges': {
+            'rcparams': {
+                'lines.solid_capstyle': 'round',
+                'axes.grid': False,
+                'axes.facecolor': 'white',
+                'axes.edgecolor': '#808080',
+                'axes.labelcolor': '#424e77',
+                'axes.labelweight': 'demibold',
+                'figure.titleweight': 'bold',
+                'xtick.labelsize': 'small',
+                'ytick.labelsize': 'small',
+                'xtick.color': '#808080',
+                'ytick.color': '#808080',
+                'patch.edgecolor': '#496070',
+                'text.color': "#424e77",
+                'xtick.bottom': True,
+                'ytick.left': True
+            },
+            'color': "#8fb4cd",
+            'cmap': mcolors.LinearSegmentedColormap.from_list(
+                'alges_cmap', PALETTES['alges'], N=256)
+        },
+        'alges_muted': {
+            'rcparams': {
+                'lines.solid_capstyle': 'round',
+                'axes.grid': False,
+                'axes.facecolor': 'white',
+                'axes.edgecolor': '#808080',
+                'axes.labelcolor': '#545f84',
+                'axes.labelweight': 'demibold',
+                'figure.titleweight': 'bold',
+                'xtick.labelsize': 'small',
+                'ytick.labelsize': 'small',
+                'xtick.color': '#808080',
+                'ytick.color': '#808080',
+                'patch.edgecolor': '#496070',
+                'text.color': "#424e77",
+                'xtick.bottom': True,
+                'ytick.left': True
+            },
+            'color': "#84a6be",
+            'cmap': mcolors.LinearSegmentedColormap.from_list(
+                'alges_cmap', PALETTES['alges_muted'], N=256)
+        },
+        'minimal': {
+            'rcparams': {
+                'axes.grid': False,
+                'axes.spines.top': False,
+                'axes.spines.right': False,
+            },
+            'color': '#333333',
+            'cmap': 'copper'
+        },
+        'publication': {
+            'rcparams': {
+                'figure.titleweight': 'bold',
+                'axes.grid': True,
+                'grid.color': '#E0E0E0',
+                'axes.spines.top': False,
+                'axes.spines.right': False,
+                'font.family': 'serif',
+                'font.size': 10,
+            },
+            'color': '#000000',
+            'cmap': 'cividis'
+        }
+    }
+
+    DEFAULT_COLOR = 'skyblue'
+    DEFAULT_CMAP = 'coolwarm'
+    DEFAULT_PRECISION_CMAP = 'bwr'
+
+    def __init__(self,
+                 theme = None,
+                 color = None,
+                 cmap = None,
+                 precision_cmap = None,):
+        
+        if theme and theme not in self.THEMES:
+            raise ValueError(f"Theme '{theme}' not found. Available: {list(self.THEMES.keys())}")
+        
+        self._original_rcparams = plt.rcParams.copy()
+
+        self.theme = theme
+        self.color = self._set_color(color)
+        self.cmap = self._set_cmap(cmap)
+        self.precision_cmap = self._set_precision_cmap(precision_cmap)
+
+        if self.theme:
+            self._apply_theme()
+
+    def _set_color(self, color):
+        if color is not None:
+            return color
+        elif self.theme is not None:
+            return self.THEMES[self.theme]['color']
+        else:
+            return self.DEFAULT_COLOR
+    
+    def _set_cmap(self, cmap):
+        if cmap is not None:
+            return cmap
+        elif self.theme is not None:
+            return self.THEMES[self.theme]['cmap']
+        else:
+            return self.DEFAULT_CMAP
+        
+    def _set_precision_cmap(self, cmap):
+        if cmap is not None:
+            return cmap
+        #elif self.theme is not None:
+        #    return self.THEMES[self.theme]['cmap']
+        else:
+            return self.DEFAULT_PRECISION_CMAP
+
+    def _apply_theme(self):
+        if self.theme and self.theme in self.THEMES:
+            theme_config = self.THEMES[self.theme]['rcparams']
+            plt.rcParams.update(theme_config)
+    
+    def get_available_themes(self):
+        """Returns the list of available themes."""
+        return list(self.THEMES.keys())
+    
+    def reset_to_original(self) -> None:
+        """Restore the initial matplotlib configuration."""
+        plt.rcParams.update(self._original_rcparams)
+    
+    def get_theme_info(self, theme_name: str):
+        """Returns information about a specific theme."""
+        if theme_name not in self.THEMES:
+            raise ValueError(f"Theme '{theme_name}' not found.")
+        return self.THEMES[theme_name].copy()
+    
+    def __repr__(self):
+        """String representation of the object."""
+        return f"PlotStyle(theme='{self.theme}', color='{self.color}', cmap='{self.cmap}')"
+
+    def __enter__(self):
+        """Context manager support - apply the theme."""
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        """Context manager support - restores original configuration."""
+        self.reset_to_original()
+
+
+def plot_histogram(data, ax, style, alpha = 0.9, rwidth=0.92, show_empty = False):
+    """
+    Plots a histogram of the given data using matplotlib
+    :param data: The data to visualize. Should be either a 1D array-like object 
+                 (list, numpy array, pandas Series) containing numerical values.
+    :param ax: Matplotlib Axes object where the histogram will be plotted.
+    :param style: Instance of PlotStyle object as Matplotlib context manager.
+    :param alpha: Sets transparency of the histogram bars. Default assigns alpha=0.9 if not specified.
+    :param rwidth: Sets relative width of the histogram bars. Default assigns rwidth=0.92 if not specified.
+    :param show_empty: Whether to show tick labels for empty histogram bins. Default assigns False.
+    """
+    counts, bin_edges, _ = ax.hist(data,
+                                   color=style.color,
+                                   alpha=alpha,
+                                   rwidth=rwidth,
+                                   zorder=3)
+    ax.set_xlabel("Error")
+    ax.set_ylabel("Frequency")
+    bin_centers = (bin_edges[:-1] + bin_edges[1:]) / 2
+    if show_empty:
+        ax.set_xticks(bin_centers)
+    else:
+        ax.set_xticks(bin_centers[counts > 0])
+    ax.tick_params(axis='x', rotation=30)
+    ax.xaxis.set_major_formatter(plt.FuncFormatter(lambda x, p: f'{x:.3f}'))
 
 
 def plot_colormap_data(data, ax=None, w=None, h=None, xi_locations=None, griddata=False, title="", **figargs):

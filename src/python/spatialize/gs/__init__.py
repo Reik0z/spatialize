@@ -48,7 +48,7 @@ class lib_spatialize_facade:
                               "loo": lsp.loo_esi_kriging_3d,
                               "kfold": lsp.kfold_esi_kriging_3d},
             # MONDRIANADAPTIVEIDW: {"estimate": lsp.estimation_adaptive_esi_idw_3d,
-            #                       "loo": lsp.loo_adaptive_esi_idw_3d,
+            #                      "loo": lsp.loo_adaptive_esi_idw_3d,
             #                       "kfold": lsp.kfold_adaptive_esi_idw_3d},
             PLAINIDW: {"estimate": lsp.estimation_nn_idw,
                        "loo": lsp.loo_nn_idw,

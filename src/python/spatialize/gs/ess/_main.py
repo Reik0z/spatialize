@@ -1,4 +1,8 @@
+import threading
+from multiprocessing import Manager
+
 import numpy as np
+from joblib import Parallel, delayed
 from sklearn.mixture import BayesianGaussianMixture, GaussianMixture
 from sklearn.neighbors import KernelDensity
 from sklearn.exceptions import ConvergenceWarning
@@ -7,6 +11,7 @@ from sklearn.exceptions import ConvergenceWarning
 import warnings
 
 from spatialize import logging
+from spatialize.gs.spa.empirical import FittedModelFactory, EmpiricalModel
 from spatialize.logging import log_message, default_singleton_callback
 from spatialize.viz import plot_colormap_array
 
@@ -39,6 +44,7 @@ class ESSResult:
     quick_plot(n_imgs=9, n_cols=3, norm_lims=False, title_prefix="scenario", title=None):
         Plots a quick preview of the ESS scenarios as a grid of colormap images.
     """
+
     def __init__(self, ess_scenarios, esi_result, desc):
         """
         Initializes an ESSResult instance.
@@ -82,94 +88,151 @@ class ESSResult:
 
 def ess_sample(esi_result,
                n_sims=100,
-               point_model_name="kde",
-               nan_model_name="ignore",
-               nan_replace_func_name="median",
-               kernel="tophat",
-               n_components=1,
+               fitted_model_factory=FittedModelFactory(),
                desc=None,
+               n_jobs=-1,
                callback=default_singleton_callback):
     """
-    To sample scenarios out of an interpolation result generative model.
+        Generate simulated scenarios from Ensemble Spatial Interpolation (ESI) samples using probabilistic models.
 
-    :param esi_result: The interpolation result. It has to be an ESIResult object.
-    :param n_sims: Number of scenarios to be generated. Its has to be a positive integer (default is 100).
-    :param point_model_name: The name of the model used to estimate the probability density at each point in space.
-    It can be “kde” for using a kernel density estimate (the fastest),
-    "emm" for fitting a Gaussian mixture model with the expectation maximisation algorithm or “vim” for the same
-    model as the previous one, but fitted with variational inference (the slowest). The default is ‘kde’.
-    :param nan_model_name: Set "ignore" to have the nan discarded from the dataset or "replace" to have it replaced.
-    The default value is "ignore".
-    :param nan_replace_func_name: Valid when nan_model_name="replace". Set "mean" to replace with the mean of the
-    point data at each position or "median" to replace with the median.
-    :param callback: Callback function for logging progress.
-    :return: ESSResult containing the scenarios sampled out of an interpolation result.
+        This function takes ESI (Ensemble Spatial Interpolation) samples from the provided ``esi_result``,
+        fits a probabilistic model to each sample using a specified model factory, and generates a specified
+        number of simulations per sample. Execution can be done serially or in parallel, with real-time progress
+        tracking via a callback.
+
+        :param esi_result:
+            An object containing ESI (Ensemble Spatial Interpolation) samples. Must implement
+            the method ``esi_samples(raw=True)`` which returns a NumPy array of shape
+            ``(n_samples, n_features)``.
+        :type esi_result: object
+        :param n_sims:
+            Number of simulations to generate per ESI sample.
+        :type n_sims: int, optional
+        :param fitted_model_factory:
+            A factory for creating fitted probabilistic models per sample. Must provide
+            a ``create(...)`` method and define ``point_model_name`` and other relevant attributes.
+        :type fitted_model_factory: FittedModelFactory, optional
+        :param desc:
+            Optional textual description for the result. If not provided, it will be generated
+            based on the model type and simulation parameters.
+        :type desc: str, optional
+        :param n_jobs:
+            Number of parallel jobs to use. Set to ``1`` for serial execution or ``-1`` to use all available CPUs.
+        :type n_jobs: int, optional
+        :param callback:
+            A callback function for progress reporting. Expected to support ``logging.progress.init``,
+            ``inform``, and ``stop`` methods.
+        :type callback: callable, optional
+        :returns:
+            An ``ESSResult`` object containing the simulated scenarios, the original ESI result,
+            and a textual description.
+        :rtype: ESSResult
+        :raises ValueError:
+            If the model type specified in ``fitted_model_factory.point_model_name`` is not one of
+            ``"vim"``, ``"emm"``, or ``"kde"``.
+        .. note::
+            - This function supports parallel execution using ``joblib.Parallel`` and includes a separate
+              thread for real-time progress monitoring.
+            - It is designed for large-scale scenario generation from spatial ensemble data.
+        .. warning::
+            - If model fitting or sampling fails for a given sample, its corresponding scenario row is
+              replaced with zeros.
+            - When using ``n_jobs != 1``, this function must be called within a
+              ``if __name__ == "__main__":`` block to avoid multiprocessing issues
+              (especially on Windows and macOS).
     """
-
     # work always with the flattened array just to support arbitrary dimensions
     esi_samples = np.array(esi_result.esi_samples(raw=True))
 
     log_message(logging.logger.debug(f"esi_samples shape: {esi_samples.shape}"))
 
-    if nan_replace_func_name == "median":
-        nan_replace_func_def = np.median
-    elif nan_replace_func_name == "mean":
-        nan_replace_func_def = np.mean
+    def run_serial():
+        scenarios = np.empty([esi_samples.shape[0], n_sims])
+        callback(logging.progress.init(esi_samples.shape[0], 1))
+        for esi_sample_idx in range(esi_samples.shape[0]):
+            model, _ = fitted_model_factory.create(esi_samples[esi_sample_idx, :])
+
+            # sampling from the fitted model
+            if fitted_model_factory.point_model_name in {"vim", "emm"}:
+                s = model.sample(n_sims)[0].reshape(1, n_sims)[0]
+            elif fitted_model_factory.point_model_name == "kde":
+                s = model.sample(n_sims).reshape(1, n_sims)[0]
+            else:
+                raise ValueError(f"Unsupported model type: {fitted_model_factory.point_model_name}")
+
+            scenarios[esi_sample_idx, :] = s[:]
+            callback(logging.progress.inform())
+        callback(logging.progress.stop())
+        return scenarios
+
+    # to run in parallel ------------------------------------------------------------------------
+    def sample_single_scenario(idx, sample_row, n_sims, model_factory, progress_q):
+        try:
+            model, _ = model_factory.create(sample_row)
+
+            # Sample based on model type
+            if model_factory.point_model_name in {"vim", "emm"}:
+                sims = model.sample(n_sims)[0].reshape(n_sims)
+            elif model_factory.point_model_name == "kde":
+                sims = model.sample(n_sims).reshape(n_sims)
+            else:
+                raise ValueError(f"Unsupported model type: {model_factory.point_model_name}")
+
+            if progress_q:
+                progress_q.put(1)
+            return idx, sims
+
+        except Exception as e:
+            logging.logger.debug(f"Sampling failed for sample[{idx}]: {e}")
+            if progress_q:
+                progress_q.put(1)
+            return idx, None
+
+    def run_parallel():
+        def progress_monitor(queue, total, cb):
+            count = 0
+            cb(logging.progress.init(total, 1))
+            while count < total:
+                queue.get()
+                count += 1
+                cb(logging.progress.inform())
+            cb(logging.progress.stop())
+
+        with Manager() as manager:
+            progress_queue = manager.Queue()
+
+            monitor_thread = threading.Thread(
+                target=progress_monitor,
+                args=(progress_queue, esi_samples.shape[0], callback),
+                daemon=True
+            )
+            monitor_thread.start()
+
+            results = Parallel(n_jobs=n_jobs, backend='loky')(
+                delayed(sample_single_scenario)(
+                    i, esi_samples[i, :], n_sims, fitted_model_factory, progress_queue
+                )
+                for i in range(esi_samples.shape[0])
+            )
+
+            monitor_thread.join()
+
+        # Sort results and construct the scenarios array
+        sorted_results = sorted(results, key=lambda x: x[0])
+        valid_scenarios = [r[1] if r[1] is not None else np.zeros(n_sims) for r in sorted_results]
+        scenarios = np.stack(valid_scenarios)
+
+        return scenarios
+
+    if n_jobs == 1:
+        scenarios = run_serial()
     else:
-        raise ValueError("nan_replace_func_name must be either 'mean' or 'median'")
-
-    # just to memoize some common operations for the for-loop
-    def replace_nan_with(arr, idx, with_function=nan_replace_func_def):
-        nan_value = with_function(arr[idx, :])
-        return np.nan_to_num(arr[idx, :], nan=nan_value)
-
-    def ignore_nan(arr, idx):
-        return arr[idx, :][~np.isnan(arr[idx, :])]
-
-    if nan_model_name == "replace":
-        nan_model = replace_nan_with
-    elif nan_model_name == "ignore":
-        nan_model = ignore_nan
-    else:
-        raise ValueError("nan_model_name must be either 'replace' or 'ignore'")
-
-    # the bandwidth is calculated automatically using the silverman method
-    if point_model_name == "kde":
-        model = KernelDensity(kernel=kernel, bandwidth="silverman", atol=0.5, rtol=0.5)
-    elif point_model_name == "vim":  # Variational inference dirichlet process gaussian mixture model
-        model = BayesianGaussianMixture(n_components=n_components, covariance_type='full')
-    elif point_model_name == "emm":  # Expectation-Maximisation gaussian mixture model
-        model = GaussianMixture(n_components=2, covariance_type='full')
-    else:
-        raise ValueError("point_model_name must be either 'kde', 'vim', or 'emm'")
-
-    scenarios = np.empty([esi_samples.shape[0], n_sims])
-
-    callback(logging.progress.init(esi_samples.shape[0], 1))
-    for esi_sample_idx in range(esi_samples.shape[0]):
-        # dealing with nans
-        point_data = nan_model(esi_samples, esi_sample_idx)
-
-        # getting the model for this position
-        model.fit(point_data.reshape(-1, 1))
-
-        # sampling from the fitted model
-        if point_model_name == "vim" or point_model_name == "emm":
-            s = model.sample(n_sims)[0].reshape(1, n_sims)[0]
-
-        if point_model_name == "kde":
-            s = model.sample(n_sims).reshape(1, n_sims)[0]
-
-        scenarios[esi_sample_idx, :] = s[:]
-
-        callback(logging.progress.inform())
-
-    callback(logging.progress.stop())
+        scenarios = run_parallel()
 
     if desc is None:
-        if point_model_name == "kde":
-            desc = f"{n_sims}sims_kde_{kernel}"
+        if fitted_model_factory.point_model_name == "kde":
+            desc = f"{n_sims}sims_kde_{fitted_model_factory.kernel}"
         else:
-            desc = f"{n_sims}sims_{point_model_name}_{n_components}_components"
+            desc = f"{n_sims}sims_{fitted_model_factory.point_model_name}_{fitted_model_factory.n_components}_components"
 
     return ESSResult(scenarios, esi_result, desc)

@@ -83,9 +83,11 @@ def load_result(result_dir_path, just_esi_result=False, simulation_desc=None):
         ess_scenarios = pd.read_csv(fn).values
         sim_results.append(ESSResult(ess_scenarios, esi_result, Path(sim).stem))
 
+    plural = "" if len(sim_results) == 1 else "s"
+    tense = "was" if len(sim_results) == 1 else "were"
     log_message(logging.logger.info(f"{len(sim_results)}"
-                                    f" instance{"" if len(sim_results) == 1 else "s"}"
-                                    f" of ESSResult {"was" if len(sim_results) == 1 else "were"} "
+                                    f" instance{plural}"
+                                    f" of ESSResult {tense} "
                                     f"loaded : {sim_results}"))
 
     return sim_results
