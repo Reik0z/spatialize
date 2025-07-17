@@ -32,7 +32,7 @@ class PosteriorSampleAnalyzer:
     def __init__(self, cv_post_result, points, sample_values, fitted_model_factory,
                  callback=default_singleton_callback):
         """
-        Initialize the PosteriorSampleAnalizer.
+        Initialize the PosteriorSampleAnalyzer.
 
         :param cv_post_result: The posterior results from a cross-validation process.
                                Expected to be a 2D numpy array where rows correspond
@@ -247,7 +247,7 @@ class PosteriorSampleAnalyzer:
         ax[2].set_title("Entropy")
 
         # Consider plt.show() or returning fig if used in non-interactive environments
-        # plt.show() 
+        # plt.show()
 
     def quick_plot_models(self, n_imgs=6, n_cols=3, seed=42, **figargs):
         """
