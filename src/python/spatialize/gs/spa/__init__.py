@@ -1,1 +1,1 @@
-from ._main import cv_sample_pred_posterior, PosteriorSampleAnalizer
+from ._main import cv_sample_pred_posterior, PosteriorSampleAnalyzer
