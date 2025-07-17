@@ -10,6 +10,12 @@ import matplotlib.colors as mcolors
 from spatialize import SpatializeError
 from spatialize.logging import log_message
 
+PALETTES = {
+    'alges': ['#070f15', '#0f212d', '#19384d', '#275474', '#326c94', '#4b87af', '#78abce', '#a7c9e1', '#cfe2ef'],
+    'alges_muted': ['#142b3b','#1e4058', '#285676', '#326c94', '#5a89a9', '#84a6be', '#c1d2de'],
+    'noname': ['#ffcbb4', '#ad92be', '#786aa9', '#124dc5'],
+    'crest': ['#7dba91', '#59a590', '#40908e', '#287a8c', '#1c6488', '#254b7f']}
+
 class PlotStyle:
     """
     Manage matplotlib plot styles with predefined themes.
@@ -63,7 +69,8 @@ class PlotStyle:
                 'ytick.labelsize': 'small'
             },
             'color': '#59a590',
-            'cmap': 'crest',
+            'cmap': mcolors.LinearSegmentedColormap.from_list(
+                'crest', PALETTES['crest'], N=256),
         },
         'whitegrid': {
             'rcparams': {
@@ -80,7 +87,8 @@ class PlotStyle:
                 'ytick.labelsize': 'small'
             },
             'color': '#7dba91',
-            'cmap': 'crest',
+            'cmap': mcolors.LinearSegmentedColormap.from_list(
+                'crest', PALETTES['crest'], N=256),
         },
         'dark': {
             'rcparams': {
@@ -116,31 +124,52 @@ class PlotStyle:
                 'ytick.left': True,
             },
             'color': '#7dba91',
-            'cmap': 'crest',
+            'cmap': mcolors.LinearSegmentedColormap.from_list(
+                'crest', PALETTES['crest'], N=256),
         },
         'alges': {
             'rcparams': {
                 'lines.solid_capstyle': 'round',
-                'axes.grid': True,
-                'axes.facecolor': 'white',      # Fondo blanco
-                'axes.edgecolor': '#EAEAF2',     # Bordes grises
+                'axes.grid': False,
+                'axes.facecolor': 'white',
+                'axes.edgecolor': '#808080',
                 'axes.labelcolor': '#424e77',
                 'axes.labelweight': 'demibold',
                 'figure.titleweight': 'bold',
-                'grid.color': '#EAEAF2',
-                'grid.alpha': 0.3,
                 'xtick.labelsize': 'small',
                 'ytick.labelsize': 'small',
                 'xtick.color': '#808080',
                 'ytick.color': '#808080',
-                'patch.edgecolor': '#496070',#'#45d5b4',
+                'patch.edgecolor': '#496070',
                 'text.color': "#424e77",
-                'xtick.bottom': False,        # Sin ticks en bottom
-                'ytick.left': False,  
+                'xtick.bottom': True,
+                'ytick.left': True
+            },
+            'color': "#8fb4cd",
+            'cmap': mcolors.LinearSegmentedColormap.from_list(
+                'alges_cmap', PALETTES['alges'], N=256)
+        },
+        'alges_muted': {
+            'rcparams': {
+                'lines.solid_capstyle': 'round',
+                'axes.grid': False,
+                'axes.facecolor': 'white',
+                'axes.edgecolor': '#808080',
+                'axes.labelcolor': '#545f84',
+                'axes.labelweight': 'demibold',
+                'figure.titleweight': 'bold',
+                'xtick.labelsize': 'small',
+                'ytick.labelsize': 'small',
+                'xtick.color': '#808080',
+                'ytick.color': '#808080',
+                'patch.edgecolor': '#496070',
+                'text.color': "#424e77",
+                'xtick.bottom': True,
+                'ytick.left': True
             },
             'color': "#84a6be",
             'cmap': mcolors.LinearSegmentedColormap.from_list(
-                "alges_cmap", ["#142b3b", "#1e4058", "#285676", "#326c94", "#5a89a9", "#84a6be", "#adc4d4"], N=256)
+                'alges_cmap', PALETTES['alges_muted'], N=256)
         },
         'minimal': {
             'rcparams': {
@@ -168,11 +197,13 @@ class PlotStyle:
 
     DEFAULT_COLOR = 'skyblue'
     DEFAULT_CMAP = 'coolwarm'
+    DEFAULT_PRECISION_CMAP = 'bwr'
 
     def __init__(self,
                  theme = None,
                  color = None,
-                 cmap = None):
+                 cmap = None,
+                 precision_cmap = None,):
         
         if theme and theme not in self.THEMES:
             raise ValueError(f"Theme '{theme}' not found. Available: {list(self.THEMES.keys())}")
@@ -182,6 +213,7 @@ class PlotStyle:
         self.theme = theme
         self.color = self._set_color(color)
         self.cmap = self._set_cmap(cmap)
+        self.precision_cmap = self._set_precision_cmap(precision_cmap)
 
         if self.theme:
             self._apply_theme()
@@ -201,6 +233,14 @@ class PlotStyle:
             return self.THEMES[self.theme]['cmap']
         else:
             return self.DEFAULT_CMAP
+        
+    def _set_precision_cmap(self, cmap):
+        if cmap is not None:
+            return cmap
+        #elif self.theme is not None:
+        #    return self.THEMES[self.theme]['cmap']
+        else:
+            return self.DEFAULT_PRECISION_CMAP
 
     def _apply_theme(self):
         if self.theme and self.theme in self.THEMES:
@@ -232,6 +272,33 @@ class PlotStyle:
     def __exit__(self, exc_type, exc_val, exc_tb):
         """Context manager support - restores original configuration."""
         self.reset_to_original()
+
+
+def plot_histogram(data, ax, style, alpha = 0.9, rwidth=0.92, show_empty = False):
+    """
+    Plots a histogram of the given data using matplotlib
+    :param data: The data to visualize. Should be either a 1D array-like object 
+                 (list, numpy array, pandas Series) containing numerical values.
+    :param ax: Matplotlib Axes object where the histogram will be plotted.
+    :param style: Instance of PlotStyle object as Matplotlib context manager.
+    :param alpha: Sets transparency of the histogram bars. Default assigns alpha=0.9 if not specified.
+    :param rwidth: Sets relative width of the histogram bars. Default assigns rwidth=0.92 if not specified.
+    :param show_empty: Whether to show tick labels for empty histogram bins. Default assigns False.
+    """
+    counts, bin_edges, _ = ax.hist(data,
+                                   color=style.color,
+                                   alpha=alpha,
+                                   rwidth=rwidth,
+                                   zorder=3)
+    ax.set_xlabel("Error")
+    ax.set_ylabel("Frequency")
+    bin_centers = (bin_edges[:-1] + bin_edges[1:]) / 2
+    if show_empty:
+        ax.set_xticks(bin_centers)
+    else:
+        ax.set_xticks(bin_centers[counts > 0])
+    ax.tick_params(axis='x', rotation=30)
+    ax.xaxis.set_major_formatter(plt.FuncFormatter(lambda x, p: f'{x:.3f}'))
 
 
 def plot_colormap_data(data, ax=None, w=None, h=None, xi_locations=None, griddata=False, title="", **figargs):
