@@ -2,7 +2,7 @@ import numpy as np
 from matplotlib import pyplot as plt
 
 from spatialize import SpatializeError, in_notebook
-from spatialize.viz import plot_colormap_data, PlotStyle
+from spatialize.viz import plot_colormap_data, plot_histogram, PlotStyle
 
 from typing import Optional, Dict, Any
 
@@ -17,10 +17,10 @@ class GridSearchResult:
         self.best_params = data[data.cv_error <= min_error]
 
     def plot_cv_error(self,
-                      fig_args: Optional[Dict[str, Any]] = None,
-                      subplot_args: Optional[Dict[str, Any]] = None,
                       theme: Optional[str] = 'alges',
-                      color: Optional[str] = None):
+                      color: Optional[str] = None,
+                      fig_args: Optional[Dict[str, Any]] = None
+                      ):
         """
         It shows a graph of the cross-validation errors of the hyperparameter
         search process. The graph has two components: the first is the error histogram,
@@ -37,33 +37,18 @@ class GridSearchResult:
         :return: Tuple with matplotlib figure and tuple of axes (fig, (ax1, ax2))
         :raises ValueError: If the specified theme does not exist.
         """
-        # Default values for figsize and wspace if not specified
+        # Default values for figsize if not specified
         if fig_args is None:
             fig_args = {'figsize': (10, 4)}
         elif 'figsize' not in fig_args:
             fig_args['figsize'] = (10, 4)
 
-        if subplot_args is None:
-            subplot_args = {'wspace': 0.45}
-        elif 'wspace' not in subplot_args:
-            subplot_args['wspace'] = 0.45
-
         with PlotStyle(theme=theme, color=color) as style:
             fig, (ax1, ax2) = plt.subplots(1, 2, **fig_args)
-            plt.subplots_adjust(**subplot_args)
+            plt.subplots_adjust(wspace=0.45)
             fig.suptitle("Cross Validation Error")
 
-            counts, bin_edges, _ = ax1.hist(self.cv_error,
-                                            color=style.color,
-                                            alpha=0.9,
-                                            rwidth=0.95,
-                                            zorder=3)
-            ax1.set_xlabel("Error")
-            ax1.set_ylabel("Frequency")
-            bin_centers = (bin_edges[:-1] + bin_edges[1:]) / 2
-            ax1.set_xticks(bin_centers[counts > 0])
-            ax1.tick_params(axis='x', rotation=30)
-            ax1.xaxis.set_major_formatter(plt.FuncFormatter(lambda x, p: f'{x:.3f}'))
+            plot_histogram(self.cv_error, ax1, style.color)
 
             self.cv_error.plot(kind='line',
                                ax=ax2,
@@ -111,7 +96,7 @@ class EstimationResult:
         else:
             return self._estimation
 
-    def plot_estimation(self, ax=None, w=None, h=None, **figargs):
+    def plot_estimation(self, ax=None, w=None, h=None, theme='alges', cmap=None, **imshow_args):
         """
         Plots the estimation using `matplotlib`.
 
@@ -123,18 +108,29 @@ class EstimationResult:
             The width of the image (if the data is reshaped).
         h : (int, optional)
             The height of the image (if the data is reshaped).
-        **figargs : (optional)
+        theme : (str, optional)
+            Theme name. Available: 'whitegrid', 'darkgrid', 'white', 'dark',
+            'alges', 'minimal', 'publication'
+        cmap : (str, optional)
+            Colormap for the plot. If None, uses theme default or 'coolwarm'
+        **imshow_args : (optional)
             Additional keyword arguments passed to the figure creation (e.g., DPI, figure size).
 
         """
-        if 'cmap' not in figargs:
-            figargs['cmap'] = 'coolwarm'
-        self._plot_data(self.estimation(), ax, w, h, **figargs)
+        plot_imshow_args = imshow_args.copy()
 
-    def _plot_data(self, data, ax=None, w=None, h=None, **figargs):
-        plot_colormap_data(data, ax=ax, w=w, h=h, xi_locations=self._xi, griddata=self.griddata, **figargs)
+        if theme:
+            with PlotStyle(theme=theme, cmap=cmap) as style:
+                plot_imshow_args.setdefault('cmap', style.cmap)
+                self._plot_data(self.estimation(), ax, w, h, **plot_imshow_args)
+        else:
+            plot_imshow_args.setdefault('cmap', cmap or 'coolwarm')
+            self._plot_data(self.estimation(), ax, w, h, **plot_imshow_args)
 
-    def quick_plot(self, w=None, h=None, **figargs):
+    def _plot_data(self, data, ax=None, w=None, h=None, **imshow_args):
+        plot_colormap_data(data, ax=ax, w=w, h=h, xi_locations=self._xi, griddata=self.griddata, **imshow_args)
+
+    def quick_plot(self, w=None, h=None, **imshow_args):
         """
         Quickly plots the estimation using `matplotlib`.
 
@@ -144,14 +140,14 @@ class EstimationResult:
             The width of the image (if the data is reshaped).
         h : (int, optional)
             The height of the image (if the data is reshaped).
-        **figargs : (optional)
+        **imshow_args : (optional)
             Additional keyword arguments passed to the figure creation (e.g., DPI, figure size).
         """
         if not self._xi is None:
             if self._xi.shape[1] > 2:
                 raise SpatializeError("quick_plot() for 3D data is not supported")
 
-        fig = plt.figure(dpi=150, **figargs)
+        fig = plt.figure(dpi=150, **imshow_args)
         gs = fig.add_gridspec(1, 1, wspace=0.45)
         ax = gs.subplots()
 

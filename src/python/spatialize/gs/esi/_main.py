@@ -13,7 +13,7 @@ from spatialize._util import signature_overload, in_notebook
 from spatialize._math_util import flatten_grid_data
 from spatialize.gs import lib_spatialize_facade, partitioning_process, local_interpolator as li
 from spatialize.logging import log_message, default_singleton_callback, singleton_null_callback
-from spatialize.viz import plot_colormap_array
+from spatialize.viz import plot_colormap_array, PlotStyle
 
 
 class ESIGridSearchResult(GridSearchResult):
@@ -137,49 +137,72 @@ class ESIResult(EstimationResult):
         self._estimation = agg_function(self._esi_samples)
         return self.estimation()
 
-    def plot_precision(self, ax=None, w=None, h=None, **figargs):
+    def plot_precision(self, ax=None, w=None, h=None, theme='alges', cmap=None, **imshow_args):
         """
         Plot the precision of the estimation.
 
         :param ax: The axis to plot on.
         :param w: The width of the plot.
         :param h: The height of the plot.
-        :param figargs: Additional figure arguments.
+        :param theme: Theme name. Available: 'whitegrid', 'darkgrid', 'white',
+            'dark', 'alges', 'minimal', 'publication'.
+        :param cmap: Colormap for the plot. If None, uses theme default or 'bwr'.
+        :param imshow_args: Additional figure arguments.
         """
         if self._precision is None:
             self._precision = self.precision()
-        if 'cmap' not in figargs:
-            figargs['cmap'] = 'bwr'
-        self._plot_data(self._precision, ax, w, h, **figargs)
 
-    def quick_plot(self, w=None, h=None, **figargs):
+        plot_imshow_args = imshow_args.copy()
+
+        if theme:
+            with PlotStyle(theme=theme, precision_cmap=cmap) as style:
+                plot_imshow_args.setdefault('cmap', style.precision_cmap)
+                self._plot_data(self._precision, ax, w, h, **plot_imshow_args)
+        else:
+            plot_imshow_args.setdefault('cmap', cmap or 'bwr')
+            self._plot_data(self._precision, ax, w, h, **plot_imshow_args)
+
+    def quick_plot(self, w=None, h=None,
+                   theme = 'alges',
+                   cmap = None,
+                   precision_cmap = None,
+                   **fig_args):
         """
         Quickly plot the estimation and precision.
 
         :param w: The width of the plot.
         :param h: The height of the plot.
-        :param figargs: Additional figure arguments.
+        :param theme: Theme name. Available: 'whitegrid', 'darkgrid', 'white',
+            'dark', 'alges', 'minimal', 'publication'.
+        :param cmap: Colormap for the plot. If None, uses theme default or 'bwr'.
+        :param imshow_args: Additional figure arguments.
         :return: The figure.
         """
         if self._xi.shape[1] > 2:
             raise SpatializeError("quick_plot() for 3D data is not supported")
+        
+        if 'figsize' not in fig_args:
+              fig_args['figsize'] = (10,10)
+        if 'dpi' not in fig_args:
+              fig_args['dpi'] = 130
 
-        fig = plt.figure(dpi=150, **figargs)
-        gs = fig.add_gridspec(1, 2, wspace=0.45)
-        (ax1, ax2) = gs.subplots()
+        with PlotStyle(theme=theme, cmap=cmap, precision_cmap=precision_cmap) as style:
+            fig = plt.figure(**fig_args)
+            gs = fig.add_gridspec(1, 2, wspace=0.45)
+            (ax1, ax2) = gs.subplots()
 
-        ax1.set_title('Estimation')
-        self.plot_estimation(ax1, w=w, h=h)
-        ax1.set_aspect('equal')
+            ax1.set_title('Estimation')
+            self.plot_estimation(ax1, w=w, h=h, theme=None, cmap=style.cmap)
+            ax1.set_aspect('equal')
 
-        ax2.set_title('Precision')
-        self.plot_precision(ax2, w=w, h=h)
-        ax2.set_aspect('equal')
+            ax2.set_title('Precision')
+            self.plot_precision(ax2, w=w, h=h, theme=None, cmap=style.precision_cmap)
+            ax2.set_aspect('equal')
 
-        if not in_notebook():
-            return fig  # just in case you want to embed it somewhere else
+            if not in_notebook():
+                return fig  # just in case you want to embed it somewhere else
 
-    def preview_esi_samples(self, n_imgs=9, n_cols=3, title_prefix="ESI sample", title=""):
+    def preview_esi_samples(self, n_imgs=9, n_cols=3, title_prefix="ESI sample", title=None, theme = 'alges', cmap = None):
         """
         Visualizes a preview of the ESI samples as a grid of colormap images.
 
@@ -196,7 +219,10 @@ class ESIResult(EstimationResult):
                                    xi_locations=self._xi,
                                    reference_map=self.estimation(),
                                    title_prefix=title_prefix,
-                                   title=title)
+                                   title=title,
+                                   #theme = theme,
+                                   #cmap = cmap
+                                   )
 
 # ============================================= PUBLIC API ==========================================================
 @signature_overload(pivot_arg=("local_interpolator", li.IDW, "local interpolator"),
