@@ -114,18 +114,15 @@ class EstimationResult:
         cmap : (str, optional)
             Colormap for the plot. If None, uses theme default or 'coolwarm'
         **imshow_args : (optional)
-            Additional keyword arguments passed to the figure creation (e.g., DPI, figure size).
+            Additional keyword arguments passed to the `_plot_data` function (e.g., vmin, vmax, alpha).
 
         """
         plot_imshow_args = imshow_args.copy()
+        if not cmap:
+            cmap = plot_imshow_args.pop('cmap', None)
 
-        if theme:
-            with PlotStyle(theme=theme, cmap=cmap) as style:
-                plot_imshow_args.setdefault('cmap', style.cmap)
-                self._plot_data(self.estimation(), ax, w, h, **plot_imshow_args)
-        else:
-            plot_imshow_args.setdefault('cmap', cmap or 'coolwarm')
-            self._plot_data(self.estimation(), ax, w, h, **plot_imshow_args)
+        with PlotStyle(theme=theme, cmap=cmap) as style:
+            self._plot_data(self.estimation(), ax, w, h, cmap = style.cmap, **plot_imshow_args)
 
     def _plot_data(self, data, ax=None, w=None, h=None, **imshow_args):
         plot_colormap_data(data, ax=ax, w=w, h=h, xi_locations=self._xi, griddata=self.griddata, **imshow_args)

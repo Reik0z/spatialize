@@ -3,7 +3,6 @@ import random as rd
 from spatialize import in_notebook, logging
 
 import matplotlib.pyplot as plt
-#from matplotlib.pyplot import colorbar
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 from matplotlib.colors import LinearSegmentedColormap as Colormap
 
@@ -17,14 +16,15 @@ PALETTES = {
     'precision': ['#51648a','#796982','#9d6c79','#c47673','#e98c76','#edb18e','#edd3b3'],
     'precision_dark': ['#0b1425','#133859','#48587a','#6c5e74','#90606c','#bc6461','#e67960','#eb937f','#f2bcaf'],
     'precision_muted': ['#5b6f9a','#867590','#a77c87','#cb8785','#ed9e8c','#f0c0a4','#f2dfc7'],
-    'crest': ['#a4ceb2', '#7dba91', '#59a590', '#40908e', '#287a8c', '#1c6488', '#254b7f', '#193458'],
+    'crest_r': ['#193458', '#254b7f', '#1c6488','#287a8c', '#40908e', '#59a590', '#7dba91','#a4ceb2'],
     'batlow': ['#fbcdfa','#fcb3b3','#f2a069','#c09036','#828434','#4c734d','#205f61','#104261','#011a5a'],
     'glasgow': ['#371437','#4e1921','#6a2810','#74471c','#716328','#697c47','#61917c','#74a8af','#a8bed7','#dcd1e8'],
     'lipari': ['#0b1425','#133859','#48587a','#6c5e74','#90606c','#bc6461','#e67960','#e9a278','#e8c79e','#fef5db'],
     'navia': ['#0b1627','#16345c','#19598c','#29738e','#398285','#4b9379','#66aa6a','#98ca6e','#d9e5a6','#fcf5d9'],
     'nuuk': ['#11598c','#2c6384','#4b7182','#70868c','#939b96','#acad95','#bbb98b','#c7c581','#e1e08c','#fbf7b3'],
     'bamako': ['#073a46','#12433f','#214f33','#385d2c','#547032','#738437','#978e33','#bfa830','#e2c66b','#fee4ab'],
-    'tokio': ['#1f1032','#4b1f42','#6a404e','#715651','#746651','#767a54','#7d9857','#8ec26d','#c3e0a7','#eff5db']}
+    'tokio': ['#1f1032','#4b1f42','#6a404e','#715651','#746651','#767a54','#7d9857','#8ec26d','#c3e0a7','#eff5db'],
+    'bilbao': ['#471010' ,'#752329', '#94454b', '#a16157', '#a6775a', '#ac8c5f', '#b6a672', '#c2bca1', '#d4d1cd', '#ffffff']}
 
 class PlotStyle:
     """
@@ -80,7 +80,7 @@ class PlotStyle:
                 'ytick.labelsize': 'small'
             },
             'color': '#59a590',
-            'cmap': Colormap.from_list('crest', PALETTES['crest']),
+            'cmap': Colormap.from_list('crest', PALETTES['crest_r']),
             'precision_cmap': Colormap.from_list('custom_precision', PALETTES['precision'])
         },
         'whitegrid': {
@@ -99,7 +99,7 @@ class PlotStyle:
                 'ytick.labelsize': 'small'
             },
             'color': '#7dba91',
-            'cmap': Colormap.from_list('crest', PALETTES['crest']),
+            'cmap': Colormap.from_list('crest', PALETTES['crest_r']),
             'precision_cmap': Colormap.from_list('custom_precision', PALETTES['precision'])
         },
         'dark': {
@@ -107,7 +107,7 @@ class PlotStyle:
                 'figure.facecolor': '#0d121a',
                 'axes.facecolor': '#16202c',
                 'axes.grid': False,
-                'axes.edgecolor': '#1e2832',
+                'axes.edgecolor': '#343d46',
                 'axes.labelcolor': 'white',
                 'axes.labelweight': 'demibold',
                 'axes.titleweight': 'bold',
@@ -115,11 +115,11 @@ class PlotStyle:
                 'text.color': 'white',
                 'xtick.color': '#b3b9c1',
                 'ytick.color': '#b3b9c1',
-                'patch.edgecolor': '#27ccab',
+                'patch.edgecolor': '#67c9cd',
                 'xtick.labelsize': 'small',
                 'ytick.labelsize': 'small', 
             },
-            'color': '#24a187',
+            'color': '#41bbc0',
             'cmap':  Colormap.from_list('custom_precision', PALETTES['navia_r']),
             'precision_cmap': Colormap.from_list('custom_precision', PALETTES['precision_dark'])
         },
@@ -128,9 +128,8 @@ class PlotStyle:
                 'lines.solid_capstyle': 'round',
                 'axes.grid': False,
                 'axes.facecolor': 'white',
-                'axes.edgecolor': '#EAEAF2',
+                'axes.edgecolor': '#d2d2d9',
                 'axes.titleweight': 'bold',
-                'grid.color': '#EAEAF2',
                 'xtick.labelsize': 'small',
                 'ytick.labelsize': 'small',
                 'axes.labelweight': 'demibold',
@@ -139,7 +138,7 @@ class PlotStyle:
                 'ytick.left': True,
             },
             'color': '#7dba91',
-            'cmap': Colormap.from_list('crest', PALETTES['crest']),
+            'cmap': Colormap.from_list('crest', PALETTES['crest_r']),
             'precision_cmap': Colormap.from_list('custom_precision', PALETTES['precision'])
         },
         'alges': {
@@ -202,16 +201,16 @@ class PlotStyle:
             'rcparams': {
                 'figure.titleweight': 'bold',
                 'axes.grid': True,
-                'grid.color': '#E0E0E0',
+                'grid.color': 'white',
                 'axes.spines.top': False,
                 'axes.spines.right': False,
                 'axes.titleweight': 'bold',
                 'font.family': 'serif',
                 'font.size': 10,
             },
-            'color': '#000000',
-            'cmap': Colormap.from_list('nuuk', PALETTES['nuuk']),
-            'precision_cmap': Colormap.from_list('custom_precision', PALETTES['precision_muted'])
+            'color': 'black',
+            'cmap': 'viridis',
+            'precision_cmap': 'cividis'
         }
     }
 
@@ -293,17 +292,16 @@ class PlotStyle:
         """Context manager support - restores original configuration."""
         self.reset_to_original()
 
-
-def plot_histogram(data, ax, color, alpha = 0.9, rwidth=0.92, show_empty = False):
+def plot_histogram(data, ax, color='skyblue', alpha = 0.9, rwidth=0.92, hide_empty = True):
     """
     Plots a histogram of the given data using matplotlib
     :param data: The data to visualize. Should be either a 1D array-like object 
                  (list, numpy array, pandas Series) containing numerical values.
     :param ax: Matplotlib Axes object where the histogram will be plotted.
-    :param style: Instance of PlotStyle object as Matplotlib context manager.
+    :param color: Color of the histogram bars. Default assigns 'skyblue'.
     :param alpha: Sets transparency of the histogram bars. Default assigns alpha=0.9 if not specified.
     :param rwidth: Sets relative width of the histogram bars. Default assigns rwidth=0.92 if not specified.
-    :param show_empty: Whether to show tick labels for empty histogram bins. Default assigns False.
+    :param hide_empty: Whether to hide tick labels for empty histogram bins. Default assigns True.
     """
     counts, bin_edges, _ = ax.hist(data,
                                    color=color,
@@ -313,26 +311,28 @@ def plot_histogram(data, ax, color, alpha = 0.9, rwidth=0.92, show_empty = False
     ax.set_xlabel("Error")
     ax.set_ylabel("Frequency")
     bin_centers = (bin_edges[:-1] + bin_edges[1:]) / 2
-    if show_empty:
-        ax.set_xticks(bin_centers)
-    else:
+    if hide_empty:
         ax.set_xticks(bin_centers[counts > 0])
+    else:
+        ax.set_xticks(bin_centers)
     ax.tick_params(axis='x', rotation=30)
     ax.xaxis.set_major_formatter(plt.FuncFormatter(lambda x, p: f'{x:.3f}'))
 
-
-def plot_colormap_data(data, ax=None, w=None, h=None, xi_locations=None, griddata=False, title="", **imshow_args):
+def plot_colormap_data(data, ax=None, w=None, h=None, xi_locations=None, griddata=False, title="",
+                       figsize = None, dpi = 120, **imshow_args):
     """
     Plots a colormap (heatmap-like visualization) of the given data using matplotlib.
 
     :param data: The data to visualize. Should be either 2D grid data (if `griddata=True`)
-                 or a flat array that can be reshaped into a 2D array.
+        or a flat array that can be reshaped into a 2D array.
     :param ax: Matplotlib axes object to plot into. If None, a new figure and axes will be created.
     :param w: Width of the image (number of columns). Required if `griddata=False` and `xi_locations` is not provided.
     :param h: Height of the image (number of rows). Required if `griddata=False` and `xi_locations` is not provided.
     :param xi_locations: Coordinates of the data points, used to infer shape (h, w) if not provided explicitly.
     :param griddata: If True, assumes `data` is already in 2D format and transposes it for display.
     :param title: Title to display on the plot (only used if `ax` is None and a new figure is created).
+    :param figsize: Width, height of the figure in inches (only used if `ax` is None and a new figure is created).
+    :param dpi: The resolution of the figure in dots-per-inch (only used if `ax` is None and a new figure is created). Defaults to 120.
     :param imshow_args: Additional keyword arguments to pass to `imshow()`, such as `cmap`, `vmin`, or `vmax`.
 
     :raises SpatializeError: If neither `w`/`h` nor `xi_locations` are provided when `griddata` is False,
@@ -354,7 +354,7 @@ def plot_colormap_data(data, ax=None, w=None, h=None, xi_locations=None, griddat
     if ax is not None:
         plotter = ax
     else:
-        fig = plt.figure(dpi=150)
+        fig = plt.figure(figsize=figsize, dpi=dpi)
         gs = fig.add_gridspec(1, 1)
         plotter = gs.subplots()
         plotter.set_title(title)
@@ -364,31 +364,32 @@ def plot_colormap_data(data, ax=None, w=None, h=None, xi_locations=None, griddat
     cax = divider.append_axes("right", size="5%", pad=0.1)
     cax.grid(False)
     plt.colorbar(img, orientation='vertical', cax=cax)
-
-
-def plot_colormap_array(data, n_imgs=9, n_cols=3, norm_lims=False, xi_locations=None, reference_map=None,
-                        cmap='coolwarm', title="", title_prefix="scenario", seed=None, **imshow_args):
+    
+def plot_colormap_array(data, n_imgs=9, n_cols=3, norm_lims=False, xi_locations=None,
+                        reference_map=None, title=None, title_prefix="scenario", seed=None, 
+                        figsize=(10, 10), dpi=120, **imshow_args):
     """
-      Plots an array of colormap visualizations (heatmaps) for a subset of data columns in a grid layout.
+    Plots an array of colormap visualizations (heatmaps) for a subset of data columns in a grid layout.
 
-      :param data: The data to visualize. A 2D array where each column represents a separate dataset to plot.
-      :param n_imgs: The number of images (subplots) to display from the data. Defaults to 9.
-      :param n_cols: The number of columns in the plot grid. Defaults to 3.
-      :param norm_lims: If True, normalizes the colormap limits using a reference map. Defaults to False.
-      :param xi_locations: Coordinates of the data points. Used for reshaping the data if necessary.
-      :param reference_map: A map to use for normalizing the colormap range (`vmin`, `vmax`).
-                             The min and max of this map are used to adjust the normalization.
-      :param cmap: The colormap to use for plotting. Defaults to 'coolwarm'.
-      :param title: The title for the entire plot. If `None`, no title will be set.
-      :param title_prefix: Prefix for individual subplot titles (e.g., "scenario 1", "scenario 2").
-      :param seed: The seed for random number generation. If `None`, a random seed will be generated for reproducibility.
-      :param imshow_args: Additional arguments to pass to the `plot_colormap_data` function, such as `vmin` or `vmax`.
+    :param data: The data to visualize. A 2D array where each column represents a separate dataset to plot.
+    :param n_imgs: The number of images (subplots) to display from the data. Defaults to 9.
+    :param n_cols: The number of columns in the plot grid. Defaults to 3.
+    :param norm_lims: If True, normalizes the colormap limits using a reference map. Defaults to False.
+    :param xi_locations: Coordinates of the data points. Used for reshaping the data if necessary.
+    :param reference_map: A map to use for normalizing the colormap range (`vmin`, `vmax`).
+        The min and max of this map are used to adjust the normalization.
+    :param title: The title for the entire plot. If `None`, no title will be set.
+    :param title_prefix: Prefix for individual subplot titles (e.g., "scenario 1", "scenario 2").
+    :param seed: The seed for random number generation. If `None`, a random seed will be generated for reproducibility.
+    :param figsize: Width, height of the figure in inches. Defaults to (10, 10).
+    :param dpi: The resolution of the figure in dots-per-inch. Defaults to 120.
+    :param imshow_args: Additional arguments to pass to the `plot_colormap_data` function, such as `cmap`, `vmin`, or `vmax`.
 
-      :return: A Matplotlib figure object and the seed used for random sampling.
-      :rtype: matplotlib.figure.Figure, int
+    :return: A Matplotlib figure object and the seed used for random sampling.
+    :rtype: matplotlib.figure.Figure, int
 
-      :raises ValueError: If the number of images to plot exceeds the number of columns in the data.
-      """
+    :raises ValueError: If the number of images to plot exceeds the number of columns in the data.
+    """
     if n_imgs > data.shape[1]:
         n_imgs = data.shape[1]
 
@@ -406,32 +407,35 @@ def plot_colormap_array(data, n_imgs=9, n_cols=3, norm_lims=False, xi_locations=
     # random sample of colormap images to plot
     sim_idx = rd.sample(range(data.shape[1]), k=n_imgs)
 
+    # set kwargs for the plot
+    plot_imshow_args = imshow_args.copy()
+    plot_imshow_args.setdefault('cmap', 'coolwarm')
+
     if norm_lims and reference_map is not None:
-        # if a reference map is provided, we use its min and max values
-        # to make the images more comparable and we normalize the values
-        # by sharpening the range of the data
-        vmin = np.nanmin(reference_map) - 0.1
-        vmax = np.nanmax(reference_map) - 0.1
+        # if a reference map is provided, we use its min and max values to make the images
+        # more comparable and we normalize the values, sharpening the range of the data
+        plot_imshow_args['vmin'] = np.nanmin(reference_map) + 0.1
+        plot_imshow_args['vmax'] = np.nanmax(reference_map) - 0.1
     else:
-        vmin, vmax = None, None
+        plot_imshow_args.setdefault('vmin', None)
+        plot_imshow_args.setdefault('vmax', None)
 
     # plot the simulation results
-    fig = plt.figure(dpi=150, figsize=(10, 10))
+    fig = plt.figure(dpi=dpi, figsize=figsize)
     gs = fig.add_gridspec(n_rows, n_cols)
-    axis = gs.subplots().flatten()
+    axes = gs.subplots().flatten()
 
     for i in range(n_imgs):
-        plot_colormap_data(data[:, sim_idx[i]], ax=axis[i],
-                           xi_locations=xi_locations,
-                           cmap=cmap,
-                           vmin=vmin, vmax=vmax,
-                           **imshow_args)
-        axis[i].set_title(f"{title_prefix} {sim_idx[i] + 1}")
+        plot_colormap_data(data[:, sim_idx[i]], ax=axes[i],
+                        xi_locations=xi_locations,
+                        **plot_imshow_args)
+        axes[i].set_title(f"{title_prefix} {sim_idx[i] + 1}")
 
     for i in range(n_imgs, n_rows * n_cols):
-        axis[i].set_axis_off()
+        axes[i].set_axis_off()
     fig.tight_layout(rect=(0, 0.03, 1, 0.95))
-    fig.suptitle(title, fontsize=14)
+    if title:
+        fig.suptitle(title, fontsize=14)
 
     if in_notebook():
         return seed

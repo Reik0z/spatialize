@@ -147,24 +147,21 @@ class ESIResult(EstimationResult):
         :param theme: Theme name. Available: 'whitegrid', 'darkgrid', 'white',
             'dark', 'alges', 'minimal', 'publication'.
         :param cmap: Colormap for the plot. If None, uses theme default or 'bwr'.
-        :param imshow_args: Additional figure arguments.
+        :param imshow_args: Additional imshow arguments to pass to the `_plot_data` function.
         """
         if self._precision is None:
             self._precision = self.precision()
 
         plot_imshow_args = imshow_args.copy()
+        if not cmap:
+            cmap = plot_imshow_args.pop('cmap', None)
 
-        if theme:
-            with PlotStyle(theme=theme, precision_cmap=cmap) as style:
-                plot_imshow_args.setdefault('cmap', style.precision_cmap)
-                self._plot_data(self._precision, ax, w, h, **plot_imshow_args)
-        else:
-            plot_imshow_args.setdefault('cmap', cmap or 'bwr')
-            self._plot_data(self._precision, ax, w, h, **plot_imshow_args)
-
+        with PlotStyle(theme=theme, precision_cmap=cmap) as style:
+            self._plot_data(self._precision, ax, w, h, cmap = style.precision_cmap, **plot_imshow_args)
+    
     def quick_plot(self, w=None, h=None,
                    theme = 'alges',
-                   cmap = None,
+                   estimation_cmap = None,
                    precision_cmap = None,
                    **fig_args):
         """
@@ -174,22 +171,22 @@ class ESIResult(EstimationResult):
         :param h: The height of the plot.
         :param theme: Theme name. Available: 'whitegrid', 'darkgrid', 'white',
             'dark', 'alges', 'minimal', 'publication'.
-        :param cmap: Colormap for the plot. If None, uses theme default or 'bwr'.
-        :param imshow_args: Additional figure arguments.
+        :param estimation_cmap: Colormap for the estimation plot. If None, uses theme default or 'coolwarm'.
+        :param precision_cmap: Colormap for the precision plot. If None, uses theme default or 'bwr'.
+        :param fig_args: Additional figure arguments.
         :return: The figure.
         """
         if self._xi.shape[1] > 2:
             raise SpatializeError("quick_plot() for 3D data is not supported")
         
-        if 'figsize' not in fig_args:
-              fig_args['figsize'] = (10,10)
-        if 'dpi' not in fig_args:
-              fig_args['dpi'] = 130
+        plot_fig_args = fig_args.copy()
+        plot_fig_args.setdefault('figsize', (10,8))
+        plot_fig_args.setdefault('dpi', 120)
 
-        with PlotStyle(theme=theme, cmap=cmap, precision_cmap=precision_cmap) as style:
-            fig = plt.figure(**fig_args)
+        with PlotStyle(theme=theme, cmap=estimation_cmap, precision_cmap=precision_cmap) as style:
+            fig = plt.figure(**plot_fig_args)
             gs = fig.add_gridspec(1, 2, wspace=0.45)
-            (ax1, ax2) = gs.subplots()
+            ax1, ax2 = gs.subplots()
 
             ax1.set_title('Estimation')
             self.plot_estimation(ax1, w=w, h=h, theme=None, cmap=style.cmap)
@@ -200,9 +197,10 @@ class ESIResult(EstimationResult):
             ax2.set_aspect('equal')
 
             if not in_notebook():
-                return fig  # just in case you want to embed it somewhere else
+                return fig      # just in case you want to embed it somewhere else
 
-    def preview_esi_samples(self, n_imgs=9, n_cols=3, title_prefix="ESI sample", title=None, theme = 'alges', cmap = None):
+    def preview_esi_samples(self, n_imgs=9, n_cols=3, title_prefix="ESI sample", title=None,
+                            figsize=(10, 10), dpi=120, theme='alges', cmap=None, **imshow_args):
         """
         Visualizes a preview of the ESI samples as a grid of colormap images.
 
@@ -213,16 +211,33 @@ class ESIResult(EstimationResult):
         :param n_cols: The number of columns in the grid layout. Defaults to 3.
         :param title_prefix: A prefix to add to each subplot title (e.g., "ESI sample 1", "ESI sample 2").
         :param title: The title for the entire plot.
+        :param figsize: Width, height of the figure in inches. Defaults to (10, 10).
+        :param dpi: The resolution of the figure in dots-per-inch. Defaults to 120.
+        :param theme: Theme name. Available: 'whitegrid', 'darkgrid', 'white',
+            'dark', 'alges', 'minimal', 'publication'.
+        :param cmap: Colormap for the plot. If None, uses theme default or 'coolwarm'.
+        :param imshow_args: Additional imshow arguments to pass to the `plot_colormap_array` function.
         """
-        return plot_colormap_array(self.esi_samples(raw=True), n_imgs=n_imgs,
-                                   n_cols=n_cols, norm_lims=False,
-                                   xi_locations=self._xi,
-                                   reference_map=self.estimation(),
-                                   title_prefix=title_prefix,
-                                   title=title,
-                                   #theme = theme,
-                                   #cmap = cmap
-                                   )
+        # Retrieve cmap if specified within imshow_args
+        plot_imshow_args = imshow_args.copy()
+        if not cmap:
+            cmap = plot_imshow_args.pop('cmap', None)
+
+        with PlotStyle(theme=theme, cmap=cmap) as style:
+            return plot_colormap_array(
+                self.esi_samples(raw=True), 
+                n_imgs=n_imgs,
+                n_cols=n_cols, 
+                norm_lims=True,
+                xi_locations=self._xi,
+                reference_map=self.estimation(),
+                title_prefix=title_prefix,
+                title=title,
+                figsize=figsize,
+                dpi=dpi,
+                cmap=style.cmap,
+                **plot_imshow_args
+                )
 
 # ============================================= PUBLIC API ==========================================================
 @signature_overload(pivot_arg=("local_interpolator", li.IDW, "local interpolator"),
