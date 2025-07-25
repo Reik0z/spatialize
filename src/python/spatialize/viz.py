@@ -340,16 +340,21 @@ def plot_colormap_data(data, ax=None, w=None, h=None, xi_locations=None, griddat
     """
     if griddata:
         im = data.T
+    elif w and h:
+            im = data.reshape(h, w)
+    elif xi_locations is None:
+        raise SpatializeError("Must provide either w/h or xi_locations")
     else:
-        if w is None or h is None:
-            if xi_locations is None:
-                raise SpatializeError(f"Wrong image size (w: {w}, h: {h})")
-            else:
-                h, w = len(np.unique(xi_locations[:, 0])) - 1, len(np.unique(xi_locations[:, 1])) - 1
-                if len(data) != h * w:
-                    h, w = len(np.unique(xi_locations[:, 0])), len(np.unique(xi_locations[:, 1]))
-                log_message(logging.logger.debug(f"using h={h}, w={w}"))
-        im = data.reshape(w, h)
+        # Ensure data is in correct order for imshow
+        sort_indices = np.lexsort((xi_locations[:, 0], xi_locations[:, 1]))
+        sorted_data = data[sort_indices]
+        
+        w, h = len(np.unique(xi_locations[:, 0])), len(np.unique(xi_locations[:, 1]))
+        if len(data) != w * h:
+            w, h = w-1, h-1
+        log_message(logging.logger.debug(f"using h={h}, w={w}"))
+            
+        im = sorted_data.reshape(h, w)
 
     if ax is not None:
         plotter = ax
