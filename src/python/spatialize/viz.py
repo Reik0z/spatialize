@@ -341,7 +341,7 @@ def plot_colormap_data(data, ax=None, w=None, h=None, xi_locations=None, griddat
     if griddata:
         im = data.T
     elif w and h:
-            im = data.reshape(h, w)
+        im = data.reshape(h, w)
     elif xi_locations is None:
         raise SpatializeError("Must provide either w/h or xi_locations")
     else:
