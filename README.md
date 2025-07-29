@@ -1,8 +1,10 @@
-# Spatialize: Python wrapper for C++ ESI Library 
-An open source library for spatial interpolation that combines the simplicity of basic methods with the power of geostatistical tools.
+# Spatialize: A Python/C++ library for Ensemble Spatial Analysis (ESA)
+An open source library for spatial analysis that combines the simplicity of basic methods with the power of geostatistical tools.
 
 ## Overview
-Spatialize implements **ensemble spatial interpolation (ESI)**, a novel method that addresses the limitations of traditional geostatistical approaches. ESI works by generating multiple estimates for each target location by creating different spatial partitions of the sample data and applying an interpolation algorithm within each local subset. These local estimates are then aggregated to produce robust predictions.
+Spatialize implements **Ensemble Spatial Analysis (ESA)**, which encompasses two complementary approaches: **Ensemble Spatial Interpolation (ESI)** and **Ensemble Spatial Simulation (ESS)**. These novel methods address the limitations of traditional geostatistical approaches by leveraging ensemble learning techniques.
+
+ESI works by generating multiple estimates for each target location by creating different spatial partitions of the sample data and applying an interpolation algorithm within each local subset. These local estimates are then aggregated to produce robust predictions. ESS extends this framework to provide stochastic simulation capabilities.
 
 Designed to bridge the gap between expert and non-expert users of geostatistics, Spatialize provides automated tools that eliminate the need for manual spatial analysis and extensive domain expertise.
 
@@ -135,7 +137,7 @@ search_result.plot_cv_error()
 Please refer to the following articles when publishing work relating to this library or the ESI model:
 
 	@article{spatialize2025,
-		author  = {Ega{\~n}a, {\'A}lvaro F. and Ehrenfeld, Alejandro and Navarro, Felipe and Garrido, Felipe and Valenzuela, Mar{\'i}a Jes{\'u}s and S{\'a}nchez-P{\'e}rez, Juan F. },
+		author  = {Navarro, Felipe and Ega{\~n}a, {\'A}lvaro F. and Ehrenfeld, Alejandro and Garrido, Felipe and Valenzuela, Mar{\'i}a Jes{\'u}s and S{\'a}nchez-P{\'e}rez, Juan F. },
 		title   = {Spatialize v1.0: A Python/C++ Library for Ensemble Spatial Interpolation},
 		journal = {},
 		year    = {2025},
