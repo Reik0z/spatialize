@@ -8,6 +8,7 @@
 #include <functional>
 #include <stdexcept>
 #include "utils.hpp"
+#include "callback_logging.hpp"
 
 namespace sptlz{
 	std::string IND_STEP = "    ";
@@ -30,7 +31,7 @@ namespace sptlz{
 		return(s.str());
 	}
 
-	std::vector<std::vector<float>> samples_coords_bbox(std::vector<std::vector<float>> *coords){
+	std::vector<std::vector<float>> samples_coords_bbox(std::vector<std::vector<float>> *coords, std::vector<std::vector<float>> *queries=NULL){
 		std::vector<std::vector<float>> bbox;
 
 		for(size_t i=0; i<coords->at(0).size(); i++){
@@ -48,9 +49,21 @@ namespace sptlz{
 			}
 		}
 
+		if(queries != NULL){
+			for(size_t i=0; i<queries->size(); i++){
+				for(size_t j=0; j<queries->at(i).size(); j++){
+					if(queries->at(i).at(j) < bbox.at(j).at(0)){
+						bbox.at(j).at(0) = queries->at(i).at(j);
+					}
+					if(bbox.at(j).at(1) < queries->at(i).at(j)){
+						bbox.at(j).at(1) = queries->at(i).at(j);
+					}
+				}
+			}
+		}
+
 		return(bbox);
 	}
-
 	float bbox_sum_interval(std::vector<std::vector<float>> bbox){
 		float c = 0.0;
 		for(std::vector<float> axis : bbox){
@@ -266,11 +279,15 @@ namespace sptlz{
 
 	class ESI {
 		protected:
+		    std::string class_name;
+		    std::function<int(std::string)> callback_visitor;
+
 			std::vector<sptlz::MondrianTree*> mondrian_forest;
 			std::vector<std::vector<float>> coords;
 			std::vector<float> values;
 			std::mt19937 my_rand;
 			bool debug;
+
 
 			virtual std::vector<float> leaf_estimation(std::vector<std::vector<float>> *coords, std::vector<float> *values, std::vector<int> *samples_id, std::vector<std::vector<float>> *locations, std::vector<int> *locations_id, std::vector<float> *params){
 				throw std::runtime_error("must override");
@@ -287,10 +304,19 @@ namespace sptlz{
 			virtual void post_process(){}
 
 		public:
-			ESI(std::vector<std::vector<float>> _coords, std::vector<float> _values, float lambda, int forest_size, std::vector<std::vector<float>> bbox, int seed=206936){
-				my_rand = std::mt19937(seed);
-				coords = _coords;
-				values = _values;
+			ESI(std::vector<std::vector<float>> _coords,
+			    std::vector<float> _values,
+			    float lambda,
+			    int forest_size,
+			    std::vector<std::vector<float>> bbox,
+			    std::function<int(std::string)> visitor,
+			    int seed=206936){
+
+			    this->class_name = __func__;
+			    this->callback_visitor = visitor;
+				this->my_rand = std::mt19937(seed);
+				this->coords = _coords;
+				this->values = _values;
 				std::uniform_int_distribution<int> uni_int;
 
 				for(int i=0; i<forest_size; i++){
@@ -298,7 +324,13 @@ namespace sptlz{
 				}
 			}
 
-			ESI(std::vector<sptlz::MondrianTree*> _mondrian_forest, std::vector<std::vector<float>> _coords, std::vector<float> _values){
+			ESI(std::vector<sptlz::MondrianTree*> _mondrian_forest,
+			    std::vector<std::vector<float>> _coords,
+			    std::vector<float> _values,
+			    std::function<int(std::string)> visitor){
+
+			    this->class_name = __func__;
+			    this->callback_visitor = visitor;
 				this->mondrian_forest = _mondrian_forest;
 				this->coords = _coords;
 				this->values = _values;
@@ -345,21 +377,17 @@ namespace sptlz{
 				return(results);
 			}
 
-			std::vector<std::vector<float>> estimate(std::vector<std::vector<float>> *locations, std::function<int(std::string)> visitor){
+			std::vector<std::vector<float>> estimate(std::vector<std::vector<float>> *locations){
 				std::stringstream json;
 				std::vector<std::vector<float>> results(locations->size());
 				std::vector<std::vector<int>> locations_by_leaf;
 				int aux, n = mondrian_forest.size();
+                sptlz::CallbackLogger *logger = new sptlz::CallbackLogger(this->callback_visitor, this->class_name);
+                sptlz::CallbackProgressSender *progress = new sptlz::CallbackProgressSender(this->callback_visitor);
 
-				// {"message": {"text": "<the log text>", "level": "<DEBUG|INFO|WARNING|ERROR|CRITICAL>"}}
-				json.str("");
-				json << "{\"message\": { \"text\":\"" << "[C++|ESI->estimate] computing estimates" << "\", \"level\":\"" << "DEBUG" <<"\"}}";
-				visitor(json.str());
+                logger->info("computing estimates");
 
-				// {"progress": {"init": <total expected count>, "step": <increment step>}}
-				json.str("");
-				json << "{\"progress\": { \"init\":" << n << ", \"step\":" << 1 <<"}}";
-				visitor(json.str());
+				progress->init(n, 1);
 
 				for(int i=0; i<n; i++){
 					// get tree
@@ -385,39 +413,30 @@ namespace sptlz{
 							}
 						}
 					}
-					// {"progress": {"token": <value>}}
-					json.str("");
-					json << "{\"progress\": {\"token\":" << 100.0*(i+1.0)/n << "}}";
+
 					if (PyErr_CheckSignals() != 0)  // to allow ctrl-c from user
                       exit(0);
-					visitor(json.str());
+					progress->inform(100.0*(i+1.0)/n);
 				}
 
-				// {"progress": "done"}
-				json.str("");
-				json << "{\"progress\": \"done\"}";
-				visitor(json.str());
+				progress->stop();
+
+				delete logger;
+				delete progress;
 				return(results);
 			}
 
-			std::vector<std::vector<float>> leave_one_out(std::function<int(std::string)> visitor){
+			std::vector<std::vector<float>> leave_one_out(){
 				std::stringstream json;
 				std::vector<std::vector<float>> results(coords.size());
 				int n = mondrian_forest.size();
 
-                // #ifdef DEBUG
-                // std::cout << "[C++] inside leave-one-out" << "\n";
-                // #endif
+				sptlz::CallbackLogger *logger = new sptlz::CallbackLogger(this->callback_visitor, this->class_name);
+                sptlz::CallbackProgressSender *progress = new sptlz::CallbackProgressSender(this->callback_visitor);
 
-				// {"message": {"text": "<the log text>", "level": "<DEBUG|INFO|WARNING|ERROR|CRITICAL>"}}
-				json.str("");
-				json << "{\"message\": { \"text\":\"" << "[C++|ESI->leave_one_out] computing estimates" << "\", \"level\":\"" << "DEBUG" <<"\"}}";
-				visitor(json.str());
+				logger->debug("computing leave-one-out");
 
-				// {"progress": {"init": <total expected count>, "step": <increment step>}}
-				json.str("");
-				json << "{\"progress\": { \"init\":" << n << ", \"step\":" << 1 <<"}}";
-				visitor(json.str());
+				progress->init(n, 1);
 
 				for(int i=0; i<n; i++){
 					// get tree
@@ -432,22 +451,20 @@ namespace sptlz{
 							}
 						}
 					}
-					// {"progress": {"token": <value>}}
-					json.str("");
-					json << "{\"progress\": {\"token\":" << 100.0*(i+1.0)/n << "}}";
+
 					if (PyErr_CheckSignals() != 0)  // to allow ctrl-c from user
                       exit(0);
-					visitor(json.str());
+					progress->inform(100.0*(i+1.0)/n);
 				}
 
-				// {"progress": "done"}
-				json.str("");
-				json << "{\"progress\": \"done\"}";
-				visitor(json.str());
+				progress->stop();
+
+				delete logger;
+				delete progress;
 				return(results);
 			}
 
-			std::vector<std::vector<float>> k_fold(int k, std::function<int(std::string)> visitor, int seed=206936){
+			std::vector<std::vector<float>> k_fold(int k, int seed=206936){
 				std::stringstream json;
 				auto fold_rand = std::mt19937(seed);
 				std::uniform_real_distribution<float> uni_float;
@@ -455,15 +472,12 @@ namespace sptlz{
 				std::vector<std::vector<float>> results(coords.size());
 				int n = mondrian_forest.size();
 
-				// {"message": {"text": "<the log text>", "level": "<DEBUG|INFO|WARNING|ERROR|CRITICAL>"}}
-				json.str("");
-				json << "{\"message\": { \"text\":\"" << "[C++|ESI->k_fold] computing estimates" << "\", \"level\":\"" << "DEBUG" <<"\"}}";
-				visitor(json.str());
+				sptlz::CallbackLogger *logger = new sptlz::CallbackLogger(this->callback_visitor, this->class_name);
+                sptlz::CallbackProgressSender *progress = new sptlz::CallbackProgressSender(this->callback_visitor);
 
-				// {"progress": {"init": <total expected count>, "step": <increment step>}}
-				json.str("");
-				json << "{\"progress\": { \"init\":" << n << ", \"step\":" << 1 <<"}}";
-				visitor(json.str());
+				logger->debug("computing k-fold");
+
+				progress->init(n, 1);
 
 				for(int i=0; i<n; i++){
 					// get tree
@@ -472,23 +486,22 @@ namespace sptlz{
 					for(size_t j=0; j<mt->samples_by_leaf.size(); j++){
 						if(mt->samples_by_leaf.at(j).size()!=0){
 							auto predictions = leaf_kfold(k, &coords, &values, &folds, &(mt->samples_by_leaf.at(j)), &(mt->leaf_params.at(j)));
-							for(size_t k=0; k<mt->samples_by_leaf.at(j).size(); k++){
-								results.at(mt->samples_by_leaf.at(j).at(k)).push_back(predictions.at(k));
+							for(size_t l=0; l<mt->samples_by_leaf.at(j).size(); l++){
+								results.at(mt->samples_by_leaf.at(j).at(l)).push_back(predictions.at(l));
 							}
 						}
 					}
-					// {"progress": {"token": <value>}}
-					json.str("");
-					json << "{\"progress\": {\"token\":" << 100.0*(i+1.0)/n << "}}";
+
+
 					if (PyErr_CheckSignals() != 0)  // to allow ctrl-c from user
                       exit(0);
-					visitor(json.str());
+					progress->inform(100.0*(i+1.0)/n);
 				}
 
-				// {"progress": "done"}
-				json.str("");
-				json << "{\"progress\": \"done\"}";
-				visitor(json.str());
+				progress->stop();
+
+				delete logger;
+				delete progress;
 				return(results);
 			}
 	};

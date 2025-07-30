@@ -24,6 +24,7 @@ requires = [
     "tqdm",
     "matplotlib",
     "rich",
+    "pybind11[global]"
 ]
 build-backend = "setuptools.build_meta"
 

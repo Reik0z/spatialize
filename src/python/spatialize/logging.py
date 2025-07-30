@@ -210,7 +210,15 @@ class AsyncProgressCounter(AsyncProgressHandler):  # callback function
     def _done(self):
         super()._done()
         tqdm.write(os.linesep)
-        tqdm.write(f"done (elpased time: {np.round(self.elapsed_time, 2)}s)")
+
+        h, m, s = map(lambda x: int(x), [self.elapsed_time / 3600, self.elapsed_time % 3600 / 60, self.elapsed_time % 60])
+        if h == 0 and m == 0:
+            etime = f'{s:2d}s'
+        elif h == 0:
+            etime = f'{m:2d}m {s:2d}s'
+        else:
+            etime = f'{h}h {m:2d}m {s:2d}s'
+        tqdm.write(f"done (elapsed time: {etime})")
 
     def _update(self):
         super()._update()

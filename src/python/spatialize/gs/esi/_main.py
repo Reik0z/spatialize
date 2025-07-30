@@ -1,18 +1,19 @@
 import tempfile
+from copy import deepcopy
+
 import numpy as np
 import pandas as pd
 from matplotlib import pyplot as plt
-from matplotlib.pyplot import colorbar
-from mpl_toolkits.axes_grid1 import make_axes_locatable
 from sklearn.model_selection import ParameterGrid
 
-from spatialize import SpatializeError, logging
+from spatialize import SpatializeError, logging, GridSearchResult, EstimationResult
 import spatialize.gs.esi.aggfunction as af
 import spatialize.gs.esi.lossfunction as lf
-from spatialize._util import signature_overload, GridSearchResult, EstimationResult
+from spatialize._util import signature_overload, in_notebook
 from spatialize._math_util import flatten_grid_data
 from spatialize.gs import lib_spatialize_facade, partitioning_process, local_interpolator as li
 from spatialize.logging import log_message, default_singleton_callback, singleton_null_callback
+from spatialize.viz import plot_colormap_array, PlotStyle
 
 
 class ESIGridSearchResult(GridSearchResult):
@@ -96,7 +97,7 @@ class ESIResult(EstimationResult):
         else:
             return prec
 
-    def esi_samples(self):
+    def esi_samples(self, raw=False):
         """
         The central concept for dealing with ESI estimation results is the `ESI sample`. 
         In this sense, it should be noted that each random partition delivers an estimate 
@@ -116,7 +117,7 @@ class ESIResult(EstimationResult):
             $d_1 \\times d_2 \\times m$ for gridded data -- remember that, in this case,
             $d_1 \\times d_2 = N_{x^*}$
         """
-        if self.griddata:
+        if self.griddata and not raw:
             N = self._esi_samples.shape[1]
             return self._esi_samples.reshape(tuple(list(self.original_shape) + [N]))
         else:
@@ -136,47 +137,107 @@ class ESIResult(EstimationResult):
         self._estimation = agg_function(self._esi_samples)
         return self.estimation()
 
-    def plot_precision(self, ax=None, w=None, h=None, **figargs):
+    def plot_precision(self, ax=None, w=None, h=None, theme='alges', cmap=None, **imshow_args):
         """
         Plot the precision of the estimation.
 
         :param ax: The axis to plot on.
         :param w: The width of the plot.
         :param h: The height of the plot.
-        :param figargs: Additional figure arguments.
+        :param theme: Theme name. Available: 'whitegrid', 'darkgrid', 'white',
+            'dark', 'alges', 'minimal', 'publication'.
+        :param cmap: Colormap for the plot. If None, uses theme default or 'bwr'.
+        :param imshow_args: Additional imshow arguments to pass to the `_plot_data` function.
         """
         if self._precision is None:
             self._precision = self.precision()
-        if 'cmap' not in figargs:
-            figargs['cmap'] = 'bwr'
-        self._plot_data(self._precision, ax, w, h, **figargs)
 
-    def quick_plot(self, w=None, h=None, **figargs):
+        plot_imshow_args = imshow_args.copy()
+        if not cmap:
+            cmap = plot_imshow_args.pop('cmap', None)
+
+        with PlotStyle(theme=theme, precision_cmap=cmap) as style:
+            self._plot_data(self._precision, ax, w, h, cmap = style.precision_cmap, **plot_imshow_args)
+    
+    def quick_plot(self, w=None, h=None,
+                   theme = 'alges',
+                   estimation_cmap = None,
+                   precision_cmap = None,
+                   **fig_args):
         """
         Quickly plot the estimation and precision.
 
         :param w: The width of the plot.
         :param h: The height of the plot.
-        :param figargs: Additional figure arguments.
+        :param theme: Theme name. Available: 'whitegrid', 'darkgrid', 'white',
+            'dark', 'alges', 'minimal', 'publication'.
+        :param estimation_cmap: Colormap for the estimation plot. If None, uses theme default or 'coolwarm'.
+        :param precision_cmap: Colormap for the precision plot. If None, uses theme default or 'bwr'.
+        :param fig_args: Additional figure arguments.
         :return: The figure.
         """
         if self._xi.shape[1] > 2:
             raise SpatializeError("quick_plot() for 3D data is not supported")
+        
+        plot_fig_args = fig_args.copy()
+        plot_fig_args.setdefault('figsize', (10,8))
+        plot_fig_args.setdefault('dpi', 120)
 
-        fig = plt.figure(dpi=150, **figargs)
-        gs = fig.add_gridspec(1, 2, wspace=0.45)
-        (ax1, ax2) = gs.subplots()
+        with PlotStyle(theme=theme, cmap=estimation_cmap, precision_cmap=precision_cmap) as style:
+            fig = plt.figure(**plot_fig_args)
+            gs = fig.add_gridspec(1, 2, wspace=0.45)
+            ax1, ax2 = gs.subplots()
 
-        ax1.set_title('Estimation')
-        self.plot_estimation(ax1, w=w, h=h)
-        ax1.set_aspect('equal')
+            ax1.set_title('Estimation')
+            self.plot_estimation(ax1, w=w, h=h, theme=None, cmap=style.cmap)
+            ax1.set_aspect('equal')
 
-        ax2.set_title('Precision')
-        self.plot_precision(ax2, w=w, h=h)
-        ax2.set_aspect('equal')
+            ax2.set_title('Precision')
+            self.plot_precision(ax2, w=w, h=h, theme=None, cmap=style.precision_cmap)
+            ax2.set_aspect('equal')
 
-        return fig  # just in case you want to embed it somewhere else
+            if not in_notebook():
+                return fig      # just in case you want to embed it somewhere else
 
+    def preview_esi_samples(self, n_imgs=9, n_cols=3, title_prefix="ESI sample", title=None,
+                            figsize=(10, 10), dpi=120, theme='alges', cmap=None, **imshow_args):
+        """
+        Visualizes a preview of the ESI samples as a grid of colormap images.
+
+        This method displays a subset of the ESI samples using the `plot_colormap_array` function.
+        The ESI samples are visualized in a grid layout, where each image corresponds to one ESI sample.
+
+        :param n_imgs: The number of ESI samples (images) to display. Defaults to 9.
+        :param n_cols: The number of columns in the grid layout. Defaults to 3.
+        :param title_prefix: A prefix to add to each subplot title (e.g., "ESI sample 1", "ESI sample 2").
+        :param title: The title for the entire plot.
+        :param figsize: Width, height of the figure in inches. Defaults to (10, 10).
+        :param dpi: The resolution of the figure in dots-per-inch. Defaults to 120.
+        :param theme: Theme name. Available: 'whitegrid', 'darkgrid', 'white',
+            'dark', 'alges', 'minimal', 'publication'.
+        :param cmap: Colormap for the plot. If None, uses theme default or 'coolwarm'.
+        :param imshow_args: Additional imshow arguments to pass to the `plot_colormap_array` function.
+        """
+        # Retrieve cmap if specified within imshow_args
+        plot_imshow_args = imshow_args.copy()
+        if not cmap:
+            cmap = plot_imshow_args.pop('cmap', None)
+
+        with PlotStyle(theme=theme, cmap=cmap) as style:
+            return plot_colormap_array(
+                self.esi_samples(raw=True), 
+                n_imgs=n_imgs,
+                n_cols=n_cols, 
+                norm_lims=True,
+                xi_locations=self._xi,
+                reference_map=self.estimation(),
+                title_prefix=title_prefix,
+                title=title,
+                figsize=figsize,
+                dpi=dpi,
+                cmap=style.cmap,
+                **plot_imshow_args
+                )
 
 # ============================================= PUBLIC API ==========================================================
 @signature_overload(pivot_arg=("local_interpolator", li.IDW, "local interpolator"),
@@ -197,7 +258,8 @@ class ESIResult(EstimationResult):
                         li.KRIGING: {"model": ["spherical", "exponential", "cubic", "gaussian"],
                                      "nugget": [0.0, 0.5, 1.0],
                                      "range": [10.0, 50.0, 100.0, 200.0],
-                                     "sill": [0.9, 1.0, 1.1]}
+                                     "sill": [0.9, 1.0, 1.1]},
+                        li.ADAPTIVE_IDW: {}
                     })
 def esi_hparams_search(points, values, xi, **kwargs):
     """
@@ -237,7 +299,11 @@ def esi_hparams_search(points, values, xi, **kwargs):
     # get the actual parameter grid
     param_grid = ParameterGrid(grid)
 
-    p_xi = xi.copy()
+    if isinstance(xi, tuple):
+        p_xi = deepcopy(xi)
+    else:
+        p_xi = xi.copy()
+
     if kwargs["griddata"]:
         p_xi, _ = flatten_grid_data(xi)
 
@@ -396,7 +462,8 @@ def esi_nongriddata(points, values, xi, **kwargs):
                                  },
                     specific_args={
                         li.IDW: {"exponent": 2.0},
-                        li.KRIGING: {"model": 1, "nugget": 0.1, "range": 5000.0, "sill": 1.0}
+                        li.KRIGING: {"model": 1, "nugget": 0.1, "range": 5000.0, "sill": 1.0},
+                        li.ADAPTIVE_IDW: {}
                     })
 def _call_libspatialize(points, values, xi, **kwargs):
     """
@@ -412,6 +479,9 @@ def _call_libspatialize(points, values, xi, **kwargs):
 
     if not kwargs["best_params_found"] is None:
         try:
+            best = kwargs["best_params_found"]["n_partitions"]
+            log_message(logging.logger.debug(f"best number of partitions found: "
+                                             f"{best}"))
             del kwargs["best_params_found"]["n_partitions"]  # this param can be overwritten all cases
         except KeyError:
             pass
@@ -468,6 +538,9 @@ def build_arg_list(points, values, xi, nonpos_args):
         l_args.insert(-2, nonpos_args["nugget"])
         l_args.insert(-2, nonpos_args["range"])
         l_args.insert(-2, nonpos_args["sill"])
+        l_args.insert(-2, nonpos_args["seed"])
+
+    if nonpos_args["local_interpolator"] == li.ADAPTIVE_IDW:
         l_args.insert(-2, nonpos_args["seed"])
 
     return l_args
